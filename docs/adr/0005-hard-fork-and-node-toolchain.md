@@ -7,6 +7,9 @@ tags:
 - fork
 - packaging
 - tooling
+links:
+- target: 8
+  kind: amendedby
 ---
 
 # 5. Hard fork as @graelo/pi-vimmode on a Node toolchain
