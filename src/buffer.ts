@@ -1011,8 +1011,7 @@ export function shiftLineRange(
     changed ||= currentResult.edit.changed;
     currentText = currentResult.edit.text;
   }
-  if (!currentResult || !currentResult.ok)
-    return applyPromptTransform(text, range, { action }, originalCursor);
+  if (!currentResult?.ok) return applyPromptTransform(text, range, { action }, originalCursor);
   return { ...currentResult, edit: { ...currentResult.edit, changed } };
 }
 

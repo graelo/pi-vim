@@ -32,7 +32,8 @@ function closesFence(line: string, fence: string): boolean {
 function forEachProseLine(
   lines: readonly string[],
   startIndex: number,
-  visit: (line: string, index: number) => boolean | void,
+  // Returning `true` stops the walk; any other return value continues it.
+  visit: (line: string, index: number) => unknown,
   visitFenced?: (line: string) => void,
 ): void {
   let fence: string | undefined;

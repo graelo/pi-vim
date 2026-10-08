@@ -5,6 +5,8 @@ import type { ReadOnlyPopup } from "../src/read-only-popup.ts";
 
 import { ReadOnlyPopupOverlayComponent } from "../src/keybinding-discovery-overlay.ts";
 
+type OverlayArgs = ConstructorParameters<typeof ReadOnlyPopupOverlayComponent>;
+
 function popup(lines: readonly string[], scrollOffset = 0): ReadOnlyPopup {
   return {
     title: "Read-only output",
@@ -18,7 +20,7 @@ function createComponent(input: ReadOnlyPopup) {
   const renders: number[] = [];
   let closed = 0;
   const component = new ReadOnlyPopupOverlayComponent(
-    { requestRender: () => renders.push(1) } as any,
+    { requestRender: () => renders.push(1) } as unknown as OverlayArgs[0],
     input,
     {},
     () => closed++,

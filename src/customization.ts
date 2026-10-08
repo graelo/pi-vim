@@ -711,7 +711,7 @@ export function mapcheckMessage(
 }
 
 export function doctorMessage(
-  options: ResolvedVimEditorOptions,
+  _options: ResolvedVimEditorOptions,
   diagnostics: VimDiagnostics = { warnings: [] },
 ): string {
   const warnings = diagnostics.warnings;

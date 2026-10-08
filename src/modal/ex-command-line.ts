@@ -43,7 +43,7 @@ import {
   runtimeHelpPopup,
 } from "../keybinding-discovery-popup.ts";
 import { parseExLineRange } from "../range.ts";
-import { type ReadOnlyPopup } from "../read-only-popup.ts";
+import type { ReadOnlyPopup } from "../read-only-popup.ts";
 import {
   clearPending,
   clearPendingEx,
@@ -553,7 +553,7 @@ export function completePendingExCommand(
     replacement = candidates[0];
   } else if (candidates.length > 1) {
     const common = candidates.reduce((shared, candidate) => {
-      let limit = Math.min(shared.length, candidate.length);
+      const limit = Math.min(shared.length, candidate.length);
       let index = 0;
       while (index < limit && shared[index] === candidate[index]) index++;
       return shared.slice(0, index);
@@ -758,7 +758,6 @@ function handleExHistoryNavigation(
 function handleExWordNavigation(
   state: ModalState,
   pendingEx: NonNullable<ModalState["pendingEx"]>,
-  data: string,
   key: string | undefined,
 ): ModalUpdate | undefined {
   if (key === "alt+left") {
@@ -854,10 +853,10 @@ export function handlePendingExInput(
   const navigationUpdate =
     handleExEditingNavigation(state, pendingEx, data, key) ??
     handleExHistoryNavigation(state, pendingEx, options, data) ??
-    handleExWordNavigation(state, pendingEx, data, key) ??
+    handleExWordNavigation(state, pendingEx, key) ??
     handleExTabInput(state, pendingEx, options, data);
   if (navigationUpdate) return navigationUpdate;
-  if (!key || key.length !== 1) return invalidate(state);
+  if (key?.length !== 1) return invalidate(state);
   const cursor = exCursor(pendingEx);
   return invalidate({
     ...state,

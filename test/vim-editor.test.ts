@@ -1,4 +1,4 @@
-import { visibleWidth } from "@earendil-works/pi-tui";
+import { type Component, type OverlayOptions, visibleWidth } from "@earendil-works/pi-tui";
 import { afterEach, expect, test } from "vitest";
 
 import type { ModalState } from "../src/modal/types.ts";
@@ -14,6 +14,8 @@ import {
 } from "../src/config.ts";
 import { SEARCH_CURRENT_START, SEARCH_START } from "../src/render.ts";
 import { fitStatusBorder, VimEditor } from "../src/vim-editor.ts";
+
+type EditorArgs = ConstructorParameters<typeof VimEditor>;
 
 function ctrlVVisualBlockOptions(startMode: "insert" | "normal" = "insert") {
   return resolveVimOptions({
@@ -54,7 +56,7 @@ function createEditorTui(
 ) {
   const writes: string[] = [];
   const hardwareCursorChanges: boolean[] = [];
-  const overlays: Array<{ component: any; options: any; hidden: boolean }> = [];
+  const overlays: Array<{ component: Component; options?: OverlayOptions; hidden: boolean }> = [];
   let hardwareCursorVisible = initialHardwareCursorVisible;
   let renderRequests = 0;
   return {
@@ -67,7 +69,7 @@ function createEditorTui(
       requestRender() {
         renderRequests += 1;
       },
-      showOverlay(component: any, options: any) {
+      showOverlay(component: Component, options?: OverlayOptions) {
         const entry = { component, options, hidden: false };
         overlays.push(entry);
         return {
@@ -94,7 +96,7 @@ function createEditorTui(
         hardwareCursorVisible = visible;
         hardwareCursorChanges.push(visible);
       },
-    } as any,
+    } as unknown as EditorArgs[0],
     writes,
     hardwareCursorChanges,
     overlays,
@@ -111,7 +113,7 @@ const editorTheme = {
     noMatch: (text: string) => text,
     scrollInfo: (text: string) => text,
   },
-} as any;
+} as unknown as EditorArgs[1];
 
 const editorKeybindings = {
   matches() {
@@ -126,7 +128,7 @@ const editorKeybindings = {
   getConflicts() {
     return [];
   },
-} as any;
+} as unknown as EditorArgs[2];
 
 function createEditor(
   options: ResolvedVimEditorOptions = DEFAULT_VIM_OPTIONS,
@@ -173,7 +175,7 @@ function installAutocomplete(editor: VimEditor, values: readonly string[], maxVi
     applyCompletion(
       lines: string[],
       cursorLine: number,
-      cursorCol: number,
+      _cursorCol: number,
       item: { value: string },
     ) {
       const next = [...lines];
@@ -1041,7 +1043,7 @@ test("keybinding discovery overlay scroll reveals hidden bounded rows", () => {
   const { editor, overlays } = createEditor(options);
 
   runEx(editor, "features keybindings");
-  const overlay = overlays.at(-1)?.component;
+  const overlay = overlays.at(-1)?.component as Required<Component>;
   expect(overlay).toBeDefined();
   const initial = overlay.render(80).join("\n");
   expect(initial).toContain("1-10/");
@@ -1155,7 +1157,7 @@ test("read-only popup local controls and too-small fallback stay prompt-safe", (
   runEx(editor, "help search");
   const overlay = overlays.at(-1);
   expect(overlay?.hidden).toBe(false);
-  overlay?.component.handleInput("\x03");
+  overlay?.component.handleInput?.("\x03");
   expect(overlay?.hidden).toBe(true);
   expect(editor.getText()).toBe("abc");
   expect(editor.getCursor()).toEqual({ line: 0, col: 3 });

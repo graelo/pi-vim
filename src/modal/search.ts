@@ -325,7 +325,7 @@ export function handlePendingSearchInput(
   if (keyMatches(data, "down")) return invalidate(navigateSearchHistory(state, search, "next"));
 
   const key = keySequence(data);
-  if (!key || key.length !== 1) return invalidate(state);
+  if (key?.length !== 1) return invalidate(state);
   return invalidate({
     ...state,
     pendingSearch: {

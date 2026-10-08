@@ -305,7 +305,6 @@ export function applyOperatorMotion(
 function applyCaseOrShiftLineCommand(
   state: ModalState,
   snapshot: EditorSnapshot,
-  options: ModalOptions,
   operator: VimOperatorAction,
   count: number,
   recordRepeat: boolean,
@@ -355,14 +354,7 @@ export function applyLineCommand(
   recordRepeat = true,
 ): ModalUpdate {
   const nextState = clearCommandPending(state);
-  const specialUpdate = applyCaseOrShiftLineCommand(
-    state,
-    snapshot,
-    options,
-    operator,
-    count,
-    recordRepeat,
-  );
+  const specialUpdate = applyCaseOrShiftLineCommand(state, snapshot, operator, count, recordRepeat);
   if (specialUpdate) return specialUpdate;
   if (operator === "delete") {
     const result = deleteLine(snapshot.text, snapshot.cursor, count);
@@ -397,13 +389,13 @@ export function applyLineCommand(
 }
 
 function applyCommandGroup0(
-  state: ModalState,
+  _state: ModalState,
   snapshot: EditorSnapshot,
   options: ModalOptions,
   command: VimCommandAction,
-  count: number,
-  char: string | undefined,
-  recordRepeat: boolean,
+  _count: number,
+  _char: string | undefined,
+  _recordRepeat: boolean,
   nextState: ModalState,
 ): ModalUpdate | undefined {
   switch (command) {
@@ -456,7 +448,7 @@ function applyCommandGroup1(
   options: ModalOptions,
   command: VimCommandAction,
   count: number,
-  char: string | undefined,
+  _char: string | undefined,
   recordRepeat: boolean,
   nextState: ModalState,
 ): ModalUpdate | undefined {
@@ -541,7 +533,7 @@ function applyCommandGroup1(
   }
 }
 function applyCommandGroup2(
-  state: ModalState,
+  _state: ModalState,
   snapshot: EditorSnapshot,
   options: ModalOptions,
   command: VimCommandAction,
@@ -597,13 +589,13 @@ function applyCommandGroup2(
   }
 }
 function applyCommandGroup3(
-  state: ModalState,
+  _state: ModalState,
   snapshot: EditorSnapshot,
-  options: ModalOptions,
+  _options: ModalOptions,
   command: VimCommandAction,
   count: number,
   char: string | undefined,
-  recordRepeat: boolean,
+  _recordRepeat: boolean,
   nextState: ModalState,
 ): ModalUpdate | undefined {
   switch (command) {
@@ -627,8 +619,8 @@ function applyCommandGroup4(
   options: ModalOptions,
   command: VimCommandAction,
   count: number,
-  char: string | undefined,
-  recordRepeat: boolean,
+  _char: string | undefined,
+  _recordRepeat: boolean,
   nextState: ModalState,
 ): ModalUpdate | undefined {
   switch (command) {

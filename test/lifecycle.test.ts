@@ -13,6 +13,8 @@ import {
 import { registerVimLifecycle } from "../src/lifecycle.ts";
 import { VimEditor } from "../src/vim-editor.ts";
 
+type EditorArgs = ConstructorParameters<typeof VimEditor>;
+
 type HookName =
   | "session_start"
   | "resources_discover"
@@ -99,7 +101,7 @@ function createRealEditor(configuration: VimRuntimeConfiguration): VimEditor {
     getShowHardwareCursor: () => false,
     setShowHardwareCursor: () => {},
     showOverlay: () => ({ hide: () => {} }),
-  } as any;
+  } as unknown as EditorArgs[0];
   const theme = {
     borderColor: (text: string) => text,
     selectList: {
@@ -108,13 +110,13 @@ function createRealEditor(configuration: VimRuntimeConfiguration): VimEditor {
       noMatch: (text: string) => text,
       scrollInfo: (text: string) => text,
     },
-  } as any;
+  } as unknown as EditorArgs[1];
   const keybindings = {
     matches: () => false,
     getKeys: () => [],
     getDefinition: () => ({ defaultKeys: [] }),
     getConflicts: () => [],
-  } as any;
+  } as unknown as EditorArgs[2];
   return new VimEditor(tui, theme, keybindings, configuration);
 }
 

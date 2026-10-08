@@ -132,7 +132,7 @@ function renderSuggestion(
   width: number,
   theme?: WorkbenchTheme,
 ): string {
-  if (!item.selected || !theme?.selectList) return fitWidth("  " + item.text, width);
+  if (!item.selected || !theme?.selectList) return fitWidth(`  ${item.text}`, width);
   const prefix = theme.selectList.selectedPrefix?.("→ ") ?? "> ";
   const content = item.text.slice(0, Math.max(0, width - 2));
   return prefix + (theme.selectList.selectedText?.(content) ?? content);
