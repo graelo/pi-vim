@@ -25,3 +25,5 @@ front-matter-title = ""
 # GitHub issue and PR templates start with front matter or a section, not a title.
 [per-file-ignores]
 ".github/**/*.md" = ["MD041"]
+# OpenSpec change artifacts start with a section, not a title.
+"openspec/changes/**/*.md" = ["MD041"]

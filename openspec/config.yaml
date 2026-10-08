@@ -11,7 +11,7 @@ context: |
   - Tooling: npm, tsc --noEmit, vitest, tsx (scripts and benchmark), biome, rumdl.
 
   Architecture seams:
-  - src/lifecycle.ts: extension activation, settings refresh, status, shutdown cursor reset.
+  - src/lifecycle.ts: extension activation, settings refresh, warning notices, shutdown cursor reset.
   - src/config.ts and src/types.ts: piVim defaults, accepted values, validation, warnings, public option types.
   - src/commands.ts: finite semantic key parser, counts, operators, motions, text objects, macro parser.
   - src/buffer.ts: pure prompt-buffer navigation/edit/search/visual/mark/register/substitution/line-transform operations.
