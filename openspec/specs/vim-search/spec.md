@@ -2,90 +2,115 @@
 
 ## Purpose
 
-TBD - created by archiving change todos-search-functionality. Update Purpose after archive.
+Define prompt-local forward and backward search, its repeat commands, its use as
+a visual and operator motion, and search highlighting.
 
 ## Requirements
 
 ### Requirement: Normal mode starts forward prompt search
 
-The Vim editor SHALL support `/` in normal mode as a pending literal search query over the current prompt buffer.
+The Vim editor SHALL support `/` in normal mode as a pending literal search
+query over the current prompt buffer.
 
 #### Scenario: Start search from normal mode
 
 - **WHEN** the editor is in normal mode and the user presses `/`
-- **THEN** the editor enters pending search state without inserting `/` into the prompt text
+- **THEN** the editor enters pending search state without inserting `/` into
+    the prompt text
 
 #### Scenario: Insert mode slash remains delegated
 
 - **WHEN** the editor is in insert mode and the user presses `/`
-- **THEN** the key is delegated to Pi default editing and slash-command completion behavior remains available
+- **THEN** the key is delegated to Pi default editing and slash-command
+    completion behavior remains available
 
 #### Scenario: Cancel pending search
 
 - **WHEN** the editor is collecting a search query and the user presses `Esc`
-- **THEN** pending search clears, prompt text is unchanged, and the editor returns to normal mode
+- **THEN** pending search clears, prompt text is unchanged, and the editor
+    returns to normal mode
 
 ### Requirement: Search query moves to matching text
 
-The Vim editor SHALL move the cursor to the next literal or explicitly opted-in regex match of the completed search query in the current prompt buffer, wrapping within the prompt when needed.
+The Vim editor SHALL move the cursor to the next literal or explicitly opted-in
+regex match of the completed search query in the current prompt buffer, wrapping
+within the prompt when needed.
 
 #### Scenario: Forward search finds later match
 
-- **WHEN** the editor is in normal mode with prompt text containing a later match and the user enters `/` followed by a query and `Enter`
-- **THEN** the cursor moves to the start of the next literal match and the completed query becomes the last search
+- **WHEN** the editor is in normal mode with prompt text containing a later
+    match and the user enters `/` followed by a query and `Enter`
+- **THEN** the cursor moves to the start of the next literal match and the
+    completed query becomes the last search
 
 #### Scenario: Forward search wraps to earlier match
 
-- **WHEN** the editor is in normal mode and no later match exists after the cursor but an earlier match exists in the prompt
-- **THEN** completing `/` search moves the cursor to the first wrapped literal match
+- **WHEN** the editor is in normal mode and no later match exists after the
+    cursor but an earlier match exists in the prompt
+- **THEN** completing `/` search moves the cursor to the first wrapped literal
+    match
 
 #### Scenario: Search with no match is safe
 
 - **WHEN** the editor completes a search query that does not match prompt text
-- **THEN** prompt text and cursor position are unchanged and the query is not recorded as the last successful search
+- **THEN** prompt text and cursor position are unchanged and the query is not
+    recorded as the last successful search
 
 #### Scenario: Empty search recalls previous query
 
-- **WHEN** the editor has a previous successful prompt search and completes `/` or `?` with an empty query
-- **THEN** the editor reuses the previous successful query and matcher mode, searches in the direction requested by the current `/` or `?` entry, and updates last-search direction when a match is found
+- **WHEN** the editor has a previous successful prompt search and completes
+    `/` or `?` with an empty query
+- **THEN** the editor reuses the previous successful query and matcher mode,
+    searches in the direction requested by the current `/` or `?` entry, and
+    updates last-search direction when a match is found
 
 #### Scenario: Empty search without previous query is safe
 
-- **WHEN** the editor completes `/` or `?` search with an empty query and no previous successful search exists
+- **WHEN** the editor completes `/` or `?` search with an empty query and no
+    previous successful search exists
 - **THEN** prompt text, cursor position, and last search state are unchanged
 
 ### Requirement: Normal mode repeats search
 
-The Vim editor SHALL support `n` and `N` in normal mode to repeat the last successful search over the current prompt buffer.
+The Vim editor SHALL support `n` and `N` in normal mode to repeat the last
+successful search over the current prompt buffer.
 
 #### Scenario: Repeat search forward
 
-- **WHEN** the editor has a successful forward search query and the user presses `n` in normal mode
+- **WHEN** the editor has a successful forward search query and the user
+    presses `n` in normal mode
 - **THEN** the cursor moves to the next wrapped literal match for that query
 
 #### Scenario: Repeat search backward
 
-- **WHEN** the editor has a successful forward search query and the user presses `N` in normal mode
+- **WHEN** the editor has a successful forward search query and the user
+    presses `N` in normal mode
 - **THEN** the cursor moves to the previous wrapped literal match for that query
 
 #### Scenario: Repeat search without prior query is safe
 
-- **WHEN** the editor is in normal mode without a successful previous search and the user presses `n` or `N`
+- **WHEN** the editor is in normal mode without a successful previous search
+    and the user presses `n` or `N`
 - **THEN** prompt text and cursor position are unchanged
 
 ### Requirement: Search works as visual motion
 
-The Vim editor SHALL allow completed search movement to extend active visual selections without changing prompt text until a visual operation is chosen.
+The Vim editor SHALL allow completed search movement to extend active visual
+selections without changing prompt text until a visual operation is chosen.
 
 #### Scenario: Visual search extends selection
 
-- **WHEN** the editor is in visual mode and the user completes `/` search with a matching query
-- **THEN** the active visual cursor moves to the match and selection remains anchored at the original visual anchor
+- **WHEN** the editor is in visual mode and the user completes `/` search with
+    a matching query
+- **THEN** the active visual cursor moves to the match and selection remains
+    anchored at the original visual anchor
 
 #### Scenario: Visual repeat search extends selection
 
-- **WHEN** the editor is in visual mode with a previous successful search and the user presses `n` or `N`
-- **THEN** the active visual cursor moves to the repeated search match and visual mode remains active
+- **WHEN** the editor is in visual mode with a previous successful search and
+    the user presses `n` or `N`
+- **THEN** the active visual cursor moves to the repeated search match and
+    visual mode remains active
 
 #### Scenario: Visual search no match preserves selection
 
@@ -94,36 +119,49 @@ The Vim editor SHALL allow completed search movement to extend active visual sel
 
 ### Requirement: Search works as operator motion
 
-The Vim editor SHALL allow completed search movement to provide an operator target range for supported normal-mode operators.
+The Vim editor SHALL allow completed search movement to provide an operator
+target range for supported normal-mode operators.
 
 #### Scenario: Delete to search match
 
-- **WHEN** the editor is in normal mode and the user enters a delete operator followed by `/`, a matching query, and `Enter`
-- **THEN** text from the operator start through the addressed search range is removed, copied to the unnamed character register, and the editor remains in normal mode
+- **WHEN** the editor is in normal mode and the user enters a delete operator
+    followed by `/`, a matching query, and `Enter`
+- **THEN** text from the operator start through the addressed search range is
+    removed, copied to the unnamed character register, and the editor remains in
+    normal mode
 
 #### Scenario: Change to search match
 
-- **WHEN** the editor is in normal mode and the user enters a change operator followed by `/`, a matching query, and `Enter`
-- **THEN** text from the operator start through the addressed search range is removed, copied to the unnamed character register, and the editor enters insert mode
+- **WHEN** the editor is in normal mode and the user enters a change operator
+    followed by `/`, a matching query, and `Enter`
+- **THEN** text from the operator start through the addressed search range is
+    removed, copied to the unnamed character register, and the editor enters
+    insert mode
 
 #### Scenario: Yank to search match
 
-- **WHEN** the editor is in normal mode and the user enters a yank operator followed by `/`, a matching query, and `Enter`
-- **THEN** text from the operator start through the addressed search range is copied to the unnamed character register without changing prompt text
+- **WHEN** the editor is in normal mode and the user enters a yank operator
+    followed by `/`, a matching query, and `Enter`
+- **THEN** text from the operator start through the addressed search range is
+    copied to the unnamed character register without changing prompt text
 
 #### Scenario: Operator search no match clears pending operator safely
 
 - **WHEN** the editor has a pending operator and completed search has no match
-- **THEN** the pending operator clears, prompt text is unchanged, and the editor remains in normal mode
+- **THEN** the pending operator clears, prompt text is unchanged, and the
+    editor remains in normal mode
 
 ### Requirement: Search behavior is documented and validated
 
-The change SHALL include automated tests and user-facing documentation for supported search behavior.
+The change SHALL include automated tests and user-facing documentation for
+supported search behavior.
 
 #### Scenario: Automated validation runs
 
 - **WHEN** `npm test` is executed
-- **THEN** tests cover pending search, cancellation, literal matching, wrap-around, no-match behavior, `n` and `N`, visual search, operator search, and insert-mode slash delegation
+- **THEN** tests cover pending search, cancellation, literal matching,
+    wrap-around, no-match behavior, `n` and `N`, visual search, operator search,
+    and insert-mode slash delegation
 
 #### Scenario: Typecheck runs
 
@@ -133,31 +171,40 @@ The change SHALL include automated tests and user-facing documentation for suppo
 #### Scenario: Feature guide describes search
 
 - **WHEN** the user opens `docs/features.md`
-- **THEN** it documents `/`, `n`, `N`, prompt-local literal search behavior, and current search limitations
+- **THEN** it documents `/`, `n`, `N`, prompt-local literal search behavior,
+    and current search limitations
 
 #### Scenario: TODO marks search complete after validation
 
 - **WHEN** the search implementation and validation pass
-- **THEN** `TODOS.md` marks `/` search complete while leaving unrelated remaining TODO items unchanged
+- **THEN** `TODOS.md` marks `/` search complete while leaving unrelated
+    remaining TODO items unchanged
 
 ### Requirement: Normal and visual modes start backward prompt search
 
-The Vim editor SHALL support `?` as a pending backward search query over the current prompt buffer wherever prompt search is supported.
+The Vim editor SHALL support `?` as a pending backward search query over the
+current prompt buffer wherever prompt search is supported.
 
 #### Scenario: Start backward search from normal mode
 
-- **WHEN** the editor is in normal mode and the user presses the resolved backward search entry key
-- **THEN** the editor enters pending search state with `?` as the displayed prefix and without inserting `?` into the prompt text
+- **WHEN** the editor is in normal mode and the user presses the resolved
+    backward search entry key
+- **THEN** the editor enters pending search state with `?` as the displayed
+    prefix and without inserting `?` into the prompt text
 
 #### Scenario: Backward search finds earlier match
 
-- **WHEN** the editor is in normal mode with prompt text containing an earlier match and the user enters `?` followed by a query and `Enter`
-- **THEN** the cursor moves to the start of the previous literal match and the completed query becomes the last search with backward direction
+- **WHEN** the editor is in normal mode with prompt text containing an earlier
+    match and the user enters `?` followed by a query and `Enter`
+- **THEN** the cursor moves to the start of the previous literal match and the
+    completed query becomes the last search with backward direction
 
 #### Scenario: Backward search wraps to later match
 
-- **WHEN** the editor is in normal mode and no earlier match exists before the cursor but a later match exists in the prompt
-- **THEN** completing `?` search moves the cursor to the last wrapped literal match
+- **WHEN** the editor is in normal mode and no earlier match exists before the
+    cursor but a later match exists in the prompt
+- **THEN** completing `?` search moves the cursor to the last wrapped literal
+    match
 
 #### Scenario: Insert mode question mark remains delegated
 
@@ -166,70 +213,92 @@ The Vim editor SHALL support `?` as a pending backward search query over the cur
 
 #### Scenario: Visual backward search extends selection
 
-- **WHEN** the editor is in visual mode and the user completes `?` search with a matching query
-- **THEN** the active visual cursor moves to the previous wrapped match and the selection remains anchored at the original visual anchor
+- **WHEN** the editor is in visual mode and the user completes `?` search with
+    a matching query
+- **THEN** the active visual cursor moves to the previous wrapped match and
+    the selection remains anchored at the original visual anchor
 
 #### Scenario: Operator backward search uses addressed range
 
-- **WHEN** the editor has a pending delete, change, or yank operator and the user completes `?` search with a matching query
-- **THEN** the operator applies to the range from the operator start through the addressed backward search match using the same register and mode-transition semantics as forward search motion
+- **WHEN** the editor has a pending delete, change, or yank operator and the
+    user completes `?` search with a matching query
+- **THEN** the operator applies to the range from the operator start through
+    the addressed backward search match using the same register and
+    mode-transition semantics as forward search motion
 
 ### Requirement: Repeat search respects original search direction and matcher mode
 
-The Vim editor SHALL repeat the last successful prompt search using its recorded direction and matcher mode.
+The Vim editor SHALL repeat the last successful prompt search using its recorded
+direction and matcher mode.
 
 #### Scenario: Repeat backward search with n
 
-- **WHEN** the previous successful search was a backward `?` search and the user presses `n` in normal mode
+- **WHEN** the previous successful search was a backward `?` search and the
+    user presses `n` in normal mode
 - **THEN** the cursor moves to the previous wrapped match for that query
 
 #### Scenario: Repeat backward search in opposite direction with N
 
-- **WHEN** the previous successful search was a backward `?` search and the user presses `N` in normal mode
+- **WHEN** the previous successful search was a backward `?` search and the
+    user presses `N` in normal mode
 - **THEN** the cursor moves to the next wrapped match for that query
 
 #### Scenario: Repeat regex search preserves regex mode
 
-- **WHEN** the previous successful search used explicit regex mode and the user presses `n` or `N`
-- **THEN** the next target is resolved by the same bounded regex matcher rather than literal matching
+- **WHEN** the previous successful search used explicit regex mode and the
+    user presses `n` or `N`
+- **THEN** the next target is resolved by the same bounded regex matcher
+    rather than literal matching
 
 ### Requirement: Search workbench keeps prompt-local history
 
-The Vim editor SHALL keep finite in-memory history for successful search entries and expose it while pending search input is active.
+The Vim editor SHALL keep finite in-memory history for successful search entries
+and expose it while pending search input is active.
 
 #### Scenario: Successful search enters history
 
 - **WHEN** the user completes `/todo` or `?todo` and a match is found
-- **THEN** the normalized search entry is added to search history without changing prompt text
+- **THEN** the normalized search entry is added to search history without
+    changing prompt text
 
 #### Scenario: Failed search does not enter history
 
-- **WHEN** the user completes a search that has no match, has invalid regex syntax, or exceeds regex bounds
+- **WHEN** the user completes a search that has no match, has invalid regex
+    syntax, or exceeds regex bounds
 - **THEN** that entry is not added to search history
 
 #### Scenario: Search history previous recalls entry
 
-- **WHEN** pending search input is active and search history contains an older entry
-- **THEN** pressing the resolved history-previous key replaces the pending search text and matcher mode with that history entry without moving the prompt cursor
+- **WHEN** pending search input is active and search history contains an older
+    entry
+- **THEN** pressing the resolved history-previous key replaces the pending
+    search text and matcher mode with that history entry without moving the
+    prompt cursor
 
 #### Scenario: Search history next restores newer entry or draft
 
 - **WHEN** pending search input is active after history-previous navigation
-- **THEN** pressing the resolved history-next key moves toward newer history entries and eventually restores the draft text that existed before history navigation
+- **THEN** pressing the resolved history-next key moves toward newer history
+    entries and eventually restores the draft text that existed before history
+    navigation
 
 #### Scenario: New editor has empty search history
 
 - **WHEN** a new `VimEditor` instance is constructed
-- **THEN** search history starts empty and no search text is recalled until a successful search occurs in that editor instance
+- **THEN** search history starts empty and no search text is recalled until a
+    successful search occurs in that editor instance
 
 ### Requirement: Search supports explicit bounded regex mode
 
-The Vim editor SHALL support regex search only when the pending search text explicitly opts in with the documented regex prefix.
+The Vim editor SHALL support regex search only when the pending search text
+explicitly opts in with the documented regex prefix.
 
 #### Scenario: Regex search finds matching text
 
 - **WHEN** the user completes `/\rTODO|FIXME` in a prompt containing `FIXME`
-- **THEN** the editor treats `TODO|FIXME` as a bounded regex pattern, moves the cursor to the regex match, records regex mode in last-search state, and does not include the `\r` prefix in the effective pattern
+- **THEN** the editor treats `TODO|FIXME` as a bounded regex pattern, moves
+    the cursor to the regex match, records regex mode in last-search state, and
+    does not include the `\r` prefix in the effective pattern
 
 #### Scenario: Literal search remains default
 
@@ -239,26 +308,37 @@ The Vim editor SHALL support regex search only when the pending search text expl
 #### Scenario: Invalid regex is safe
 
 - **WHEN** the user completes a regex search with invalid pattern syntax
-- **THEN** prompt text, cursor position, visual selection, pending operator effects, and last-search state remain unchanged and the workbench reports a readable error
+- **THEN** prompt text, cursor position, visual selection, pending operator
+    effects, and last-search state remain unchanged and the workbench reports a
+    readable error
 
 #### Scenario: Regex bound exceeded is safe
 
-- **WHEN** a regex search pattern or prompt text exceeds the documented regex search bounds
-- **THEN** prompt text, cursor position, visual selection, pending operator effects, and last-search state remain unchanged and the workbench reports a readable error
+- **WHEN** a regex search pattern or prompt text exceeds the documented regex
+    search bounds
+- **THEN** prompt text, cursor position, visual selection, pending operator
+    effects, and last-search state remain unchanged and the workbench reports a
+    readable error
 
 #### Scenario: Zero-length regex match is rejected
 
 - **WHEN** a regex search would resolve to a zero-length match
-- **THEN** prompt text, cursor position, visual selection, pending operator effects, and last-search state remain unchanged and the workbench reports a readable error
+- **THEN** prompt text, cursor position, visual selection, pending operator
+    effects, and last-search state remain unchanged and the workbench reports a
+    readable error
 
 ### Requirement: Search workbench behavior is documented and validated
 
-The change SHALL include automated tests and user-facing documentation for backward search, history, recall, and regex mode.
+The change SHALL include automated tests and user-facing documentation for
+backward search, history, recall, and regex mode.
 
 #### Scenario: Automated validation runs
 
 - **WHEN** `npm test` is executed
-- **THEN** tests cover `/`, `?`, cancellation, empty-query recall, history navigation, literal matching, bounded regex matching, invalid regex safety, wrap-around, no-match behavior, `n` and `N`, visual search, operator search, and insert-mode delegation
+- **THEN** tests cover `/`, `?`, cancellation, empty-query recall, history
+    navigation, literal matching, bounded regex matching, invalid regex safety,
+    wrap-around, no-match behavior, `n` and `N`, visual search, operator search,
+    and insert-mode delegation
 
 #### Scenario: Typecheck runs
 
@@ -268,70 +348,101 @@ The change SHALL include automated tests and user-facing documentation for backw
 #### Scenario: Feature guide describes safe search workbench
 
 - **WHEN** the user opens `docs/features.md`
-- **THEN** it documents `/`, `?`, `n`, `N`, search history, empty-query recall, literal default behavior, regex opt-in syntax, regex bounds, and current search limitations
+- **THEN** it documents `/`, `?`, `n`, `N`, search history, empty-query
+    recall, literal default behavior, regex opt-in syntax, regex bounds, and
+    current search limitations
 
 ### Requirement: Normal mode searches word under cursor
 
-The Vim editor SHALL support normal-mode word-under-cursor prompt search commands that derive a literal keyword-word query from the current prompt cursor and use existing prompt search repeat state. A keyword word is a contiguous run of ASCII letters, digits, and `_`. A cursor on a keyword character uses that containing word; a cursor immediately after a keyword word, including at line end, uses that preceding word.
+The Vim editor SHALL support normal-mode word-under-cursor prompt search
+commands that derive a literal keyword-word query from the current prompt cursor
+and use existing prompt search repeat state. A keyword word is a contiguous run
+of ASCII letters, digits, and `_`. A cursor on a keyword character uses that
+containing word; a cursor immediately after a keyword word, including at line
+end, uses that preceding word.
 
 #### Scenario: Star searches current word forward
 
-- **WHEN** the editor is in normal mode, the cursor is on a keyword word, and the user presses `*`
-- **THEN** the cursor moves to the next wrapped literal match for that word and the last search is recorded with that query, forward direction, and literal matcher mode
+- **WHEN** the editor is in normal mode, the cursor is on a keyword word, and
+    the user presses `*`
+- **THEN** the cursor moves to the next wrapped literal match for that word
+    and the last search is recorded with that query, forward direction, and
+    literal matcher mode
 
 #### Scenario: Hash searches current word backward
 
-- **WHEN** the editor is in normal mode, the cursor is on a keyword word, and the user presses `#`
-- **THEN** the cursor moves to the previous wrapped literal match for that word and the last search is recorded with that query, backward direction, and literal matcher mode
+- **WHEN** the editor is in normal mode, the cursor is on a keyword word, and
+    the user presses `#`
+- **THEN** the cursor moves to the previous wrapped literal match for that
+    word and the last search is recorded with that query, backward direction,
+    and literal matcher mode
 
 #### Scenario: Cursor at word end searches preceding word
 
-- **WHEN** the editor is in normal mode and the prompt cursor is immediately after a keyword word
-- **THEN** pressing `*` or `#` uses that preceding keyword word as the literal search query
+- **WHEN** the editor is in normal mode and the prompt cursor is immediately
+    after a keyword word
+- **THEN** pressing `*` or `#` uses that preceding keyword word as the literal
+    search query
 
 #### Scenario: Word search on a unique word records search without moving
 
-- **WHEN** the editor is in normal mode, the cursor resolves to a keyword word that has no other literal match in the prompt, and the user presses `*` or `#`
-- **THEN** the cursor stays on that word, and the last search, search history, and visible highlights are recorded with that word query so `n` and `N` repeat consistently
+- **WHEN** the editor is in normal mode, the cursor resolves to a keyword word
+    that has no other literal match in the prompt, and the user presses `*` or
+    `#`
+- **THEN** the cursor stays on that word, and the last search, search history,
+    and visible highlights are recorded with that word query so `n` and `N`
+    repeat consistently
 
 #### Scenario: Missing word is safe
 
-- **WHEN** the editor is in normal mode and the cursor is not on or immediately after a keyword word
-- **THEN** pressing `*` or `#` leaves prompt text, cursor position, visible search highlight, search history, and last-search state unchanged
+- **WHEN** the editor is in normal mode and the cursor is not on or
+    immediately after a keyword word
+- **THEN** pressing `*` or `#` leaves prompt text, cursor position, visible
+    search highlight, search history, and last-search state unchanged
 
 #### Scenario: Repeat search follows star direction
 
 - **WHEN** the user presses `*` on a matching keyword word and then presses `n`
-- **THEN** repeat search moves to the next wrapped literal match for that same word
+- **THEN** repeat search moves to the next wrapped literal match for that same
+    word
 
 #### Scenario: Reverse repeat search follows star direction
 
 - **WHEN** the user presses `*` on a matching keyword word and then presses `N`
-- **THEN** repeat search moves to the previous wrapped literal match for that same word
+- **THEN** repeat search moves to the previous wrapped literal match for that
+    same word
 
 #### Scenario: Repeat search follows hash direction
 
 - **WHEN** the user presses `#` on a matching keyword word and then presses `n`
-- **THEN** repeat search moves to the previous wrapped literal match for that same word
+- **THEN** repeat search moves to the previous wrapped literal match for that
+    same word
 
 #### Scenario: Word search updates prompt-local search history
 
 - **WHEN** `*` or `#` successfully moves to a literal word match
-- **THEN** the normalized literal query is added to the current editor instance search history without changing prompt text
+- **THEN** the normalized literal query is added to the current editor
+    instance search history without changing prompt text
 
 #### Scenario: Word search updates visible highlights when enabled
 
-- **WHEN** search highlighting is enabled and `*` or `#` successfully moves to a literal word match
-- **THEN** visible search highlights use that word query and mark the current match at the restored cursor position
+- **WHEN** search highlighting is enabled and `*` or `#` successfully moves to
+    a literal word match
+- **THEN** visible search highlights use that word query and mark the current
+    match at the restored cursor position
 
 ### Requirement: Word-under-cursor search behavior is documented and validated
 
-The change SHALL include automated tests and user-facing documentation for word-under-cursor prompt search behavior.
+The change SHALL include automated tests and user-facing documentation for
+word-under-cursor prompt search behavior.
 
 #### Scenario: Automated validation runs
 
 - **WHEN** `npm test` is executed
-- **THEN** tests cover `*`, `#`, insertion-point word-end extraction, missing-word no-op behavior, unique-word no-move behavior, `n` and `N` repeat semantics after `*` and `#`, search history, search highlights, insert-mode delegation, and configured key bindings
+- **THEN** tests cover `*`, `#`, insertion-point word-end extraction,
+    missing-word no-op behavior, unique-word no-move behavior, `n` and `N`
+    repeat semantics after `*` and `#`, search history, search highlights,
+    insert-mode delegation, and configured key bindings
 
 #### Scenario: Typecheck runs
 
@@ -341,9 +452,12 @@ The change SHALL include automated tests and user-facing documentation for word-
 #### Scenario: Feature guide describes word search
 
 - **WHEN** the user opens `docs/features.md`
-- **THEN** it documents `*` and `#` as normal-mode literal keyword-word prompt search commands, explains repeat behavior with `n` and `N`, and lists current limitations
+- **THEN** it documents `*` and `#` as normal-mode literal keyword-word prompt
+    search commands, explains repeat behavior with `n` and `N`, and lists
+    current limitations
 
 #### Scenario: TODO marks word search complete after validation
 
 - **WHEN** word-under-cursor search implementation and validation pass
-- **THEN** `TODOS.md` marks the `*` / `#` search word under cursor item complete while leaving unrelated remaining TODO items unchanged
+- **THEN** `TODOS.md` marks the `*` / `#` search word under cursor item
+    complete while leaving unrelated remaining TODO items unchanged
