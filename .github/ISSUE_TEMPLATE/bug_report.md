@@ -22,14 +22,18 @@ assignees: ""
 
 **Environment**
 
-- pi-vimmode version:
+- pi-vimmode version (`@graelo/pi-vimmode`):
 - Pi version (`pi --version`):
-- OS:
+- OS / terminal:
 
 **Config (if relevant)**
 
 ```json
-// piVimMode settings from Pi config
+// piVimMode settings from ~/.pi/agent/settings.json or .pi/settings.json
+```
+
+```js
+// ~/.pi/agent/pi-vimmode.config.js, if you use trusted JavaScript config
 ```
 
 **Additional context**
