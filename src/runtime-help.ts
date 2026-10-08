@@ -49,7 +49,11 @@ const ENTRIES = [
     limits: ["finite topics only", "no pager", "no Vim help tags"],
     docsAnchor: "runtime-help:runtime-help",
     specAnchor: "openspec/specs/vim-ex-command-line/spec.md",
-    testAnchors: ["test/runtime-help.test.ts", "test/ex.test.ts", "test/modal.test.ts"],
+    testAnchors: [
+      "test/runtime-help.test.ts",
+      "test/ex.test.ts",
+      "test/modal/popups-feedback.test.ts",
+    ],
   },
   {
     id: "search",
@@ -61,7 +65,7 @@ const ENTRIES = [
     limits: ["prompt-local", "literal by default", "no cross-prompt history"],
     docsAnchor: "runtime-help:search",
     specAnchor: "openspec/specs/vim-search/spec.md",
-    testAnchors: ["test/modal.test.ts", "test/vim-editor.test.ts"],
+    testAnchors: ["test/modal/search.test.ts", "test/vim-editor.test.ts"],
   },
   {
     id: "ex",
@@ -78,7 +82,7 @@ const ENTRIES = [
     ],
     docsAnchor: "runtime-help:ex",
     specAnchor: "openspec/specs/vim-ex-command-line/spec.md",
-    testAnchors: ["test/ex.test.ts", "test/modal.test.ts"],
+    testAnchors: ["test/ex.test.ts", "test/modal/ex-command-line.test.ts"],
   },
   {
     id: "customization",
@@ -90,7 +94,7 @@ const ENTRIES = [
     limits: ["no full command palette", "no .vimrc", "no Vimscript"],
     docsAnchor: "runtime-help:customization-diagnostics",
     specAnchor: "openspec/specs/vim-customization-diagnostics/spec.md",
-    testAnchors: ["test/customization.test.ts", "test/modal.test.ts"],
+    testAnchors: ["test/customization.test.ts", "test/modal/keymap-scoped.test.ts"],
   },
   {
     id: "motions",
@@ -102,7 +106,12 @@ const ENTRIES = [
     limits: ["prompt-local", "no subword/camelCase motions", "no display-line motions"],
     docsAnchor: "runtime-help:motions",
     specAnchor: "openspec/specs/extended-vim-keybindings/spec.md",
-    testAnchors: ["test/commands.test.ts", "test/buffer.test.ts", "test/modal.test.ts"],
+    testAnchors: [
+      "test/commands.test.ts",
+      "test/buffer.test.ts",
+      "test/modal/motions.test.ts",
+      "test/modal/prose.test.ts",
+    ],
   },
   {
     id: "surround",
@@ -114,7 +123,11 @@ const ENTRIES = [
     limits: ["no tags or function surrounds", "no newline variants", "no visual block"],
     docsAnchor: "runtime-help:surround",
     specAnchor: "openspec/specs/vim-surround/spec.md",
-    testAnchors: ["test/surround.test.ts", "test/modal.test.ts", "test/vim-editor.test.ts"],
+    testAnchors: [
+      "test/surround.test.ts",
+      "test/modal/surround.test.ts",
+      "test/vim-editor.test.ts",
+    ],
   },
   {
     id: "registers",
@@ -130,7 +143,11 @@ const ENTRIES = [
     ],
     docsAnchor: "runtime-help:registers",
     specAnchor: "openspec/specs/vim-named-registers/spec.md",
-    testAnchors: ["test/registers.test.ts", "test/modal.test.ts", "test/vim-editor.test.ts"],
+    testAnchors: [
+      "test/registers.test.ts",
+      "test/modal/registers.test.ts",
+      "test/vim-editor.test.ts",
+    ],
   },
   {
     id: "marks",
@@ -142,7 +159,7 @@ const ENTRIES = [
     limits: ["no persistent marks", "no file marks", "slots are configurable"],
     docsAnchor: "runtime-help:marks",
     specAnchor: "openspec/specs/vim-marks/spec.md",
-    testAnchors: ["test/modal.test.ts", "test/config.test.ts"],
+    testAnchors: ["test/modal/marks.test.ts", "test/config.test.ts"],
   },
   {
     id: "macros",
@@ -153,7 +170,7 @@ const ENTRIES = [
     limits: ["in-memory only", "bounded replay", "slots are configurable"],
     docsAnchor: "runtime-help:macros",
     specAnchor: "openspec/specs/vim-macro-recording/spec.md",
-    testAnchors: ["test/modal.test.ts", "test/config.test.ts"],
+    testAnchors: ["test/modal/macros.test.ts", "test/config.test.ts"],
   },
   {
     id: "settings",
