@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 
 import { DIAGNOSTIC_ACTIONS } from "../src/diagnostic-actions.ts";
 import {
@@ -35,7 +35,7 @@ describe("prompt transform action registry", () => {
       expect(entry.countBehavior.length).toBeGreaterThan(0);
       expect(entry.visualBehavior.length).toBeGreaterThan(0);
       expect(entry.repeatability).toBe("not-dot-repeatable");
-      expect(entry.docsAnchor).toStartWith("#");
+      expect(entry.docsAnchor.startsWith("#")).toBe(true);
       expect("dispatch" in entry).toBe(false);
     }
   });

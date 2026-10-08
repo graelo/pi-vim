@@ -185,7 +185,7 @@ const ENTRIES = [
     category: "settings",
     topics: ["settings", "config", "piVimMode", "options"],
     summary:
-      "piVimMode JSON settings control finite editor options; trusted global JavaScript setup and API: https://github.com/pekochan069/pi-vimmode/blob/main/docs/config.md#basic-setup",
+      "piVimMode JSON settings control finite editor options; trusted global JavaScript setup and API: https://github.com/graelo/pi-vimmode/blob/main/docs/config.md#basic-setup",
     examples: ["piVimMode.preset", "piVimMode.keymap", "/vimmode reload"],
     limits: ["field-by-field validation", "trusted JavaScript is global and unsandboxed"],
     docsAnchor: "runtime-help:settings",

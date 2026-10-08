@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 
 import type { ExMessage, ModalState } from "../src/modal/types.ts";
 
@@ -64,7 +64,7 @@ describe("modal inspect diagnostics", () => {
     );
 
     expect(history).toHaveLength(MESSAGE_HISTORY_LIMIT);
-    expect(history?.[0]?.text).toStartWith("message 3");
+    expect(history?.[0]?.text).toMatch(/^message 3/);
     const rendered = runtimeMessagesMessage(history);
     expect(rendered).toContain(`messages: ${MESSAGE_HISTORY_LIMIT} retained`);
     expect(rendered).toContain("latest: message 22 with a long payload that should not …");

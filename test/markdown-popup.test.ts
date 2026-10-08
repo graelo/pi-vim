@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "vitest";
 
 import { renderMarkdownRows } from "../src/markdown-popup.ts";
 

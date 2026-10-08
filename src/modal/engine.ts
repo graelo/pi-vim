@@ -524,7 +524,7 @@ function isMacroInputBlocked(
 ): boolean {
   return Boolean(
     snapshot.isMacroReplaying &&
-    (state.pendingMacro || isMacroControlKey(key, recordKeys, playKeys)),
+      (state.pendingMacro || isMacroControlKey(key, recordKeys, playKeys)),
   );
 }
 

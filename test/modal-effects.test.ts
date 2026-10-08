@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 
 import type { ModalEffect, ModalOptions, ModalState } from "../src/modal/types.ts";
 

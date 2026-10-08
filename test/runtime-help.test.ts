@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 
 import { DEFAULT_VIM_OPTIONS, resolveVimOptions } from "../src/config.ts";
 import {

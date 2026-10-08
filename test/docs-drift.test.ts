@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 
 import {
@@ -54,7 +54,8 @@ describe("config guide documentation", () => {
   });
 
   test("global config examples resolve types from Pi's installed package", () => {
-    const annotation = '/** @type {import("./npm/node_modules/pi-vimmode/config").VimConfig} */';
+    const annotation =
+      '/** @type {import("./npm/node_modules/@graelo/pi-vimmode/config").VimConfig} */';
     for (const example of globalConfigExamples) expect(example).toContain(annotation);
   });
 
@@ -352,8 +353,8 @@ describe("action keybinding documentation", () => {
     ]);
   });
 
-  test("release docs include build and package contents inspection", () => {
-    expect(readFileSync("README.md", "utf8")).toContain("bun run build");
-    expect(readFileSync("README.md", "utf8")).toContain("bun pm pack --dry-run");
+  test("release docs include checks and package contents inspection", () => {
+    expect(readFileSync("README.md", "utf8")).toContain("npm run check");
+    expect(readFileSync("README.md", "utf8")).toContain("npm pack --dry-run");
   });
 });

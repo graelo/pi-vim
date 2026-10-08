@@ -1,5 +1,5 @@
 import { visibleWidth } from "@earendil-works/pi-tui";
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, expect, test } from "vitest";
 
 import type { ModalState } from "../src/modal/types.ts";
 import type { ResolvedVimEditorOptions, VimDiagnostics, VimMode } from "../src/types.ts";

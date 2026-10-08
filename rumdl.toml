@@ -1,0 +1,25 @@
+# See the lints at https://github.com/rvben/rumdl/tree/main/docs
+[global]
+flavor = "mkdocs"
+disable = [
+  "MD007",  # prefer the flavor over MD007
+  "MD046",  # allow code blocks to be indented and fenced
+]
+exclude = ["openspec/changes/archive", "docs/solutions", "node_modules"]
+
+[MD013]
+line-length = 80
+code-blocks = false
+tables = false
+reflow = true
+
+[MD033]
+allowed-elements = ["kbd", "a"]
+
+# Inherited upstream docs use one paragraph per line, and the drift tests match
+# exact phrases in them, so they are not reflowed.
+[per-file-ignores]
+"README.md" = ["MD013"]
+"CONCEPTS.md" = ["MD013"]
+"CONTEXT.md" = ["MD013"]
+"docs/*.md" = ["MD013"]

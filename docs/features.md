@@ -2,7 +2,7 @@
 
 pi-vimmode replaces Pi's main prompt editor with a Vim-style modal editor. It targets fast prompt editing inside Pi, not full Vim or Neovim parity.
 
-Use this guide for behavior. Use [`settings.md`](https://github.com/pekochan069/pi-vimmode/blob/main/docs/settings.md) for every `piVimMode` setting and default.
+Use this guide for behavior. Use [`settings.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/settings.md) for every `piVimMode` setting and default.
 
 ## Activation and lifecycle
 
@@ -22,14 +22,14 @@ Runtime behavior:
 Example install from Git:
 
 ```sh
-pi install git:https://github.com/pekochan069/pi-vimmode
+pi install git:https://github.com/graelo/pi-vimmode
 ```
 
 Local development:
 
 ```sh
-bun install
-bun test
+npm install
+npm test
 ```
 
 ## Disable or recover
@@ -40,7 +40,7 @@ Because pi-vimmode replaces Pi's main prompt editor, keep the recovery path hand
 - Run `/vimmode on` or `/vimmode` to enable the Vim editor again.
 - Run `pi list` to confirm the installed extension source.
 - Run `pi remove <source>` or `pi uninstall <source>` to remove it from Pi settings.
-- For the Git install shown above, run `pi remove git:https://github.com/pekochan069/pi-vimmode`.
+- For the Git install shown above, run `pi remove git:https://github.com/graelo/pi-vimmode`.
 - Restart Pi or start a new session so extension discovery reloads without pi-vimmode.
 - Run `pi config` if you want to enable/disable package resources through Pi's TUI instead of hand-editing settings.
 - If the terminal cursor shape looks stuck, close and reopen the terminal. pi-vimmode resets tracked cursor styles on `session_shutdown`, but terminal support is best effort.
@@ -675,7 +675,7 @@ Valid read-only Ex help and diagnostic commands open a dedicated bounded read-on
 
 `:keybindings` is the direct keybinding discovery entry point. It lists effective pi-vimmode bindings from resolved settings by finite category: commands, motions, operators, text objects, macros, marks, searches, prompt transform actions, and protected Pi shortcuts. Each binding row shows key, supported mode scope, action ID, and description in a fixed grid. `:keybindings <query>` shows focused detail for action IDs (`redo`, `wordForward`, `prompt.transform.reflow`), descriptions, current keys, protected shortcuts such as `ctrl+p`, rejected metadata/action binding warnings, and bounded no-match output. Ex commands and diagnostic/help metadata IDs are excluded from the catalog because they are not keybindings. It is read-only discovery: it does not edit settings, create mappings, run a command palette, or dispatch metadata actions.
 
-`:features keybindings` remains supported as the recipe-oriented keybinding discovery entry point. That popup summarizes runtime help topics, feature discovery results, action keybinding recipes and presets, canonical `prompt.transform.*` action IDs, accepted configured bindings from `piVimMode.keymap.actions`, the `piVimMode.keymap.actionPresets` surface, customization diagnostics, message-history summaries, inspectability summaries, and hints for `:actions <query>`, `:keymap <action>`, `:keybindings <query>`, and `:mapcheck <key>`. Detailed setting shapes, defaults, and validation rules remain in [`settings.md`](https://github.com/pekochan069/pi-vimmode/blob/main/docs/settings.md).
+`:features keybindings` remains supported as the recipe-oriented keybinding discovery entry point. That popup summarizes runtime help topics, feature discovery results, action keybinding recipes and presets, canonical `prompt.transform.*` action IDs, accepted configured bindings from `piVimMode.keymap.actions`, the `piVimMode.keymap.actionPresets` surface, customization diagnostics, message-history summaries, inspectability summaries, and hints for `:actions <query>`, `:keymap <action>`, `:keybindings <query>`, and `:mapcheck <key>`. Detailed setting shapes, defaults, and validation rules remain in [`settings.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/settings.md).
 
 When popup content overflows the bounded body, scroll inside the overlay with `j`/`k` or arrow-down/arrow-up to reach hidden rows. The popup scroll position is local overlay state only; it does not edit the prompt, move the prompt cursor, or append `:messages` history. Popup content, popup scroll, popup dismissal, and the output of `:messages` itself are not retained as runtime message history.
 
@@ -928,7 +928,7 @@ Examples of configurable features:
 - prompt transform enablement and command names
 - optional no-op feedback (`piVimMode.feedback.noop`) for selected confusing ignored inputs
 
-See [`settings.md`](https://github.com/pekochan069/pi-vimmode/blob/main/docs/settings.md) for complete settings reference.
+See [`settings.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/settings.md) for complete settings reference.
 
 ## Architecture source map
 
@@ -953,10 +953,9 @@ Useful files when verifying feature behavior:
 Automated checks:
 
 ```sh
-bun test
-bun run check-types
-bun run lint
-bun run format:check
+npm run check
+npm run lint
+npm test
 ```
 
 Manual smoke checklist:

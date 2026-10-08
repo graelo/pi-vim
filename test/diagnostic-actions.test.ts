@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 
 import {
   DIAGNOSTIC_ACTIONS,
@@ -22,7 +22,7 @@ describe("diagnostic/help action metadata", () => {
 
     const ids = new Set<string>();
     for (const entry of DIAGNOSTIC_ACTIONS) {
-      expect(entry.id).toStartWith("vimmode.");
+      expect(entry.id.startsWith("vimmode.")).toBe(true);
       expect(ids.has(entry.id)).toBe(false);
       ids.add(entry.id);
       expect(entry.bindable).toBe(false);

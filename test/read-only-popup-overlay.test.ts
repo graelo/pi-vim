@@ -1,5 +1,5 @@
 import { visibleWidth } from "@earendil-works/pi-tui";
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 
 import type { ReadOnlyPopup } from "../src/read-only-popup.ts";
 

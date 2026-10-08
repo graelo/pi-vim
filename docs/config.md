@@ -9,7 +9,7 @@
 Create exactly `~/.pi/agent/pi-vimmode.config.js`:
 
 ```js
-/** @type {import("./npm/node_modules/pi-vimmode/config").VimConfig} */
+/** @type {import("./npm/node_modules/@graelo/pi-vimmode/config").VimConfig} */
 export default (vim) => {
   vim.startMode = "normal";
 };
@@ -17,7 +17,7 @@ export default (vim) => {
 
 `vim.startMode` is validated: only `"insert"` or `"normal"` is accepted. Run `/vimmode reload` after editing root config. See checked [`examples/pi-vimmode.config.js`](../examples/pi-vimmode.config.js) for a larger basic workflow.
 
-Generated reference blocks below come from canonical source metadata. Regenerate with `bun run generate:config-reference`; check committed output with `bun run check:config-reference`. Corresponding JSON behavior remains canonical in [`docs/settings.md`](settings.md).
+Generated reference blocks below come from canonical source metadata. Regenerate with `npm run generate:config-reference`; check committed output with `npm run check:config-reference`. Corresponding JSON behavior remains canonical in [`docs/settings.md`](settings.md).
 
 <a id="generated-properties"></a>
 
@@ -1617,4 +1617,4 @@ Reload preserves prompt text, bounds-clamped cursor, stable mode, undo/redo, reg
 
 Valid pre-0.9.0 `vim.g.mapleader`, `vim.prompt.*`, and three-argument `vim.keymap.set` calls remain compatible. Breaking trusted-config changes require a major release; removals should warn for at least one minor release when feasible.
 
-No sandbox, project JavaScript config, TypeScript config, runtime `pi-vimmode/config` module, `defineConfig`, file watching, plugin discovery, arbitrary custom action execution, recursive mappings, timeout-based prefix resolution, Vimscript, `.vimrc`, Neovim Lua, or full Vim/Neovim parity.
+No sandbox, project JavaScript config, TypeScript config, runtime `@graelo/pi-vimmode/config` module, `defineConfig`, file watching, plugin discovery, arbitrary custom action execution, recursive mappings, timeout-based prefix resolution, Vimscript, `.vimrc`, Neovim Lua, or full Vim/Neovim parity.

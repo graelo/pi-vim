@@ -1,9 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { join } from "node:path";
 
 import { loadVimJsConfig } from "../src/config-js.ts";
 
-const examples = join(import.meta.dir, "../examples");
+const examples = join(import.meta.dirname, "../examples");
 
 async function load(name: string) {
   const result = await loadVimJsConfig(join(examples, name));

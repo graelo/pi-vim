@@ -58,7 +58,7 @@ Canonical setup, generated API reference, checked workflows, reload behavior, an
 Use `vim.keymap.set(mode, keys, target, options?)`. `target` is an opaque `vim.action.*` descriptor, a compatible `vim.prompt.*` built-in, a literal key replay string, or `null` to unmap those exact keys in selected scopes. `keys` uses JSON key syntax; string targets are replayed keys, never internal action IDs.
 
 ```js
-/** @type {import("./npm/node_modules/pi-vimmode/config").VimConfig} */
+/** @type {import("./npm/node_modules/@graelo/pi-vimmode/config").VimConfig} */
 export default (vim) => {
   vim.g.mapleader = " ";
   vim.keymap.set("i", "<A-w>", vim.prompt.deleteWordBackward());
@@ -403,7 +403,7 @@ Use this command path for a shortcut to keybinding discovery. Do not configure `
 | Path                               | Default | Effect                                                                               |
 | ---------------------------------- | ------- | ------------------------------------------------------------------------------------ |
 | `piVimMode.keymap.marks.set`       | `["m"]` | Prefix to set local mark, e.g. `ma`.                                                 |
-| `piVimMode.keymap.marks.jumpExact` | `["`"]` | Prefix for exact mark jump, e.g. `` `a ``. Works in normal/operator/visual contexts. |
+| `piVimMode.keymap.marks.jumpExact` | ``["`"]`` | Prefix for exact mark jump, e.g. `` `a ``. Works in normal/operator/visual contexts. |
 | `piVimMode.keymap.marks.jumpLine`  | `["'"]` | Prefix for line mark jump, e.g. `'a`. Works in normal/operator/visual contexts.      |
 
 ### Text object keymap

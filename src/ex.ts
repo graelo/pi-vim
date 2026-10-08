@@ -307,9 +307,9 @@ function parseCommand(
 function isValidDelimiter(delimiter: string | undefined): delimiter is string {
   return Boolean(
     delimiter &&
-    delimiter.length === 1 &&
-    delimiter.charCodeAt(0) >= 32 &&
-    !/[A-Za-z0-9\s\\]/.test(delimiter),
+      delimiter.length === 1 &&
+      delimiter.charCodeAt(0) >= 32 &&
+      !/[A-Za-z0-9\s\\]/.test(delimiter),
   );
 }
 

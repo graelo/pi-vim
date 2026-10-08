@@ -304,7 +304,7 @@ export function generateConfigReference(
   if (options.check) {
     if (expected !== current) {
       throw new Error(
-        `Generated config reference is stale. Run bun run generate:config-reference (${filePath})`,
+        `Generated config reference is stale. Run npm run generate:config-reference (${filePath})`,
       );
     }
     return;

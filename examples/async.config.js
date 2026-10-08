@@ -1,4 +1,4 @@
-/** @type {import("./npm/node_modules/pi-vimmode/config").VimConfig} */
+/** @type {import("./npm/node_modules/@graelo/pi-vimmode/config").VimConfig} */
 export default async (vim) => {
   const preferredWidth = await Promise.resolve(88);
   vim.promptTransforms.enabled = true;
