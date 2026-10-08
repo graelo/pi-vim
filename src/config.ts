@@ -573,6 +573,7 @@ export function cloneResolvedVimOptions(
     macros: options.macros ? cloneMacros(options.macros) : undefined,
     marks: options.marks ? cloneMarks(options.marks) : undefined,
     search: options.search ? cloneSearch(options.search) : undefined,
+    easymotion: options.easymotion ? cloneEasymotion(options.easymotion) : undefined,
     exCommand: options.exCommand ? cloneExCommand(options.exCommand) : undefined,
     feedback: options.feedback ? cloneFeedback(options.feedback) : undefined,
     promptStructures: options.promptStructures
