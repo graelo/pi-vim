@@ -122,12 +122,12 @@ The change SHALL include automated tests and user-facing documentation for suppo
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover pending search, cancellation, literal matching, wrap-around, no-match behavior, `n` and `N`, visual search, operator search, and insert-mode slash delegation
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Feature guide describes search
@@ -257,12 +257,12 @@ The change SHALL include automated tests and user-facing documentation for backw
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover `/`, `?`, cancellation, empty-query recall, history navigation, literal matching, bounded regex matching, invalid regex safety, wrap-around, no-match behavior, `n` and `N`, visual search, operator search, and insert-mode delegation
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Feature guide describes safe search workbench
@@ -330,12 +330,12 @@ The change SHALL include automated tests and user-facing documentation for word-
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover `*`, `#`, insertion-point word-end extraction, missing-word no-op behavior, unique-word no-move behavior, `n` and `N` repeat semantics after `*` and `#`, search history, search highlights, insert-mode delegation, and configured key bindings
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Feature guide describes word search

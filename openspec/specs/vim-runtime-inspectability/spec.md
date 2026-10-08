@@ -89,7 +89,7 @@ The inspectability surface SHALL document exact supported command syntax, output
 
 #### Scenario: Automated validation covers inspectability
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover inspect output categories, bounded message history, redaction of large prompt/register/macro content, read-only state preservation, and unsupported inspect command errors
 
 ### Requirement: Keybinding popup remains separate from message history

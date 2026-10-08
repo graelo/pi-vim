@@ -137,12 +137,12 @@ The mark change SHALL include automated tests and user-facing documentation for 
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover setting marks, overwriting marks, normal jumps, visual jumps, operator mark motions, mark configuration, missing marks, invalid prefixes, stale mark clamping, and existing Vim behavior
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Canonical docs document marks

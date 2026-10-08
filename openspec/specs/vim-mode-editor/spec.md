@@ -230,12 +230,12 @@ The change SHALL include automated tests for pure Vim editing logic and user-fac
 
 #### Scenario: Text operation tests run
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** buffer transformation, selection range, register, and command parsing tests pass
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: User reads README
@@ -278,12 +278,12 @@ The change SHALL include automated tests and user-facing documentation for redo 
 
 #### Scenario: Automated validation covers redo
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover redo after undo, redo without state, redo branch clearing after new edits, movement before redo, insert-mode delegation, and existing undo behavior
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Feature guide documents redo
@@ -361,7 +361,7 @@ The Vim editor SHALL integrate insert escape alias handling with existing modal 
 
 #### Scenario: Automated validation covers insert escape behavior
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover alias success, raw text rejection, autocomplete preservation, visual mode escape, normal-mode non-participation, macro recording/replay, fast-path guarding, and default behavior without aliases
 
 ### Requirement: Insert mode supports configured line opening

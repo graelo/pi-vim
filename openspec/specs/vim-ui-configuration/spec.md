@@ -132,7 +132,7 @@ The Vim editor MUST keep rendered output width-safe for every supported UI confi
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover default UI, configured labels, disabled items, item ordering, cursor position formatting, legacy Vim option rejection, invalid config fallback, and narrow-width rendering
 
 #### Scenario: Settings reference documents UI config
@@ -325,12 +325,12 @@ The change SHALL include automated rendering tests and user-facing documentation
 
 #### Scenario: Render validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** render tests cover `/`, `?`, and `:` workbench rows, long pending text, substitution match preview messages/highlights, transient regex errors, default viewport shrink behavior, configured reserved rows, idle reserved rows, visual selection composition, search highlight composition, and narrow terminal widths
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: User docs describe workbench row

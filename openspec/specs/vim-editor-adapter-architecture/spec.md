@@ -79,12 +79,12 @@ The adapter/module split MUST preserve the current supported keymap, settings, r
 
 #### Scenario: Existing validation suite runs
 
-- **WHEN** `bun test` is executed after the refactor
+- **WHEN** `npm test` is executed after the refactor
 - **THEN** existing parser, buffer, render, config, and editor behavior tests pass without requiring changed user-facing expectations
 
 #### Scenario: Type checking runs
 
-- **WHEN** `bun run check-types` is executed after the refactor
+- **WHEN** `npm run check` is executed after the refactor
 - **THEN** the TypeScript project compiles without type errors
 
 #### Scenario: Current keymap remains documented
@@ -98,12 +98,12 @@ The change SHALL add modal-engine tests that cover behavior previously only reac
 
 #### Scenario: Modal tests cover mode families
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover insert, normal, characterwise visual, and visual line modal transitions through the modal module
 
 #### Scenario: Modal tests cover effect contracts
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover delegate effects, structural edit effects, register updates, pending operator clearing, mode feedback state, and terminal cursor style intents
 
 #### Scenario: Adapter tests stay focused
@@ -189,7 +189,7 @@ The change SHALL add golden semantic tests that lock modal state/effect behavior
 
 #### Scenario: Golden tests cover high-risk feature families
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover normalized state/effect output for prompt search, Ex command-line entry/cancel/history/preview/apply/error behavior, visual char/line/block operations, macro record/play behavior, register/mark interactions, protected Pi delegation, and message/highlight state
 
 #### Scenario: Golden tests normalize stable contract details
@@ -295,7 +295,7 @@ The Vim editor SHALL allow `VimEditor` to bypass full modal snapshot constructio
 
 #### Scenario: Validation covers fast-path safety
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover the fast-path predicate, safe insert delegation, unsafe-state fallback, macro recording and replay, transient Ex message behavior, redo clearing, search highlight expectations, and `Esc` behavior through the real `VimEditor` adapter where adapter state can affect correctness
 
 ### Requirement: Resolved editor options preserve clone isolation
@@ -348,5 +348,5 @@ The modal editing architecture SHALL concentrate visual-selection range normaliz
 
 #### Scenario: Behavior-preserving extraction is validated
 
-- **WHEN** `bun test` is executed after extraction
+- **WHEN** `npm test` is executed after extraction
 - **THEN** focused tests cover visual range normalization, text extraction, visual edit targets, summaries, renderer selection mapping, modal visual operations, and Ex visual range prefill compatibility

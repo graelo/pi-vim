@@ -216,5 +216,5 @@ Customization diagnostics SHALL derive prompt transform action IDs, descriptions
 
 #### Scenario: Registry-backed diagnostics are validated
 
-- **WHEN** `bun test` is executed after diagnostics are wired to the action registry
+- **WHEN** `npm test` is executed after diagnostics are wired to the action registry
 - **THEN** tests cover `:actions`, `:features`, `:keymap`, `:mapcheck`, and `:vimdoctor` output for prompt transform action metadata without requiring a second prompt transform description table

@@ -208,7 +208,7 @@ User-facing docs SHALL describe named prompt transform action keybindings, examp
 #### Scenario: Release docs include package artifact verification
 
 - **WHEN** release or validation docs describe publishing the package
-- **THEN** they include `bun run build` and package contents inspection in addition to tests, typecheck, lint, and format checks
+- **THEN** they include `npm pack --dry-run` package contents inspection in addition to tests, typecheck, and lint checks
 
 ### Requirement: Feature guide quickref classifies diagnostic and help surfaces
 
@@ -422,7 +422,7 @@ The project SHALL keep documentation drift guard metadata for runtime help entri
 
 #### Scenario: Drift guard preserves coverage through dev metadata
 
-- **WHEN** `bun test` runs the documentation drift guard
+- **WHEN** `npm test` runs the documentation drift guard
 - **THEN** every runtime help entry, diagnostic action, read-only popup command, and action keybinding recipe/preset has matching test/dev metadata that validates feature-doc anchors, spec files, parser examples, excluded bindability boundaries, and recipe/preset documentation
 
 #### Scenario: Public runtime discovery behavior is unchanged
@@ -430,10 +430,10 @@ The project SHALL keep documentation drift guard metadata for runtime help entri
 - **WHEN** users execute supported read-only discovery commands such as `:help`, `:features`, `:keybindings`, `:actions`, `:keymap`, `:mapcheck`, `:vimdoctor`, `:messages`, or `:vimmode inspect`
 - **THEN** the commands keep their existing bounded prompt-local popup or message behavior, finite topic coverage, non-goals, and read-only prompt-editing state boundaries
 
-#### Scenario: Build artifact excludes docs/test-only metadata
+#### Scenario: Published runtime source excludes docs/test-only metadata
 
-- **WHEN** `bun run build` produces `dist/index.js`
-- **THEN** the bundled runtime artifact does not include metadata strings that exist only for drift validation, such as OpenSpec spec paths, test file paths, `specAnchor`, `testAnchors`, or parser examples moved to test/dev metadata
+- **WHEN** the package is packed with its `src/` runtime sources
+- **THEN** the runtime modules do not include metadata strings that exist only for drift validation, such as OpenSpec spec paths, test file paths, `specAnchor`, `testAnchors`, or parser examples moved to test/dev metadata
 
 ### Requirement: Documentation covers visual reselection
 

@@ -6,9 +6,9 @@ context: |
   Product boundary: practical agent prompt editing, not full Vim/Neovim parity.
 
   Tech stack:
-  - TypeScript ESM, Bun, Pi extension package.
+  - TypeScript ESM, Node >= 24, Pi extension package (@graelo/pi-vimmode) shipping src/ directly; no build step.
   - Runtime peers: @earendil-works/pi-coding-agent and @earendil-works/pi-tui.
-  - Build/test tools: rolldown, bun test, tsgo --noEmit, oxlint, oxfmt.
+  - Tooling: npm, tsc --noEmit, vitest, tsx (scripts and benchmark), biome, rumdl.
 
   Architecture seams:
   - src/lifecycle.ts: extension activation, settings refresh, status, shutdown cursor reset.
@@ -29,7 +29,7 @@ context: |
   - User-facing behavior docs: docs/features.md.
   - Settings docs: docs/settings.md.
   - README: quickstart and docs index only, not full behavior reference.
-  - ADRs: compact durable decisions.
+  - ADRs: compact durable decisions in docs/adr/, managed with `adrs` (NextGen mode).
   - docs/solutions: reusable pitfalls and architectural patterns; check relevant entries before repeating parser/buffer/modal/config work.
 
   Design principles:
@@ -42,13 +42,13 @@ context: |
   - Any new option family must survive live VimEditor construction; update cloneOptions and add live editor tests.
   - Render layers must compose safely: visual selection, search highlights, cursor style, width truncation.
   - Keep TypeScript functions <=100 lines when possible; extract helpers before deep branching.
-  - Do not edit, format, normalize, or otherwise touch /home/thinline20/.pi/agent/settings.json unless explicitly requested.
+  - Do not edit, format, normalize, or otherwise touch the user's ~/.pi/agent/settings.json unless explicitly requested.
 
   Validation commands:
-  - bun test
-  - bun run check-types
-  - bun run lint
-  - bun run format:check
+  - npm test
+  - npm run check
+  - npm run lint
+  - npm run check:config-reference
   - openspec validate --specs --strict
 
 # Per-artifact rules shown to AI when creating specific artifacts.
@@ -81,5 +81,5 @@ rules:
     - "Group tasks by implementation seam: pure helper/module, parser/types/config, modal integration, adapter/live editor, render/view, docs, validation."
     - "Put focused tests beside each seam before broad integration tasks."
     - "Include regression tests for known drift risks: config parsing vs live VimEditor behavior, dot-repeat, register writes, search highlight clearing, visual range capture, protected Pi shortcuts."
-    - "End with validation tasks: bun test, bun run check-types, bun run lint, bun run format:check, openspec validate --specs --strict."
+    - "End with validation tasks: npm test, npm run check, npm run lint, openspec validate --specs --strict."
     - 'Keep tasks independently checkable and small enough to complete/review; avoid vague "polish" tasks.'

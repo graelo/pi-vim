@@ -147,12 +147,12 @@ The change SHALL include tests and documentation for each new keybinding group.
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover navigation, matching-pair jumps, open-line commands, operator-motion commands, line aliases, paste-before behavior, invalid pending operators, and existing Vim behavior
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Feature guide documents extended keymap
@@ -330,12 +330,12 @@ The change SHALL include automated tests and user-facing documentation for the n
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover counts, numeric adjustment, word-end motion, replacement, substitution, line-local character search, dot-repeat, text objects, safe no-op behavior, and existing Vim behavior
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Feature guide documents roadmap keybindings
@@ -451,12 +451,12 @@ The change SHALL include automated validation and user documentation for normal 
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover normal `>>` and `<<`, counts, dot-repeat, visual character/line/block shifts, unsupported shift targets, register preservation, and existing delete/change/yank behavior
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Feature guide documents shift operators
@@ -616,7 +616,7 @@ The implementation SHALL include automated validation and user-facing documentat
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover default `<C-d>` and `<C-u>` behavior, counts, prompt-boundary clamping, visual selection behavior, and existing normal-mode behavior
 
 #### Scenario: Feature guide documents scroll keys
@@ -703,12 +703,12 @@ The change SHALL include automated validation and user-facing documentation for 
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover paragraph motions, counts, operator paragraph motions, paragraph text objects, visual extension, safe no-op behavior, dot-repeat for paragraph changes, and existing Vim behavior
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Feature guide documents paragraph behavior
@@ -751,7 +751,7 @@ The implementation SHALL include focused tests and user-facing documentation for
 
 #### Scenario: Automated validation covers delete before cursor
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover normal, counted, line-start no-op, register, and dot-repeat behavior for `X`
 
 #### Scenario: Feature guide documents delete before cursor
@@ -823,12 +823,12 @@ The implementation SHALL include automated validation and user-facing documentat
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover normal case operators, motion targets, text-object targets, line targets, counts, visual character/line/block transforms, safe no-op behavior, register preservation, dot-repeat, and existing Vim behavior
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Feature guide documents case behavior

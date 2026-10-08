@@ -8,7 +8,7 @@ TBD - created by archiving change publish-config-type-subpath. Update Purpose af
 
 ### Requirement: Public trusted-config types are declaration only
 
-The package SHALL export a declaration-only `pi-vimmode/config` subpath containing `VimConfig` and `VimConfigApi` without runtime config helper surface.
+The package SHALL export a declaration-only `@graelo/pi-vimmode/config` subpath containing `VimConfig` and `VimConfigApi` without runtime config helper surface.
 
 #### Scenario: Root config uses public VimConfig type
 
@@ -23,8 +23,8 @@ The package SHALL export a declaration-only `pi-vimmode/config` subpath containi
 
 #### Scenario: Config subpath has no runtime module
 
-- **WHEN** a consumer inspects or executes built package
-- **THEN** `pi-vimmode/config` exposes declarations only
+- **WHEN** a consumer inspects or executes the published package
+- **THEN** `@graelo/pi-vimmode/config` exposes declarations only
 - **AND** package contains no runtime config stub, `defineConfig`, descriptor constructor, or registry API
 
 ### Requirement: Basic JavaScript config is checked unchanged
@@ -39,26 +39,25 @@ The repository SHALL provide one basic JavaScript config example using public `V
 
 #### Scenario: Basic example typechecks without modification
 
-- **WHEN** same committed example is typechecked against built package declarations
+- **WHEN** same committed example is typechecked against the package declarations
 - **THEN** it passes without generated wrappers, copied source, or test-only edits
 
-### Requirement: Built package resolves trusted-config declarations
+### Requirement: Published package resolves trusted-config declarations
 
-Built package SHALL include config declaration and matching export-map entry atomically and SHALL resolve `pi-vimmode/config` under supported TypeScript module-resolution modes.
+The published package SHALL include `src/vim-config.d.ts` and a matching type-only `./config` export-map entry, and SHALL resolve `@graelo/pi-vimmode/config` under supported TypeScript module-resolution modes.
 
-#### Scenario: Bundler consumer resolves built declaration
+#### Scenario: Bundler consumer resolves declaration
 
-- **WHEN** temporary consumer imports `VimConfig` and `VimConfigApi` from built `pi-vimmode/config` using TypeScript Bundler resolution
-- **THEN** consumer typechecks successfully outside repository cwd
-- **AND** resolution uses copied built package rather than repository source
+- **WHEN** a consumer imports `VimConfig` and `VimConfigApi` from `@graelo/pi-vimmode/config` using TypeScript Bundler resolution
+- **THEN** the consumer typechecks successfully
 
-#### Scenario: NodeNext consumer resolves built declaration
+#### Scenario: NodeNext consumer resolves declaration
 
-- **WHEN** temporary consumer imports `VimConfig` and `VimConfigApi` from built `pi-vimmode/config` using TypeScript NodeNext resolution
-- **THEN** consumer typechecks successfully outside repository cwd
+- **WHEN** a consumer imports `VimConfig` and `VimConfigApi` from `@graelo/pi-vimmode/config` using TypeScript NodeNext resolution
+- **THEN** the consumer typechecks successfully
 - **AND** no runtime JavaScript module is required for config subpath
 
 #### Scenario: Declaration or export map is incomplete
 
-- **WHEN** built declaration, package inventory entry, or type-only subpath export is missing or inconsistent
-- **THEN** package verification fails before publication
+- **WHEN** the declaration file is missing from the package `files` list or the type-only subpath export is missing or inconsistent
+- **THEN** `npm pack --dry-run` inspection reveals the gap before publication

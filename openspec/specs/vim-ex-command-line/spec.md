@@ -571,12 +571,12 @@ The change SHALL include automated tests and user-facing documentation for Ex hi
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover Ex workbench typing, cursor movement, cursor-aware deletion, command-line word deletion, cancellation, history navigation, visual Ex cancellation after history navigation, literal substitution match preview/apply, regex substitution match preview/apply, count-only substitutions, no-error substitutions, repeat substitution, invalid regex safety, regex bounds, unsupported flags, no-match behavior, identical replacement behavior, register operands, and history recording rules
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Feature guide describes Ex workbench
@@ -744,7 +744,7 @@ The change SHALL include automated tests and user-facing documentation for visib
 
 #### Scenario: Automated range validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover Ex address offsets, semicolon base semantics, destination offsets, destination zero preservation, visual range preservation, invalid offset safety, substitution preview ranges, and non-substitution command ranges
 
 #### Scenario: Feature guide describes finite Ex ranges
@@ -1057,7 +1057,7 @@ The change SHALL include automated tests and user-facing documentation for bare 
 
 #### Scenario: Automated line-jump validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover parsing accepted bare single-address jumps, rejecting commandless ranges, executing cursor-only jumps, clamping target columns, preserving prompt text and modal side effects, and leaving invalid jumps harmless
 
 #### Scenario: Feature guide describes line jumps
@@ -1100,7 +1100,7 @@ The change SHALL include automated tests and user-facing documentation for suppo
 
 #### Scenario: Automated quit validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover parsing `:q` and `:quit`, rejecting unsupported quit-like commands, modal shutdown effects, side-effect preservation, and adapter wiring to Pi graceful shutdown
 
 #### Scenario: Feature guide describes quit scope
@@ -1205,7 +1205,7 @@ The change SHALL include automated tests and user-facing documentation for finit
 
 #### Scenario: Automated suggestion validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover suggestion candidate filtering, range-prefixed command suggestions, configured transform aliases, disabled transform omission, `Tab` completion behavior, existing history/execution keys, side-effect preservation, and render composition with host autocomplete rows
 
 #### Scenario: Feature guide describes suggestion scope

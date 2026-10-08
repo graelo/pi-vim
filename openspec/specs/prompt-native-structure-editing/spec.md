@@ -134,12 +134,12 @@ The change SHALL include automated validation and user-facing documentation for 
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover structure range resolution, operator text objects, Ex transform parsing, transform edit results, safe no-op behavior, and existing Vim behavior
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Feature guide documents prompt-native editing

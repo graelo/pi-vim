@@ -127,12 +127,12 @@ The change SHALL include automated validation for the extracted lifecycle behavi
 
 #### Scenario: Lifecycle tests run
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover lifecycle hook registration, immediate install, delayed reinstall scheduling, factory identity, settings refresh/status, stale delayed context handling, and shutdown cleanup
 
 #### Scenario: Existing tests continue to pass
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** existing Vim config, buffer, command, render, modal, and editor tests pass without behavior changes
 
 #### Scenario: Typecheck runs
@@ -185,7 +185,7 @@ The lifecycle change SHALL include automated coverage for busy/idle cursor coord
 
 #### Scenario: Lifecycle tests cover busy and idle transitions
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** lifecycle tests cover `agent_start`, `agent_end`, editor creation before and during busy state, shutdown cleanup, and `/vimmode off` cleanup
 
 #### Scenario: Existing install behavior remains stable

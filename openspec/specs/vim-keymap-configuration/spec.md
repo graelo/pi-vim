@@ -113,12 +113,12 @@ The change SHALL include automated validation and user documentation for keymap 
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover default keymap resolution, configured operators, configured motions, configured commands, operator-motion matrices, protected keys, invalid config fallback, multi-key sequences, and conflicts
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the TypeScript project compiles without type errors
 
 #### Scenario: Settings reference documents keymap config
@@ -185,12 +185,12 @@ The change SHALL include tests and documentation for configurable roadmap keybin
 
 #### Scenario: Config validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover default roadmap keymap resolution, configurable word-end motion, configurable finite roadmap commands, configurable case operators, operator-motion matrix integration, invalid input safety, and protected shortcut handling
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the TypeScript project compiles without type errors
 
 #### Scenario: Canonical docs document configurable roadmap actions
@@ -324,12 +324,12 @@ The change SHALL include tests and settings documentation for configurable redo 
 
 #### Scenario: Config validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover default redo keymap resolution, configured redo command execution, invalid redo binding fallback, live editor option propagation, and protected shortcut handling
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the TypeScript project compiles without type errors
 
 #### Scenario: Settings reference documents redo command
@@ -401,12 +401,12 @@ The change SHALL include tests and settings documentation for configurable backw
 
 #### Scenario: Config validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover default backward search keymap resolution, configured backward search command execution, visual/operator contexts, invalid binding fallback, live editor option propagation, and protected shortcut handling
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the TypeScript project compiles without type errors
 
 #### Scenario: Settings reference documents backward search command
@@ -804,12 +804,12 @@ The change SHALL include automated tests that prove descriptor-derived keymap da
 
 #### Scenario: Automated equivalence validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover descriptor/default keymap equivalence, supported-action validation, unsupported-action fallback, legacy operator and motion map equivalence, command classification equivalence, protected shortcut handling, and conflict diagnostics
 
 #### Scenario: Typecheck validates descriptor coverage
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** TypeScript verifies descriptor records cover the public semantic action unions without unsupported action keys
 
 ### Requirement: Cached keymap lookups preserve semantic command resolution
@@ -861,12 +861,12 @@ The change SHALL validate resolver performance work with tests and profiling evi
 
 #### Scenario: Automated semantic validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover cached resolver equivalence for default commands, configured bindings, prefix precedence, operator motions, operator text objects, operator search, character search, counts, prompt-transform action bindings, invalid pending input, and distinct keymap identities
 
 #### Scenario: Typecheck validates cached lookup types
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** TypeScript validates the compiled lookup structures without exposing unsupported public keymap API
 
 #### Scenario: No documentation update is required
@@ -1006,7 +1006,7 @@ The change SHALL include tests and settings documentation for configurable word-
 
 #### Scenario: Config validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover default word search keymap resolution, configured word search command execution, invalid binding fallback, live editor option propagation, and insert-mode delegation
 
 #### Scenario: Settings reference documents word search commands
@@ -1103,7 +1103,7 @@ The change SHALL document configured escape aliases and keep runtime keymap diag
 
 #### Scenario: Automated validation covers insert escape configuration
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover accepted modified-key aliases, rejected protected shortcuts, rejected raw printable text aliases, invalid config fallback, normal-mode keymap preservation, and live editor option cloning for the new setting
 
 ### Requirement: Protected shortcut overrides require explicit allow-list
@@ -1170,12 +1170,12 @@ The change SHALL include tests and user documentation for protected shortcut ove
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover default protected-key rejection, allow-listed classic bindings, allow-listed action bindings, same-layer allow-list scope, invalid allow-list warnings, runtime dispatch, and preserved delegation for unmapped protected keys
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the TypeScript project compiles without type errors
 
 #### Scenario: Settings reference documents protected overrides
@@ -1233,7 +1233,7 @@ The change SHALL include automated validation and user-facing documentation for 
 
 #### Scenario: Automated validation covers insert keymap config
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover default empty insert bindings, accepted modified keys for line-opening/edit/navigation actions, raw printable rejection, protected-key allow-list behavior, duplicate insert binding diagnostics, invalid config fallback, live editor option cloning, insert-mode dispatch, autocomplete delegation, and preserved Pi delegation for unconfigured input
 
 #### Scenario: Settings reference documents insert bindings
@@ -1345,7 +1345,7 @@ The Vim keymap configuration SHALL keep runtime command resolution and settings 
 
 #### Scenario: Refactor preserves default command behavior
 
-- **WHEN** `bun test` is executed after grammar helper extraction
+- **WHEN** `npm test` is executed after grammar helper extraction
 - **THEN** existing default keymap command resolution, pending-prefix invalidation, protected shortcut handling, and action keybinding conflict tests continue to pass without changed user-facing expectations
 
 ### Requirement: Trusted global JS keymap builder adds prompt built-in bindings
@@ -1553,5 +1553,5 @@ The change SHALL include automated validation and user documentation for leader 
 
 #### Scenario: Automated leader validation runs
 
-- **WHEN** `bun test`, `bun run check-types`, `bun run lint`, `bun run format:check`, and strict OpenSpec validation are executed
+- **WHEN** `npm test`, `npm run check`, `npm run lint`, and strict OpenSpec validation are executed
 - **THEN** leader parsing, layer precedence, placeholder expansion, prefix reservation, modal dispatch, option cloning, docs, types, lint, formatting, and specifications pass

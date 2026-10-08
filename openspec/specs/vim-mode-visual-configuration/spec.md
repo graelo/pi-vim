@@ -166,12 +166,12 @@ The change SHALL include tests and documentation for visual highlighting, visual
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover visual highlight range mapping, visual line operations, config parsing/defaults, and mode-specific cursor rendering
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Canonical docs document visual settings and keymap
@@ -286,7 +286,7 @@ The change SHALL include tests and documentation for visual block keybindings, r
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests for visual block selection math, commands, rendering, and modal editor behavior pass
 
 #### Scenario: Typecheck runs
@@ -339,7 +339,7 @@ The cursor flicker fix SHALL include automated coverage that preserves cursor re
 
 #### Scenario: Cursor visibility transitions are tested
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover bar cursor hardware visibility during interactive editing, suppression during agent work, restoration after agent work, and reset behavior
 
 #### Scenario: Render width safety remains unchanged

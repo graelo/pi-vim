@@ -141,12 +141,12 @@ The named register change SHALL include automated tests and user-facing document
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover normal-mode register writes, visual-mode register writes, paste from named registers, uppercase append, invalid prefixes, missing registers, one-shot target clearing, and macro separation where macro support is present
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Feature guide documents named registers
@@ -209,12 +209,12 @@ The named register change SHALL include automated tests and user-facing document
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover Ex delete/yank lowercase writes, uppercase append writes, unnamed-register updates, Ex put lowercase and uppercase reads, missing named register put safety, invalid Ex register operands, visual-source Ex ranges, and preservation of existing normal and visual named-register behavior
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Feature guide documents Ex register operands
@@ -354,12 +354,12 @@ The special register change SHALL include automated tests, inspectability covera
 
 #### Scenario: Automated validation runs
 
-- **WHEN** `bun test` is executed
+- **WHEN** `npm test` is executed
 - **THEN** tests cover normal-mode special register writes and reads, visual-mode special register writes and reads, Ex special register operands, clipboard copy/read effects, black-hole preservation of the unnamed register, missing clipboard paste safety, unsupported special target rejection, and preservation of existing named-register behavior
 
 #### Scenario: Typecheck runs
 
-- **WHEN** `bun run check-types` is executed
+- **WHEN** `npm run check` is executed
 - **THEN** the extension TypeScript compiles without type errors
 
 #### Scenario: Feature guide documents special registers
