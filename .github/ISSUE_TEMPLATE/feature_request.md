@@ -6,18 +6,18 @@ labels: enhancement
 assignees: ""
 ---
 
-**Vim feature / motion**
+## Vim feature / motion
 
 <!-- What Vim behavior do you want? Reference `:help <motion>` if applicable. -->
 
-**Use case**
+## Use case
 
 <!-- Why is this useful in Pi's prompt editor? -->
 
-**Expected behavior**
+## Expected behavior
 
 <!-- How should it work? Include mode (normal/visual/insert), key sequence, result. -->
 
-**Alternatives considered**
+## Alternatives considered
 
 <!-- Workarounds you use now? -->

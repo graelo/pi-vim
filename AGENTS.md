@@ -8,7 +8,8 @@ practical prompt editing, not full Vim/Neovim parity.
 ## Commands
 
 - `npm run check`: typecheck (`tsc --noEmit`)
-- `npm run lint`: biome (lint and format check), then rumdl on Markdown
+- `npm run lint`: biome (lint and format check), then rumdl on all Markdown;
+  fix with `npx biome check --write .` and `npx rumdl fmt .`
 - `npm test`: vitest
 - `npm run check:config-reference`: fails when the generated blocks in
   `docs/config.md` are stale; regenerate with
@@ -31,12 +32,13 @@ no build step. Load a checkout in pi with `pi -e ./src/index.ts`.
 - `docs/adr/`: architecture decisions, managed with `adrs` in NextGen mode
   (`adrs.toml`).
 - `docs/features.md`, `docs/settings.md`, `docs/config.md`: user-facing
-  reference docs (ADR-0002). `test/docs-drift.test.ts` matches exact phrases in
-  them, so do not reflow them.
+  reference docs (ADR-0002). `test/docs-drift.test.ts` checks them for anchors,
+  identifiers and settings paths with whitespace collapsed, so reflowing is
+  safe; never assert on prose wording there.
 - `docs/solutions/`: documented solutions to past problems, with YAML
   frontmatter (`module`, `tags`, `problem_type`). Check it before reworking the
-  parser, buffer, modal, or config code. Entries predate the fork and may
-  mention Bun commands.
+  parser, buffer, modal, or config code. Test counts and dates in entries are
+  historical.
 - `CONTEXT.md` (prompt-editing glossary) and `CONCEPTS.md` (input-ownership
   vocabulary): use their terms in specs, tests, and issue titles.
 - `docs/rules/`: coding rules; follow them.

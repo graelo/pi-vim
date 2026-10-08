@@ -1,12 +1,15 @@
 # pi-vimmode settings reference
 
-pi-vimmode reads one `piVimMode` object from Pi settings plus an optional trusted global JS config. This document lists every supported setting, default, accepted value, and effect.
+pi-vimmode reads one `piVimMode` object from Pi settings plus an optional
+trusted global JS config. This document lists every supported setting, default,
+accepted value, and effect.
 
 Source of truth:
 
 - Defaults and validation: `src/config.ts`
 - Types: `src/types.ts`
-- Runtime use: `src/lifecycle.ts`, `src/vim-editor.ts`, `src/modal/*`, `src/render.ts`
+- Runtime use: `src/lifecycle.ts`, `src/vim-editor.ts`, `src/modal/*`,
+    `src/render.ts`
 
 ## Settings files and precedence
 
@@ -16,7 +19,14 @@ pi-vimmode loads settings from:
 2. Trusted global JS config: `~/.pi/agent/pi-vimmode.config.js`
 3. Project settings: `.pi/settings.json` in the current project
 
-Global JS config applies after global settings and before project settings. Project settings apply last. Objects merge field by field. Arrays replace that specific setting when valid. Invalid fields are ignored while valid sibling fields still apply. JS `vim.keymap.set(...)` calls add keybindings to inherited global settings instead of replacing preset or JSON bindings for the same built-in action; project JSON can still clear an action with an explicit empty array. Leader mappings use one final effective leader after all three layers resolve.
+Global JS config applies after global settings and before project settings.
+Project settings apply last. Objects merge field by field. Arrays replace that
+specific setting when valid. Invalid fields are ignored while valid sibling
+fields still apply. JS `vim.keymap.set(...)` calls add keybindings to inherited
+global settings instead of replacing preset or JSON bindings for the same
+built-in action; project JSON can still clear an action with an explicit empty
+array. Leader mappings use one final effective leader after all three layers
+resolve.
 
 Example:
 
@@ -32,7 +42,11 @@ Example:
 }
 ```
 
-Warnings are non-fatal. When settings or JS config produce warnings, Pi status shows `pi-vimmode: vim ⚠`. Run `:vimdoctor` in normal mode to see the retained warning count and first actionable warning for the live editor. Run `:help settings` or `:features settings` for compact runtime reminders, but this file remains the complete settings reference.
+Warnings are non-fatal. When settings or JS config produce warnings, Pi status
+shows `pi-vimmode: vim ⚠`. Run `:vimdoctor` in normal mode to see the retained
+warning count and first actionable warning for the live editor. Run
+`:help settings` or `:features settings` for compact runtime reminders, but this
+file remains the complete settings reference.
 
 Common warning causes:
 
@@ -47,15 +61,23 @@ Common warning causes:
 - Invalid UI/search/macro/mark/feedback field type.
 - Invalid `piVimMode.ui.workbench.reservedRows` value outside `0` through `5`.
 - Legacy `piVimMode.vimOptions` present.
-- Invalid global JS config import, export shape, mode, key string, or mapping target.
+- Invalid global JS config import, export shape, mode, key string, or mapping
+    target.
 
 ## Global JS config
 
-Canonical setup, generated API reference, checked workflows, reload behavior, and safety contract live in [`docs/config.md`](config.md#basic-setup).
+Canonical setup, generated API reference, checked workflows, reload behavior,
+and safety contract live in [`docs/config.md`](config.md#basic-setup).
 
-`~/.pi/agent/pi-vimmode.config.js` is trusted local code executed with full Pi process privileges. It is not sandboxed. Project-local executable JS config is intentionally unsupported.
+`~/.pi/agent/pi-vimmode.config.js` is trusted local code executed with full Pi
+process privileges. It is not sandboxed. Project-local executable JS config is
+intentionally unsupported.
 
-Use `vim.keymap.set(mode, keys, target, options?)`. `target` is an opaque `vim.action.*` descriptor, a compatible `vim.prompt.*` built-in, a literal key replay string, or `null` to unmap those exact keys in selected scopes. `keys` uses JSON key syntax; string targets are replayed keys, never internal action IDs.
+Use `vim.keymap.set(mode, keys, target, options?)`. `target` is an opaque
+`vim.action.*` descriptor, a compatible `vim.prompt.*` built-in, a literal key
+replay string, or `null` to unmap those exact keys in selected scopes. `keys`
+uses JSON key syntax; string targets are replayed keys, never internal action
+IDs.
 
 ```js
 /** @type {import("./npm/node_modules/@graelo/pi-vimmode/config").VimConfig} */
@@ -70,17 +92,45 @@ export default (vim) => {
 };
 ```
 
-Modes: `"i"`/`"insert"`, `"n"`/`"normal"`, `"v"`/`"x"`/`"visual"` for all visual modes, exact `"visualLine"` or `"visualBlock"`, and `"o"`/`"operatorPending"`/`"operator-pending"` while an operator awaits its target. Arrays of modes are accepted. Each descriptor declares allowed scopes; unsupported scope combinations warn and do not install that mapping.
+Modes: `"i"`/`"insert"`, `"n"`/`"normal"`, `"v"`/`"x"`/`"visual"` for all visual
+modes, exact `"visualLine"` or `"visualBlock"`, and
+`"o"`/`"operatorPending"`/`"operator-pending"` while an operator awaits its
+target. Arrays of modes are accepted. Each descriptor declares allowed scopes;
+unsupported scope combinations warn and do not install that mapping.
 
-`vim.action` exposes finite operator, motion, command, macro, mark, insert, text-object, and prompt-transform descriptor factories. `vim.prompt.*` remains the compatible alias for prompt-transform and insert built-ins. Prompt transform factories are `quote`, `unquote`, `bulletize`, `fence({ language })`, `indent`, `dedent`, and `reflow({ width })`; insert factories are `openLineBelow`, `openLineAbove`, `deleteWordBackward`, `deleteWordForward`, `deleteLineBackward`, `deleteLineForward`, `moveWordBackward`, `moveWordForward`, `moveLineStart`, and `moveLineEnd`.
+`vim.action` exposes finite operator, motion, command, macro, mark, insert,
+text-object, and prompt-transform descriptor factories. `vim.prompt.*` remains
+the compatible alias for prompt-transform and insert built-ins. Prompt transform
+factories are `quote`, `unquote`, `bulletize`, `fence({ language })`, `indent`,
+`dedent`, and `reflow({ width })`; insert factories are `openLineBelow`,
+`openLineAbove`, `deleteWordBackward`, `deleteWordForward`,
+`deleteLineBackward`, `deleteLineForward`, `moveWordBackward`,
+`moveWordForward`, `moveLineStart`, and `moveLineEnd`.
 
-Literal replay strings work only in normal or visual scopes, are bounded, and do not recursively expand mappings. `null` removes only the exact selected-scope mapping. `options` accepts only `allowProtected: true` and diagnostic `desc: string`; an override does not guarantee that Pi or terminal delivers that key. Same-scope exact mappings are source-ordered; same-scope executable prefix overlaps warn and are rejected because keymaps have no timeout.
+Literal replay strings work only in normal or visual scopes, are bounded, and do
+not recursively expand mappings. `null` removes only the exact selected-scope
+mapping. `options` accepts only `allowProtected: true` and diagnostic
+`desc: string`; an override does not guarantee that Pi or terminal delivers that
+key. Same-scope exact mappings are source-ordered; same-scope executable prefix
+overlaps warn and are rejected because keymaps have no timeout.
 
-Set `vim.g.mapleader` to one printable character or `null`. Assignment affects every retained `<leader>` mapping after project settings apply, regardless of assignment order inside the JS file. Invalid assignments warn and preserve the last valid value.
+Set `vim.g.mapleader` to one printable character or `null`. Assignment affects
+every retained `<leader>` mapping after project settings apply, regardless of
+assignment order inside the JS file. Invalid assignments warn and preserve the
+last valid value.
 
-JS config boundaries: no raw object export, no string target that names internal action IDs such as `"prompt.transform.reflow"`, no recursive mapping expansion beyond normal macro replay limits, no TypeScript config, no project-local JS, no file watchers, no plugin discovery, and no arbitrary custom action execution. String targets are replayed through the macro path, so Ex-command remaps such as `":vimdoctor<CR>"` work within the normal replay-step limit. `<leader>` is expanded only in mapping keys, never in replay target strings.
+JS config boundaries: no raw object export, no string target that names internal
+action IDs such as `"prompt.transform.reflow"`, no recursive mapping expansion
+beyond normal macro replay limits, no TypeScript config, no project-local JS, no
+file watchers, no plugin discovery, and no arbitrary custom action execution.
+String targets are replayed through the macro path, so Ex-command remaps such as
+`":vimdoctor<CR>"` work within the normal replay-step limit. `<leader>` is
+expanded only in mapping keys, never in replay target strings.
 
-Run `/vimmode reload` after editing JS config. Use `:vimdoctor`, `:keymap`, and `:mapcheck <key>` to inspect results. Imported helpers follow native ESM caching; see [`docs/config.md#exports-async-config-and-imported-presets`](config.md#exports-async-config-and-imported-presets).
+Run `/vimmode reload` after editing JS config. Use `:vimdoctor`, `:keymap`, and
+`:mapcheck <key>` to inspect results. Imported helpers follow native ESM
+caching; see
+[`docs/config.md#exports-async-config-and-imported-presets`](config.md#exports-async-config-and-imported-presets).
 
 ## Key sequence syntax
 
@@ -112,10 +162,16 @@ Rules:
   - `<S-tab>` / `<Shift-tab>` -> `shift+tab`
   - `<D-x>` / `<Cmd-x>` / `<Super-x>` -> `super+x`
 - Prefer lowercase normalized names such as `ctrl+a` for raw modifier strings.
-- A mapping may begin with case-insensitive `<leader>` when `piVimMode.leader` is configured. `<leader><leader>` is valid; a lone `<leader>` or `g<leader>x` is rejected.
-- Empty arrays do not override existing/default bindings for classic keymap groups. In `piVimMode.keymap.actions`, an empty array unbinds that action in the current settings scope.
-- `piVimMode.keymap.escape` defaults to `[]` and replaces the inherited escape alias list when set.
-- Escape aliases are key aliases such as `<D-j>` or `<C-j>`, not raw text chords such as `jk` or `jj`.
+- A mapping may begin with case-insensitive `<leader>` when `piVimMode.leader`
+    is configured. `<leader><leader>` is valid; a lone `<leader>` or
+    `g<leader>x` is rejected.
+- Empty arrays do not override existing/default bindings for classic keymap
+    groups. In `piVimMode.keymap.actions`, an empty array unbinds that action in
+    the current settings scope.
+- `piVimMode.keymap.escape` defaults to `[]` and replaces the inherited escape
+    alias list when set.
+- Escape aliases are key aliases such as `<D-j>` or `<C-j>`, not raw text
+    chords such as `jk` or `jj`.
 
 Protected Pi shortcuts cannot be mapped:
 
@@ -132,9 +188,16 @@ Protected Pi shortcuts cannot be mapped:
 | `ctrl+p`, `shift+ctrl+p`, `ctrl+shift+p` | Pi command/model palette shortcuts.                                                 |
 | `ctrl+t`                                 | Pi external editor/tool shortcut.                                                   |
 
-Protected or unsupported keys are ignored with a warning that names the protected key and reason. Use `:mapcheck <key>` at runtime for current ownership and binding details. `ctrl+a`, `ctrl+x`, `ctrl+r`, `ctrl+d`, `ctrl+u`, `/`, and `?` are explicitly owned by pi-vimmode in normal mode for numeric adjustment, redo, half-page scroll, and prompt search; insert mode still delegates them to Pi.
+Protected or unsupported keys are ignored with a warning that names the
+protected key and reason. Use `:mapcheck <key>` at runtime for current ownership
+and binding details. `ctrl+a`, `ctrl+x`, `ctrl+r`, `ctrl+d`, `ctrl+u`, `/`, and
+`?` are explicitly owned by pi-vimmode in normal mode for numeric adjustment,
+redo, half-page scroll, and prompt search; insert mode still delegates them to
+Pi.
 
-Protected keys can be overridden by listing them in `piVimMode.keymap.allowProtectedOverrides` within the same settings layer. See the allow-list section below.
+Protected keys can be overridden by listing them in
+`piVimMode.keymap.allowProtectedOverrides` within the same settings layer. See
+the allow-list section below.
 
 ## Top-level settings
 
@@ -148,11 +211,14 @@ Protected keys can be overridden by listing them in `piVimMode.keymap.allowProte
 
 ### Presets
 
-Presets are field-level baselines. Resolution order is defaults, global preset, global explicit fields, project preset, project explicit fields.
+Presets are field-level baselines. Resolution order is defaults, global preset,
+global explicit fields, project preset, project explicit fields.
 
-- `minimal`: quieter status, fewer inspectability extras, macro/mark features disabled by default.
+- `minimal`: quieter status, fewer inspectability extras, macro/mark features
+    disabled by default.
 - `prompt-safe`: conservative default-style baseline for Pi prompt editing.
-- `vim-heavy`: starts in normal mode, keeps visual block unbound so Pi paste shortcuts remain owned by Pi, and shows more status items.
+- `vim-heavy`: starts in normal mode, keeps visual block unbound so Pi paste
+    shortcuts remain owned by Pi, and shows more status items.
 
 Example explicit override:
 
@@ -166,11 +232,15 @@ Example explicit override:
 }
 ```
 
-Here `vim-heavy` supplies its baseline, then `startMode` and `visualBlock` override those fields.
+Here `vim-heavy` supplies its baseline, then `startMode` and `visualBlock`
+override those fields.
 
 ### Leader key
 
-Leader is optional and has no default. Global JSON, trusted JS, and project JSON resolve in that order; the final value expands every retained mapping key beginning with `<leader>`. Omit the field to inherit, or use `null` to clear an inherited leader.
+Leader is optional and has no default. Global JSON, trusted JS, and project JSON
+resolve in that order; the final value expands every retained mapping key
+beginning with `<leader>`. Omit the field to inherit, or use `null` to clear an
+inherited leader.
 
 ```json
 {
@@ -190,13 +260,25 @@ Leader is optional and has no default. Global JSON, trusted JS, and project JSON
 
 Rules:
 
-- Value must be exactly one printable character, including space, comma, or backslash. Empty, multi-character, control, and non-string values warn and are ignored.
-- `<leader>` is case-insensitive but must start mapping key. A lone `<leader>` warns and is ignored; repeated leading tokens such as `<leader><leader>` are valid.
-- Missing or cleared leader drops affected mappings with warnings while valid sibling mappings remain.
-- Any retained normal/visual leader mapping reserves selected prefix across normal and all visual modes. Existing grammar on that prefix becomes unavailable, including counts for digit leaders, named-register entry for `"`, macro/mark keys, and direct visual `u`/`U` transforms.
-- Leader setting alone changes no key behavior. Insert escape/action and multi-key text-object bindings retain existing validation and do not activate normal/visual prefix reservation.
-- Runtime keybinding views show expanded physical keys, not `<leader>` source notation.
-- No timeout fallback, recursive expansion, runtime `:map`, target substitution, Vimscript, or Neovim Lua support.
+- Value must be exactly one printable character, including space, comma, or
+    backslash. Empty, multi-character, control, and non-string values warn and
+    are ignored.
+- `<leader>` is case-insensitive but must start mapping key. A lone `<leader>`
+    warns and is ignored; repeated leading tokens such as `<leader><leader>` are
+    valid.
+- Missing or cleared leader drops affected mappings with warnings while valid
+    sibling mappings remain.
+- Any retained normal/visual leader mapping reserves selected prefix across
+    normal and all visual modes. Existing grammar on that prefix becomes
+    unavailable, including counts for digit leaders, named-register entry for
+    `"`, macro/mark keys, and direct visual `u`/`U` transforms.
+- Leader setting alone changes no key behavior. Insert escape/action and
+    multi-key text-object bindings retain existing validation and do not
+    activate normal/visual prefix reservation.
+- Runtime keybinding views show expanded physical keys, not `<leader>` source
+    notation.
+- No timeout fallback, recursive expansion, runtime `:map`, target
+    substitution, Vimscript, or Neovim Lua support.
 
 ## Cursor settings
 
@@ -210,13 +292,16 @@ Allowed cursor styles: `"block"`, `"bar"`, `"underline"`.
 | `piVimMode.cursor.visualLine`  | `"block"` | Cursor style in visual line mode.                                                               |
 | `piVimMode.cursor.visualBlock` | `"block"` | Cursor style in visual block mode.                                                              |
 
-Invalid cursor styles fall back per mode, so one bad value does not discard the rest of `cursor`.
+Invalid cursor styles fall back per mode, so one bad value does not discard the
+rest of `cursor`.
 
-Terminal cursor support is best effort. pi-vimmode writes DECSCUSR cursor-shape hints, but terminals can ignore them.
+Terminal cursor support is best effort. pi-vimmode writes DECSCUSR cursor-shape
+hints, but terminals can ignore them.
 
 ## Keymap settings
 
-`piVimMode.keymap` maps key sequences to supported semantic actions. It does not add arbitrary Vim grammar.
+`piVimMode.keymap` maps key sequences to supported semantic actions. It does not
+add arbitrary Vim grammar.
 
 ### Escape aliases
 
@@ -224,7 +309,9 @@ Terminal cursor support is best effort. pi-vimmode writes DECSCUSR cursor-shape 
 | ------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `piVimMode.keymap.escape` | `[]`    | Optional key aliases for leaving insert mode, visual modes, and pending Ex commands, for example `["<D-j>"]` or `["<C-j>"]`. |
 
-Configured escape aliases act like physical `Esc` while insert mode is active and Pi autocomplete is closed, while visual/visual-line/visual-block mode is active, or while a `:` Ex command-line is pending. Example:
+Configured escape aliases act like physical `Esc` while insert mode is active
+and Pi autocomplete is closed, while visual/visual-line/visual-block mode is
+active, or while a `:` Ex command-line is pending. Example:
 
 ```json
 {
@@ -238,12 +325,20 @@ Configured escape aliases act like physical `Esc` while insert mode is active an
 
 Rules:
 
-- Valid modified-key aliases such as `"<D-j>"`, `"<C-j>"`, or `"<A-j>"` leave insert mode, cancel visual mode, or cancel a pending Ex command without inserting text.
-- Raw printable text chords such as `"jk"`, `"jj"`, and `"j"` are rejected so normal typing stays normal.
-- Plain Ctrl-J often arrives from terminals as `enter`; it only works as `ctrl+j` when the terminal/input layer sends distinct enhanced keyboard input.
-- When autocomplete is open, aliases delegate to Pi and do not close autocomplete or enter normal mode.
-- Protected shortcuts such as `enter`, `tab`, `ctrl+c`, and `escape` are rejected.
-- These are not Vim mappings: no runtime `:map`, recursive mappings, insert abbreviations, `.vimrc`, Vimscript, or `timeoutlen`.
+- Valid modified-key aliases such as `"<D-j>"`, `"<C-j>"`, or `"<A-j>"` leave
+    insert mode, cancel visual mode, or cancel a pending Ex command without
+    inserting text.
+- Raw printable text chords such as `"jk"`, `"jj"`, and `"j"` are rejected so
+    normal typing stays normal.
+- Plain Ctrl-J often arrives from terminals as `enter`; it only works as
+    `ctrl+j` when the terminal/input layer sends distinct enhanced keyboard
+    input.
+- When autocomplete is open, aliases delegate to Pi and do not close
+    autocomplete or enter normal mode.
+- Protected shortcuts such as `enter`, `tab`, `ctrl+c`, and `escape` are
+    rejected.
+- These are not Vim mappings: no runtime `:map`, recursive mappings, insert
+    abbreviations, `.vimrc`, Vimscript, or `timeoutlen`.
 
 ### Insert mode newline, edit, and movement bindings
 
@@ -284,15 +379,25 @@ Example:
 
 Rules:
 
-- Only modified or protected single-key chords are accepted. Raw printable text such as `"j"` or `"oo"` is rejected so normal typing stays normal.
-- Protected keys such as `"enter"` require same-layer `piVimMode.keymap.allowProtectedOverrides` before they are accepted.
-- Insert bindings only work in insert mode when Pi autocomplete is inactive. Normal and visual modes use the existing `openLineBelow` / `openLineAbove` commands under `piVimMode.keymap.commands`.
-- Insert delete bindings do not write Vim registers, marks, visual state, macro slots, or dot-repeat state.
-- Insert movement bindings preserve prompt text, search highlights, and registers.
-- Insert word movement and deletion reuse pi-vimmode lowercase small-word semantics where keyword runs, punctuation runs, and whitespace are separate groups.
-- `piVimMode.keymap.insert` owns only physical insert edits and movement. Semantic prompt transforms remain under `piVimMode.keymap.actions`.
+- Only modified or protected single-key chords are accepted. Raw printable
+    text such as `"j"` or `"oo"` is rejected so normal typing stays normal.
+- Protected keys such as `"enter"` require same-layer
+    `piVimMode.keymap.allowProtectedOverrides` before they are accepted.
+- Insert bindings only work in insert mode when Pi autocomplete is inactive.
+    Normal and visual modes use the existing `openLineBelow` / `openLineAbove`
+    commands under `piVimMode.keymap.commands`.
+- Insert delete bindings do not write Vim registers, marks, visual state,
+    macro slots, or dot-repeat state.
+- Insert movement bindings preserve prompt text, search highlights, and
+    registers.
+- Insert word movement and deletion reuse pi-vimmode lowercase small-word
+    semantics where keyword runs, punctuation runs, and whitespace are separate
+    groups.
+- `piVimMode.keymap.insert` owns only physical insert edits and movement.
+    Semantic prompt transforms remain under `piVimMode.keymap.actions`.
 - Autocomplete-active input keeps Pi ownership and does not run insert bindings.
-- These are opt-in: with no `piVimMode.keymap.insert` config, every insert-mode key delegates to Pi default behavior.
+- These are opt-in: with no `piVimMode.keymap.insert` config, every
+    insert-mode key delegates to Pi default behavior.
 
 ### Operators
 
@@ -307,9 +412,18 @@ Rules:
 | `piVimMode.keymap.operators.indent`     | `[">"]`  | Line-only shift operator. Doubled operator indents addressed line(s) by two spaces.                  |
 | `piVimMode.keymap.operators.dedent`     | `["<"]`  | Line-only shift operator. Doubled operator dedents addressed line(s).                                |
 
-`lowercase`, `uppercase`, and `toggleCase` do not write registers and do not enter insert mode. Their doubled line forms are `gugu`, `gUgU`, and `g~g~` by default; configured equivalents repeat the configured operator sequence. Mark, prompt-search, and character-search targets are unsupported safe no-ops for case operators.
+`lowercase`, `uppercase`, and `toggleCase` do not write registers and do not
+enter insert mode. Their doubled line forms are `gugu`, `gUgU`, and `g~g~` by
+default; configured equivalents repeat the configured operator sequence. Mark,
+prompt-search, and character-search targets are unsupported safe no-ops for case
+operators.
 
-`indent` and `dedent` are line-only operators. In normal mode, repeat the operator sequence (`>>`, `<<`, or configured equivalents) and optional counts (`3>>`). In visual modes, one operator key shifts all touched lines; a count before the operator changes shift depth (`2>` indents selected lines by two levels). Arbitrary `>{motion}`, `<{motion}`, text-object, prompt-search, and mark-target shift ranges are unsupported safe no-ops.
+`indent` and `dedent` are line-only operators. In normal mode, repeat the
+operator sequence (`>>`, `<<`, or configured equivalents) and optional counts
+(`3>>`). In visual modes, one operator key shifts all touched lines; a count
+before the operator changes shift depth (`2>` indents selected lines by two
+levels). Arbitrary `>{motion}`, `<{motion}`, text-object, prompt-search, and
+mark-target shift ranges are unsupported safe no-ops.
 
 ### Motions
 
@@ -383,13 +497,36 @@ Rules:
 | `piVimMode.keymap.commands.redo`                    | `["ctrl+r"]` | Redo the latest prompt text/cursor state undone by normal-mode undo.                                                                                                     |
 | `piVimMode.keymap.commands.showKeybindings`         | `[]`         | Optional normal-mode shortcut that opens the same bounded read-only popup as `:keybindings`.                                                                             |
 
-`halfPageDown` and `halfPageUp` are prompt-local cursor motions in normal and visual modes. Their default `ctrl+d` / `ctrl+u` keys are only allowed for these motion actions; mapping those protected control keys to unrelated actions is rejected with a warning. They are not supported operator motions, so adding them to `piVimMode.keymap.operatorMotions` is ignored with a warning.
+`halfPageDown` and `halfPageUp` are prompt-local cursor motions in normal and
+visual modes. Their default `ctrl+d` / `ctrl+u` keys are only allowed for these
+motion actions; mapping those protected control keys to unrelated actions is
+rejected with a warning. They are not supported operator motions, so adding them
+to `piVimMode.keymap.operatorMotions` is ignored with a warning.
 
-`findCharForward`, `findCharBackward`, `tillCharForward`, and `tillCharBackward` are character-argument commands. Their configured semantic key sequences work as normal-mode motions and after motion-capable `delete`, `change`, and `yank` operators. For example, mapping `findCharForward` to `["gf"]` makes `dgf,` delete through the next comma on the current line. Counts after the operator target later/earlier matches (`d2gf,`), and counts before and after the operator multiply for this finite character-search grammar. These command bindings do not make shift operators (`>`/`<`) accept character-search targets.
+`findCharForward`, `findCharBackward`, `tillCharForward`, and `tillCharBackward`
+are character-argument commands. Their configured semantic key sequences work as
+normal-mode motions and after motion-capable `delete`, `change`, and `yank`
+operators. For example, mapping `findCharForward` to `["gf"]` makes `dgf,`
+delete through the next comma on the current line. Counts after the operator
+target later/earlier matches (`d2gf,`), and counts before and after the operator
+multiply for this finite character-search grammar. These command bindings do not
+make shift operators (`>`/`<`) accept character-search targets.
 
-`showKeybindings` has no default keybinding. Configure it like other semantic normal-mode commands, for example `{ "piVimMode": { "keymap": { "commands": { "showKeybindings": ["gk"] } } } }`. It follows normal keymap validation: protected Pi shortcuts such as `ctrl+p`, `enter`, and `tab` are rejected; exact conflicts and prefix-shadow conflicts with the finite grammar are rejected; valid sibling settings stay intact; multi-key sequences use the same finite pending-prefix matcher as other commands. Insert mode remains Pi-owned, so the same physical key sequence delegates to Pi while inserting text unless pi-vimmode otherwise supports that insert-mode input.
+`showKeybindings` has no default keybinding. Configure it like other semantic
+normal-mode commands, for example
+`{ "piVimMode": { "keymap": { "commands": { "showKeybindings": ["gk"] } } } }`.
+It follows normal keymap validation: protected Pi shortcuts such as `ctrl+p`,
+`enter`, and `tab` are rejected; exact conflicts and prefix-shadow conflicts
+with the finite grammar are rejected; valid sibling settings stay intact;
+multi-key sequences use the same finite pending-prefix matcher as other
+commands. Insert mode remains Pi-owned, so the same physical key sequence
+delegates to Pi while inserting text unless pi-vimmode otherwise supports that
+insert-mode input.
 
-Use this command path for a shortcut to keybinding discovery. Do not configure `vimmode.*` diagnostic/help metadata IDs under `piVimMode.keymap.actions`: `vimmode.keybindings`, `vimmode.keymap`, `vimmode.help`, and other `vimmode.*` IDs are metadata-only, not bindable prompt transform actions.
+Use this command path for a shortcut to keybinding discovery. Do not configure
+`vimmode.*` diagnostic/help metadata IDs under `piVimMode.keymap.actions`:
+`vimmode.keybindings`, `vimmode.keymap`, `vimmode.help`, and other `vimmode.*`
+IDs are metadata-only, not bindable prompt transform actions.
 
 ### Macro keymap
 
@@ -408,7 +545,8 @@ Use this command path for a shortcut to keybinding discovery. Do not configure `
 
 ### Text object keymap
 
-Text object keys are only read after an operator and a text-object kind key. Defaults preserve Vim-style `iw`, `aw`, plus prompt-native objects.
+Text object keys are only read after an operator and a text-object kind key.
+Defaults preserve Vim-style `iw`, `aw`, plus prompt-native objects.
 
 | Path                                                  | Default      | Effect                                                  |
 | ----------------------------------------------------- | ------------ | ------------------------------------------------------- |
@@ -444,7 +582,8 @@ Example:
 
 ### Operator motion allow-list
 
-These settings decide which semantic motions are valid after each operator. Accepted motion action names:
+These settings decide which semantic motions are valid after each operator.
+Accepted motion action names:
 
 ```text
 left, down, up, right, wordForward, wordBackward, wordEnd, wordForwardBig, wordBackwardBig, wordEndBig, wordPreviousEnd, wordPreviousEndBig, lineStart, firstNonBlank, lineEnd, bufferStart, bufferEnd, matchingPair, paragraphBackward, paragraphForward
@@ -459,11 +598,35 @@ left, down, up, right, wordForward, wordBackward, wordEnd, wordForwardBig, wordB
 | `piVimMode.keymap.operatorMotions.uppercase`  | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after uppercase operator.                                      |
 | `piVimMode.keymap.operatorMotions.toggleCase` | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after range toggle-case operator.                              |
 
-WORD and previous-end actions can be customized and used in `operatorMotions` like other finite motions. Example: `{ "piVimMode": { "keymap": { "motions": { "wordForwardBig": ["gw"], "wordPreviousEnd": ["g-"] }, "operatorMotions": { "delete": ["wordForwardBig", "wordPreviousEnd"] } } } }` makes `dgw` and `dg-` valid delete targets.
+WORD and previous-end actions can be customized and used in `operatorMotions`
+like other finite motions. This example makes `dgw` and `dg-` valid delete
+targets:
 
-Character-search commands are configured under `piVimMode.keymap.commands`, not `operatorMotions`; they are current-line operator targets for motion-capable `delete`, `change`, and `yank` when their `findCharForward`, `findCharBackward`, `tillCharForward`, `tillCharBackward`, `repeatCharSearch`, or `repeatCharSearchReverse` command bindings resolve. Case operators intentionally do not accept character-search, prompt-search, or mark targets. `operatorMotions` applies only to motion-capable `delete`, `change`, `yank`, `lowercase`, `uppercase`, and `toggleCase`; `operatorMotions.indent` and `operatorMotions.dedent` are rejected with warnings because shift operators are line-only.
+```json
+{
+  "piVimMode": {
+    "keymap": {
+      "motions": { "wordForwardBig": ["gw"], "wordPreviousEnd": ["g-"] },
+      "operatorMotions": { "delete": ["wordForwardBig", "wordPreviousEnd"] }
+    }
+  }
+}
+```
 
-Motion configuration boundaries: no subword/camelCase navigation, display-line motions, recursive mappings, Vimscript, `.vimrc`, or full Vim/Neovim parity are added by these settings.
+Character-search commands are configured under `piVimMode.keymap.commands`, not
+`operatorMotions`; they are current-line operator targets for motion-capable
+`delete`, `change`, and `yank` when their `findCharForward`, `findCharBackward`,
+`tillCharForward`, `tillCharBackward`, `repeatCharSearch`, or
+`repeatCharSearchReverse` command bindings resolve. Case operators intentionally
+do not accept character-search, prompt-search, or mark targets.
+`operatorMotions` applies only to motion-capable `delete`, `change`, `yank`,
+`lowercase`, `uppercase`, and `toggleCase`; `operatorMotions.indent` and
+`operatorMotions.dedent` are rejected with warnings because shift operators are
+line-only.
+
+Motion configuration boundaries: no subword/camelCase navigation, display-line
+motions, recursive mappings, Vimscript, `.vimrc`, or full Vim/Neovim parity are
+added by these settings.
 
 ### Protected key allow-list
 
@@ -471,7 +634,10 @@ Motion configuration boundaries: no subword/camelCase navigation, display-line m
 | ------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------ |
 | `piVimMode.keymap.allowProtectedOverrides` | `[]`    | Opt-in array of protected key sequences to allow pi-vimmode to bind instead of delegating to Pi. |
 
-Protected Pi shortcuts such as `ctrl+p`, `ctrl+v`, `alt+v`, `ctrl+alt+v`, `ctrl+t`, and `tab` are rejected from all keymap groups by default. Adding a key to this allow-list within the same settings layer authorizes that key in classic keymap groups, escape aliases, and action keybindings of the same layer.
+Protected Pi shortcuts such as `ctrl+p`, `ctrl+v`, `alt+v`, `ctrl+alt+v`,
+`ctrl+t`, and `tab` are rejected from all keymap groups by default. Adding a key
+to this allow-list within the same settings layer authorizes that key in classic
+keymap groups, escape aliases, and action keybindings of the same layer.
 
 Example:
 
@@ -490,18 +656,30 @@ Example:
 
 Rules:
 
-- The allow-list is scoped to its settings layer. Global allow-list entries do not authorize project-layer bindings without a project-layer allow-list. Add the same key to `allowProtectedOverrides` in the layer where it is bound.
-- Entries are normalized the same way as keymap bindings: `"<C-p>"`, `"ctrl+p"`, and `"control+p"` are equivalent.
-- Invalid or unparseable entries produce a warning without affecting valid siblings.
+- The allow-list is scoped to its settings layer. Global allow-list entries do
+    not authorize project-layer bindings without a project-layer allow-list. Add
+    the same key to `allowProtectedOverrides` in the layer where it is bound.
+- Entries are normalized the same way as keymap bindings: `"<C-p>"`,
+    `"ctrl+p"`, and `"control+p"` are equivalent.
+- Invalid or unparseable entries produce a warning without affecting valid
+    siblings.
 - Protected keys not listed remain rejected regardless of the keymap group.
-- Overrides are not OS or terminal guarantees. pi-vimmode can only handle keys Pi delivers distinctly. For example, Ctrl+J often arrives as `enter` and cannot be distinguished from the Enter key in many terminal configurations.
-- Insert mode still delegates protected shortcuts to Pi unless the key is configured as an escape alias.
-- Binding `ctrl+v`, `alt+v`, or `ctrl+alt+v` to `commands.visualBlock` makes normal/visual mode own Vim visual block for that key; leave them unbound when normal-mode image paste should reach Pi.
+- Overrides are not OS or terminal guarantees. pi-vimmode can only handle keys
+    Pi delivers distinctly. For example, Ctrl+J often arrives as `enter` and
+    cannot be distinguished from the Enter key in many terminal configurations.
+- Insert mode still delegates protected shortcuts to Pi unless the key is
+    configured as an escape alias.
+- Binding `ctrl+v`, `alt+v`, or `ctrl+alt+v` to `commands.visualBlock` makes
+    normal/visual mode own Vim visual block for that key; leave them unbound
+    when normal-mode image paste should reach Pi.
 - To roll back, remove the key from `allowProtectedOverrides`.
 
 ### Action keybindings
 
-`piVimMode.keymap.actions` binds finite prompt transform actions to normal/visual key sequences. It is a flat record from canonical action ID to an array of string entries or `{ "key", "args" }` entries. No action keybindings exist by default.
+`piVimMode.keymap.actions` binds finite prompt transform actions to
+normal/visual key sequences. It is a flat record from canonical action ID to an
+array of string entries or `{ "key", "args" }` entries. No action keybindings
+exist by default.
 
 Supported bindable action IDs:
 
@@ -537,14 +715,25 @@ Example:
 }
 ```
 
-Action keybinding presets are selectable opt-in bundles backed by the same finite recipe metadata. They create no default keybindings and are not defaults, not recursive mappings, not runtime `:map`, not `.vimrc`, no plugin API, not a plugin API, not diagnostic/help action dispatch, and not Vim/Neovim parity. Run `:features keybindings` or `:features action presets` for compact runtime discovery.
+Action keybinding presets are selectable opt-in bundles backed by the same
+finite recipe metadata. They create no default keybindings and are not defaults,
+not recursive mappings, not runtime `:map`, not `.vimrc`, no plugin API, not a
+plugin API, not diagnostic/help action dispatch, and not Vim/Neovim parity. Run
+`:features keybindings` or `:features action presets` for compact runtime
+discovery.
 
 `piVimMode.keymap.actionPresets` accepts:
 
 - `paragraph-editing`
 - `markdown-wrapping`
 
-Resolution order is defaults, global whole-editor `piVimMode.preset`, global `keymap.actionPresets`, global explicit `keymap.actions`, project whole-editor `piVimMode.preset`, project `keymap.actionPresets`, then project explicit `keymap.actions`. Later presets replace earlier preset bindings for the same action ID. Explicit `piVimMode.keymap.actions` entries override preset-provided entries for the same action ID; an explicit empty action array clears that action from the preset.
+Resolution order is defaults, global whole-editor `piVimMode.preset`, global
+`keymap.actionPresets`, global explicit `keymap.actions`, project whole-editor
+`piVimMode.preset`, project `keymap.actionPresets`, then project explicit
+`keymap.actions`. Later presets replace earlier preset bindings for the same
+action ID. Explicit `piVimMode.keymap.actions` entries override preset-provided
+entries for the same action ID; an explicit empty action array clears that
+action from the preset.
 
 <!-- action-keybinding-preset:paragraph-editing -->
 <!-- action-keybinding-preset:markdown-wrapping -->
@@ -565,9 +754,14 @@ Preset example:
 }
 ```
 
-In this example, presets provide reflow/fence/quote/unquote bindings, explicit `quote` changes the quote key to `zq`, and explicit empty `unquote` removes the preset-provided unquote binding.
+In this example, presets provide reflow/fence/quote/unquote bindings, explicit
+`quote` changes the quote key to `zq`, and explicit empty `unquote` removes the
+preset-provided unquote binding.
 
-Action keybinding recipes are copy-pasteable opt-in snippets. Recipes and presets share the same canonical action metadata: recipes are pasted under `piVimMode.keymap.actions`, while presets are selected by ID under `piVimMode.keymap.actionPresets`.
+Action keybinding recipes are copy-pasteable opt-in snippets. Recipes and
+presets share the same canonical action metadata: recipes are pasted under
+`piVimMode.keymap.actions`, while presets are selected by ID under
+`piVimMode.keymap.actionPresets`.
 
 <!-- action-keybinding-recipe:paragraph-editing -->
 
@@ -605,18 +799,34 @@ Markdown wrapping recipe:
 }
 ```
 
-Normal mode action keys transform the current line; a count extends the line range, e.g. `3gq` reflows current line plus next two lines. Visual, visual-line, and visual-block action keys transform touched lines once, ignore visual counts, then return to normal mode. Visual-block action transforms are linewise, not rectangular.
+Normal mode action keys transform the current line; a count extends the line
+range, e.g. `3gq` reflows current line plus next two lines. Visual, visual-line,
+and visual-block action keys transform touched lines once, ignore visual counts,
+then return to normal mode. Visual-block action transforms are linewise, not
+rectangular.
 
 Parameterized args:
 
-- `prompt.transform.fence`: optional `{ "language": "ts" }`; language must not contain whitespace.
-- `prompt.transform.reflow`: optional `{ "width": 72 }`; width must be an integer from `20` through `240`.
+- `prompt.transform.fence`: optional `{ "language": "ts" }`; language must not
+    contain whitespace.
+- `prompt.transform.reflow`: optional `{ "width": 72 }`; width must be an
+    integer from `20` through `240`.
 - `quote`, `unquote`, `bulletize`, `indent`, and `dedent` reject args.
-- Unknown arg keys reject that binding so typos do not silently fall back to defaults.
+- Unknown arg keys reject that binding so typos do not silently fall back to
+    defaults.
 
-Rejected action key entries are ignored with warnings while valid sibling entries stay usable. Rejections include unknown action IDs, invalid args, protected Pi shortcuts, disabled prompt transform actions, duplicate keys across different actions, exact grammar conflicts, and prefix-shadow conflicts. Same-action repeated keys dedupe without warning. Use `:vimdoctor` for retained warnings and `:mapcheck <key>` to inspect accepted or rejected action keys.
+Rejected action key entries are ignored with warnings while valid sibling
+entries stay usable. Rejections include unknown action IDs, invalid args,
+protected Pi shortcuts, disabled prompt transform actions, duplicate keys across
+different actions, exact grammar conflicts, and prefix-shadow conflicts.
+Same-action repeated keys dedupe without warning. Use `:vimdoctor` for retained
+warnings and `:mapcheck <key>` to inspect accepted or rejected action keys.
 
-`piVimMode.keymap.actions` accepts canonical `prompt.transform.*` IDs only. Non-canonical action IDs are unsupported and do not install keybinding dispatch. `piVimMode.promptTransforms.actions` remains the enable/disable boolean surface for transforms, and `piVimMode.promptTransforms.commands` remains the Ex command-name surface; neither moves into `keymap.actions`.
+`piVimMode.keymap.actions` accepts canonical `prompt.transform.*` IDs only.
+Non-canonical action IDs are unsupported and do not install keybinding dispatch.
+`piVimMode.promptTransforms.actions` remains the enable/disable boolean surface
+for transforms, and `piVimMode.promptTransforms.commands` remains the Ex
+command-name surface; neither moves into `keymap.actions`.
 
 ### Keymap validation
 
@@ -635,16 +845,20 @@ Example shift operator remap:
 }
 ```
 
-With this config, `]]` indents the current line in normal mode, `[[` dedents it, and visual `]` / `[` shifts selected lines.
+With this config, `]]` indents the current line in normal mode, `[[` dedents it,
+and visual `]` / `[` shifts selected lines.
 
 - Unknown action names warn and are ignored.
 - `keymap.actionPresets` must be an array of supported preset ID strings.
-- Each classic keymap binding value must be an array of strings; `keymap.actions` also accepts `{ "key", "args" }` entries.
+- Each classic keymap binding value must be an array of strings;
+    `keymap.actions` also accepts `{ "key", "args" }` entries.
 - Protected shortcuts are ignored with warnings.
 - Duplicate bindings inside a classic group warn.
 - Duplicate bindings across the resolved classic keymap warn.
-- A shorter classic binding shadowed by a longer binding prefix warns, e.g. `g` and `gg`.
-- Action binding conflicts reject before dispatch; classic grammar remains owner until explicitly unbound or remapped.
+- A shorter classic binding shadowed by a longer binding prefix warns, e.g.
+    `g` and `gg`.
+- Action binding conflicts reject before dispatch; classic grammar remains
+    owner until explicitly unbound or remapped.
 
 ## Macro behavior settings
 
@@ -679,23 +893,31 @@ These settings control search highlighting, not search motion semantics.
 
 ## EasyMotion settings
 
-These settings control the visual appearance of EasyMotion character-search labels.
+These settings control the visual appearance of EasyMotion character-search
+labels.
 
 | Path                              | Default    | Accepted values         | Effect                                                                                        |
 | --------------------------------- | ---------- | ----------------------- | --------------------------------------------------------------------------------------------- |
 | `piVimMode.easymotion.labelColor` | `\x1b[31m` | ANSI escape code string | Color applied to EasyMotion label characters (e.g. `\x1b[31m` for red, `\x1b[32m` for green). |
 
-Search is literal by default and prompt-local. `?` starts backward search, empty `/` or `?` recalls the previous successful query, and `Up` / `Down` navigate in-memory history while a search is pending. Prefix a pending query with `\r` for bounded regex search. Vim highlight groups, offsets, and cross-prompt history are not supported. `:noh` / `:nohlsearch` clear current prompt search highlights without changing text or registers.
+Search is literal by default and prompt-local. `?` starts backward search, empty
+`/` or `?` recalls the previous successful query, and `Up` / `Down` navigate
+in-memory history while a search is pending. Prefix a pending query with `\r`
+for bounded regex search. Vim highlight groups, offsets, and cross-prompt
+history are not supported. `:noh` / `:nohlsearch` clear current prompt search
+highlights without changing text or registers.
 
 ## Feedback settings
 
-Optional feedback keeps default modal editing quiet while helping users understand confusing no-ops.
+Optional feedback keeps default modal editing quiet while helping users
+understand confusing no-ops.
 
 | Path                      | Default | Accepted values     | Effect                                                                                                           |
 | ------------------------- | ------- | ------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `piVimMode.feedback.noop` | `"off"` | `"off"`, `"status"` | `"status"` shows one transient info row for selected no-ops such as unmapped normal keys or protected shortcuts. |
 
-Invalid feedback values warn and fall back to `"off"` without discarding valid sibling settings.
+Invalid feedback values warn and fall back to `"off"` without discarding valid
+sibling settings.
 
 Example:
 
@@ -709,7 +931,9 @@ Example:
 
 ## Prompt-native structure settings
 
-These settings enable/disable prompt-native structure text objects after parsing. Disabled structures become safe no-ops; classic word/quote/bracket text objects still work.
+These settings enable/disable prompt-native structure text objects after
+parsing. Disabled structures become safe no-ops; classic word/quote/bracket text
+objects still work.
 
 | Path                                                | Default | Effect                                 |
 | --------------------------------------------------- | ------- | -------------------------------------- |
@@ -722,7 +946,10 @@ These settings enable/disable prompt-native structure text objects after parsing
 
 ## Prompt transform settings
 
-These settings enable/disable finite prompt transform Ex commands and configure command names. They are separate from `piVimMode.keymap.actions`: `promptTransforms.actions` are boolean enable flags, and `promptTransforms.commands` are Ex command names such as `:quote` or `:reflow`.
+These settings enable/disable finite prompt transform Ex commands and configure
+command names. They are separate from `piVimMode.keymap.actions`:
+`promptTransforms.actions` are boolean enable flags, and
+`promptTransforms.commands` are Ex command names such as `:quote` or `:reflow`.
 
 | Path                                           | Default     | Effect                                 |
 | ---------------------------------------------- | ----------- | -------------------------------------- |
@@ -737,7 +964,8 @@ These settings enable/disable finite prompt transform Ex commands and configure 
 | `piVimMode.promptTransforms.commands.quote`    | `["quote"]` | Ex command names that run quote.       |
 | `piVimMode.promptTransforms.commands.fence`    | `["fence"]` | Ex command names that run fence.       |
 
-Command-name arrays exist for every transform action: `quote`, `unquote`, `bulletize`, `fence`, `indent`, `dedent`, `reflow`.
+Command-name arrays exist for every transform action: `quote`, `unquote`,
+`bulletize`, `fence`, `indent`, `dedent`, `reflow`.
 
 Example:
 
@@ -755,7 +983,8 @@ Example:
 
 ## UI settings
 
-`piVimMode.ui` is the only supported status/UI config surface. Vim/Neovim aliases such as `showmode`, `showcmd`, and `ruler` are not supported.
+`piVimMode.ui` is the only supported status/UI config surface. Vim/Neovim
+aliases such as `showmode`, `showcmd`, and `ruler` are not supported.
 
 ### Status
 
@@ -774,7 +1003,9 @@ Status item meanings:
 | `selection`       | Visual selection summary and preview when enabled.                                                                                         |
 | `cursorPosition`  | Cursor position when `ui.cursorPosition.enabled` is true.                                                                                  |
 
-`position` aligns the complete status sequence, so mode, pending state, selection, cursor position, and macro recording always move together. The aligned group is truncated as needed to preserve terminal width.
+`position` aligns the complete status sequence, so mode, pending state,
+selection, cursor position, and macro recording always move together. The
+aligned group is truncated as needed to preserve terminal width.
 
 ### Mode labels
 
@@ -829,7 +1060,13 @@ Example cursor formats:
 | ------------------------------------- | ------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `piVimMode.ui.workbench.reservedRows` | `0`     | integer from `0` to `5` | Reserves width-safe rows below the prompt for `/`, `?`, `:` input, Ex/search messages, and substitution previews. |
 
-Default `0` preserves the existing idle layout: no blank workbench row is reserved until search, Ex input, preview, success, or error feedback is active. Active feedback still reserves one row. Setting `reservedRows` to `1` or more keeps that many rows below the prompt even when idle; active feedback renders in the first reserved row without subtracting extra height. Values below `0`, above `5`, non-integers, and non-numbers warn and fall back to `0` while valid sibling UI settings still apply.
+Default `0` preserves the existing idle layout: no blank workbench row is
+reserved until search, Ex input, preview, success, or error feedback is active.
+Active feedback still reserves one row. Setting `reservedRows` to `1` or more
+keeps that many rows below the prompt even when idle; active feedback renders in
+the first reserved row without subtracting extra height. Values below `0`, above
+`5`, non-integers, and non-numbers warn and fall back to `0` while valid sibling
+UI settings still apply.
 
 Example stable two-row command area:
 
@@ -845,7 +1082,8 @@ Example stable two-row command area:
 
 ## Full default reference
 
-This is the resolved default shape. Comments are not valid JSON; this block omits comments so it can be copied.
+This is the resolved default shape. Comments are not valid JSON; this block
+omits comments so it can be copied.
 
 ```json
 {
@@ -1121,7 +1359,8 @@ This is the resolved default shape. Comments are not valid JSON; this block omit
 
 ### Project override for one cursor style
 
-Global settings can keep broad defaults. Project settings can override one field:
+Global settings can keep broad defaults. Project settings can override one
+field:
 
 ```json
 {
@@ -1147,7 +1386,9 @@ Global settings can keep broad defaults. Project settings can override one field
 }
 ```
 
-`Ctrl-v`, Windows-style `Alt-v`, and `Ctrl-Alt-v` still delegate to Pi image/clipboard paste. Plain `B` is a default WORD motion, so it is not a safe visual-block example key.
+`Ctrl-v`, Windows-style `Alt-v`, and `Ctrl-Alt-v` still delegate to Pi
+image/clipboard paste. Plain `B` is a default WORD motion, so it is not a safe
+visual-block example key.
 
 ### Opt into Ctrl-v visual block ownership
 
@@ -1164,7 +1405,8 @@ Global settings can keep broad defaults. Project settings can override one field
 }
 ```
 
-Use this only when Vim-style visual block on `Ctrl-v` is more important than delegating Pi image paste from normal and visual modes.
+Use this only when Vim-style visual block on `Ctrl-v` is more important than
+delegating Pi image paste from normal and visual modes.
 
 ### Remap operator and motion
 
@@ -1183,7 +1425,8 @@ Use this only when Vim-style visual block on `Ctrl-v` is more important than del
 }
 ```
 
-With this config, `zz` deletes a line and `zgw` deletes by the configured `wordForward` motion.
+With this config, `zz` deletes a line and `zgw` deletes by the configured
+`wordForward` motion.
 
 ### Disable one operator-motion combination
 
@@ -1208,7 +1451,8 @@ With this config, `zz` deletes a line and `zgw` deletes by the configured `wordF
 }
 ```
 
-Now delete only accepts `d{wordForward}` and `d{lineEnd}` among finite operator motions.
+Now delete only accepts `d{wordForward}` and `d{lineEnd}` among finite operator
+motions.
 
 ### Status with cursor position
 
@@ -1302,11 +1546,14 @@ Now delete only accepts `d{wordForward}` and `d{lineEnd}` among finite operator 
 
 ### Status shows `vim ⚠`
 
-`vim ⚠` is currently a summary-only status indicator; pi-vimmode does not expose the exact warning text in the prompt UI. To isolate the failing setting, check project settings first, then global settings:
+`vim ⚠` is currently a summary-only status indicator; pi-vimmode does not expose
+the exact warning text in the prompt UI. To isolate the failing setting, check
+project settings first, then global settings:
 
 1. Review `.pi/settings.json` in the current project.
 2. Review `~/.pi/agent/settings.json` for global `piVimMode` values.
-3. Temporarily remove or narrow one `piVimMode` block at a time and start a new Pi session.
+3. Temporarily remove or narrow one `piVimMode` block at a time and start a new
+    Pi session.
 
 Common fixes:
 
@@ -1326,8 +1573,11 @@ Possible causes:
 - Binding uses protected key.
 - Binding is shadowed by longer prefix.
 - Operator motion is not in `operatorMotions` allow-list.
-- Feature has built-in special handling, e.g. protected Pi paste shortcuts are delegated unless explicitly allow-listed.
+- Feature has built-in special handling, e.g. protected Pi paste shortcuts are
+    delegated unless explicitly allow-listed.
 
 ### Cursor style does not change
 
-Cursor shape hints are terminal-dependent. `bar` cursor additionally needs Pi TUI hardware cursor visibility, which pi-vimmode manages when the API is available. Some terminals still ignore shape escapes.
+Cursor shape hints are terminal-dependent. `bar` cursor additionally needs Pi
+TUI hardware cursor visibility, which pi-vimmode manages when the API is
+available. Some terminals still ignore shape escapes.

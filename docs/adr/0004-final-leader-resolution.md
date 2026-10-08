@@ -18,12 +18,23 @@ Accepted
 
 ## Context
 
-A leader can be set in global JSON, trusted global JavaScript, and project JSON. Vim expands `mapleader` at declaration time, which would prevent project configuration from consistently changing or clearing inherited leader mappings.
+A leader can be set in global JSON, trusted global JavaScript, and project JSON.
+Vim expands `mapleader` at declaration time, which would prevent project
+configuration from consistently changing or clearing inherited leader mappings.
 
 ## Decision
 
-pi-vimmode will resolve one optional leader from global JSON, trusted global JavaScript, and project JSON in normal precedence order, then expand retained case-insensitive mappings that begin with `<leader>` using that final value. This deliberately differs from Vim's declaration-time `mapleader`.
+pi-vimmode will resolve one optional leader from global JSON, trusted global
+JavaScript, and project JSON in normal precedence order, then expand retained
+case-insensitive mappings that begin with `<leader>` using that final value.
+This deliberately differs from Vim's declaration-time `mapleader`.
 
 ## Consequences
 
-Project configuration can change or clear inherited leader mappings consistently. Any accepted normal/visual leader mapping reserves its prefix across normal and visual keymap grammar because pi-vimmode has no timeout fallback for exact-prefix ambiguity; insert-only leader mappings do not activate that reservation. Expansion applies only to mapping keys, not replay RHS inputs; mappings without a configured leader, containing `<leader>` after another key, or consisting only of one `<leader>` are rejected with non-fatal warnings.
+Project configuration can change or clear inherited leader mappings
+consistently. Any accepted normal/visual leader mapping reserves its prefix
+across normal and visual keymap grammar because pi-vimmode has no timeout
+fallback for exact-prefix ambiguity; insert-only leader mappings do not activate
+that reservation. Expansion applies only to mapping keys, not replay RHS inputs;
+mappings without a configured leader, containing `<leader>` after another key,
+or consisting only of one `<leader>` are rejected with non-fatal warnings.

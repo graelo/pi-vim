@@ -23,7 +23,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "lint": "biome check . && npm run lint:md",
-    "lint:md": "rumdl check *.md docs/*.md",
+    "lint:md": "rumdl check .",
     "test": "vitest run",
     "test:watch": "vitest",
     "bench": "tsx benchmark/run.ts",

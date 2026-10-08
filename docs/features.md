@@ -1,23 +1,31 @@
 # pi-vimmode feature guide
 
-pi-vimmode replaces Pi's main prompt editor with a Vim-style modal editor. It targets fast prompt editing inside Pi, not full Vim or Neovim parity.
+pi-vimmode replaces Pi's main prompt editor with a Vim-style modal editor. It
+targets fast prompt editing inside Pi, not full Vim or Neovim parity.
 
-Use this guide for behavior. Use [`settings.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/settings.md) for every `piVimMode` setting and default.
+Use this guide for behavior. Use
+[`settings.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/settings.md)
+for every `piVimMode` setting and default.
 
 ## Activation and lifecycle
 
-Pi discovers this extension through `package.json` and installs `VimEditor` as the active `CustomEditor`.
+Pi discovers this extension through `package.json` and installs `VimEditor` as
+the active `CustomEditor`.
 
 Runtime behavior:
 
-- Installs automatically on `session_start`, `resources_discover`, and `agent_end`.
+- Installs automatically on `session_start`, `resources_discover`, and
+    `agent_end`.
 - Re-runs installation on the next tick for startup/resource timing reliability.
-- Registers `/vimmode [on|off|toggle|status]` to temporarily enable/disable the modal editor without uninstalling the extension.
+- Registers `/vimmode [on|off|toggle|status]` to temporarily enable/disable
+    the modal editor without uninstalling the extension.
 - Loads settings from global and project Pi settings whenever it installs.
 - Shows status key `pi-vimmode` as `vim` when settings parse cleanly.
 - Shows `vim ⚠` when settings load with warnings.
 - Shows `vim off` when disabled through `/vimmode off`.
-- Keeps `bar` hardware cursors visible while Pi agent work is active, suppresses non-bar hardware cursors, and resets terminal cursor hints on `session_shutdown` or `/vimmode off`.
+- Keeps `bar` hardware cursors visible while Pi agent work is active,
+    suppresses non-bar hardware cursors, and resets terminal cursor hints on
+    `session_shutdown` or `/vimmode off`.
 
 Example install from Git:
 
@@ -34,16 +42,24 @@ npm test
 
 ## Disable or recover
 
-Because pi-vimmode replaces Pi's main prompt editor, keep the recovery path handy when trying it in a new terminal.
+Because pi-vimmode replaces Pi's main prompt editor, keep the recovery path
+handy when trying it in a new terminal.
 
-- Run `/vimmode off` to restore Pi's previous editor for the current extension runtime.
+- Run `/vimmode off` to restore Pi's previous editor for the current extension
+    runtime.
 - Run `/vimmode on` or `/vimmode` to enable the Vim editor again.
 - Run `pi list` to confirm the installed extension source.
-- Run `pi remove <source>` or `pi uninstall <source>` to remove it from Pi settings.
-- For the Git install shown above, run `pi remove git:https://github.com/graelo/pi-vimmode`.
-- Restart Pi or start a new session so extension discovery reloads without pi-vimmode.
-- Run `pi config` if you want to enable/disable package resources through Pi's TUI instead of hand-editing settings.
-- If the terminal cursor shape looks stuck, close and reopen the terminal. pi-vimmode resets tracked cursor styles on `session_shutdown`, but terminal support is best effort.
+- Run `pi remove <source>` or `pi uninstall <source>` to remove it from Pi
+    settings.
+- For the Git install shown above, run
+    `pi remove git:https://github.com/graelo/pi-vimmode`.
+- Restart Pi or start a new session so extension discovery reloads without
+    pi-vimmode.
+- Run `pi config` if you want to enable/disable package resources through Pi's
+    TUI instead of hand-editing settings.
+- If the terminal cursor shape looks stuck, close and reopen the terminal.
+    pi-vimmode resets tracked cursor styles on `session_shutdown`, but terminal
+    support is best effort.
 
 ## Modes
 
@@ -55,11 +71,13 @@ Because pi-vimmode replaces Pi's main prompt editor, keep the recovery path hand
 | Visual line  | `V-LINE`  | Linewise selection. Whole selected lines are highlighted.                                                                                    |
 | Visual block | `V-BLOCK` | Rectangular selection. Selected cells are highlighted.                                                                                       |
 
-Startup mode is `insert` by default. Configure `piVimMode.startMode` to start new prompts in `normal` instead.
+Startup mode is `insert` by default. Configure `piVimMode.startMode` to start
+new prompts in `normal` instead.
 
 ## Quick reference
 
-pi-vimmode has a finite prompt-local surface. This quickref classifies what is supported; it is not a Vim/Neovim quickref clone.
+pi-vimmode has a finite prompt-local surface. This quickref classifies what is
+supported; it is not a Vim/Neovim quickref clone.
 
 | Category                             | Examples                                                                      | Classification                                                                                      |
 | ------------------------------------ | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
@@ -82,28 +100,63 @@ pi-vimmode has a finite prompt-local surface. This quickref classifies what is s
 <!-- diagnostic-actions:vimmode.messages -->
 <!-- diagnostic-actions:vimmode.inspect -->
 
-Diagnostic/help metadata IDs are for discovery only: `vimmode.doctor`, `vimmode.actions`, `vimmode.keymap`, `vimmode.keybindings`, `vimmode.mapcheck`, `vimmode.help`, `vimmode.features`, `vimmode.messages`, and `vimmode.inspect` are not accepted by `piVimMode.keymap.actions` and cannot dispatch from user keybindings. Use `piVimMode.keymap.commands.showKeybindings` for an optional normal-mode shortcut to the keybindings popup. Use canonical `prompt.transform.*` IDs for prompt transform keybindings and diagnostic queries.
+Diagnostic/help metadata IDs are for discovery only: `vimmode.doctor`,
+`vimmode.actions`, `vimmode.keymap`, `vimmode.keybindings`, `vimmode.mapcheck`,
+`vimmode.help`, `vimmode.features`, `vimmode.messages`, and `vimmode.inspect`
+are not accepted by `piVimMode.keymap.actions` and cannot dispatch from user
+keybindings. Use `piVimMode.keymap.commands.showKeybindings` for an optional
+normal-mode shortcut to the keybindings popup. Use canonical
+`prompt.transform.*` IDs for prompt transform keybindings and diagnostic
+queries.
 
-Non-goals: no public plugin action API, diagnostic action keybinding dispatch, runtime `:map`, runtime `:action`, Vimscript, Neovim Lua, full Vim help tags, help pager, or broad quickref parity.
+Non-goals: no public plugin action API, diagnostic action keybinding dispatch,
+runtime `:map`, runtime `:action`, Vimscript, Neovim Lua, full Vim help tags,
+help pager, or broad quickref parity.
 
 ### Escape and reset behavior
 
 - Insert + inactive autocomplete: `Esc` enters normal mode.
 - Insert + active autocomplete: `Esc` delegates to Pi so autocomplete can close.
-- Optional `piVimMode.keymap.escape` aliases such as `<D-j>` or `<C-j>` enter normal mode from insert mode when autocomplete is inactive, cancel visual modes, and cancel pending `:` Ex command-lines.
-- Raw printable text chords such as `jk` or `jj` are rejected; aliases are real key sequences, not inserted text.
-- Escape aliases are disabled while autocomplete is open and delegate to Pi instead.
+- Optional `piVimMode.keymap.escape` aliases such as `<D-j>` or `<C-j>` enter
+    normal mode from insert mode when autocomplete is inactive, cancel visual
+    modes, and cancel pending `:` Ex command-lines.
+- Raw printable text chords such as `jk` or `jj` are rejected; aliases are
+    real key sequences, not inserted text.
+- Escape aliases are disabled while autocomplete is open and delegate to Pi
+    instead.
 - Normal: `Esc` delegates to Pi so interrupt/abort behavior still works.
-- Visual modes: `Esc` and configured escape aliases cancel selection and return to normal mode.
-- In normal/visual prompt editing, `Enter`, `Ctrl-C`, and `Ctrl-G` reset Vim transient state, return to configured startup mode, and delegate to Pi.
-- While `/` search or `:` Ex command-line is pending, `Enter` completes or executes that pending operation instead; `Ctrl-C` and `Ctrl-G` reset/delegate.
-- In insert mode, non-`Esc` keys delegate to Pi unless they are part of configured `piVimMode.keymap.escape` handling or configured `piVimMode.keymap.insert` newline, edit, or movement bindings.
-- Configured insert newline bindings (`piVimMode.keymap.insert.openLineBelow` / `openLineAbove`) open a blank line above or below the current prompt line while staying in insert mode. They only work when Pi autocomplete is inactive; autocomplete-active input keeps Pi ownership.
-- Configured insert edit bindings (`piVimMode.keymap.insert.deleteWordBackward`, `deleteWordForward`, `deleteLineBackward`, `deleteLineForward`) edit prompt text in insert mode without writing Vim registers, marks, macros, dot-repeat state, or prompt transforms.
-- Configured insert movement bindings (`piVimMode.keymap.insert.moveWordBackward`, `moveWordForward`, `moveLineStart`, `moveLineEnd`) move the cursor in insert mode without changing prompt text.
-- Insert word movement and deletion reuse pi-vimmode lowercase small-word semantics, where keyword runs, punctuation runs, and whitespace are separate groups.
-- `piVimMode.keymap.insert` owns only physical insert edits and movement. Semantic prompt transforms remain under `piVimMode.keymap.actions`.
-- Insert bindings are not Vim mappings: no raw printable chords such as `jk`, `jj`, or `oo`, no multi-key insert sequences, no insert abbreviations, no recursive mappings, no `.vimrc`, no Vimscript, no Neovim Lua, no default insert presets, no runtime `:map`, and no runtime `:action`.
+- Visual modes: `Esc` and configured escape aliases cancel selection and
+    return to normal mode.
+- In normal/visual prompt editing, `Enter`, `Ctrl-C`, and `Ctrl-G` reset Vim
+    transient state, return to configured startup mode, and delegate to Pi.
+- While `/` search or `:` Ex command-line is pending, `Enter` completes or
+    executes that pending operation instead; `Ctrl-C` and `Ctrl-G`
+    reset/delegate.
+- In insert mode, non-`Esc` keys delegate to Pi unless they are part of
+    configured `piVimMode.keymap.escape` handling or configured
+    `piVimMode.keymap.insert` newline, edit, or movement bindings.
+- Configured insert newline bindings (`piVimMode.keymap.insert.openLineBelow`
+    / `openLineAbove`) open a blank line above or below the current prompt line
+    while staying in insert mode. They only work when Pi autocomplete is
+    inactive; autocomplete-active input keeps Pi ownership.
+- Configured insert edit bindings
+    (`piVimMode.keymap.insert.deleteWordBackward`, `deleteWordForward`,
+    `deleteLineBackward`, `deleteLineForward`) edit prompt text in insert mode
+    without writing Vim registers, marks, macros, dot-repeat state, or prompt
+    transforms.
+- Configured insert movement bindings
+    (`piVimMode.keymap.insert.moveWordBackward`, `moveWordForward`,
+    `moveLineStart`, `moveLineEnd`) move the cursor in insert mode without
+    changing prompt text.
+- Insert word movement and deletion reuse pi-vimmode lowercase small-word
+    semantics, where keyword runs, punctuation runs, and whitespace are separate
+    groups.
+- `piVimMode.keymap.insert` owns only physical insert edits and movement.
+    Semantic prompt transforms remain under `piVimMode.keymap.actions`.
+- Insert bindings are not Vim mappings: no raw printable chords such as `jk`,
+    `jj`, or `oo`, no multi-key insert sequences, no insert abbreviations, no
+    recursive mappings, no `.vimrc`, no Vimscript, no Neovim Lua, no default
+    insert presets, no runtime `:map`, and no runtime `:action`.
 
 ### Readline-style and home-row-mod insert binding examples
 
@@ -142,10 +195,14 @@ Home-row-mod example:
 }
 ```
 
-`ctrl+k` cannot be assigned to both readline-style `deleteLineForward` and home-row-style `openLineAbove` in the same insert keymap.
+`ctrl+k` cannot be assigned to both readline-style `deleteLineForward` and
+home-row-style `openLineAbove` in the same insert keymap.
 
-- Unknown control/non-printable keys delegate to Pi. Unmapped printable keys in normal/visual mode are ignored.
-- `Ctrl-D` and `Ctrl-U` are Vim-owned half-page scroll motions in normal/visual modes, but insert mode still delegates them to Pi/default editing.
+- Unknown control/non-printable keys delegate to Pi. Unmapped printable keys
+    in normal/visual mode are ignored.
+- `Ctrl-D` and `Ctrl-U` are Vim-owned half-page scroll motions in
+    normal/visual modes, but insert mode still delegates them to Pi/default
+    editing.
 
 Example:
 
@@ -177,11 +234,24 @@ Enter        -> submit through Pi
 | `t{char}` / `T{char}` | move until before/after char            | Current line only.                                                                                                          |
 | `;` / `,`             | repeat char search                      | Same/opposite direction.                                                                                                    |
 
-Counts work for supported motions: `3w`, `2e`, `2W`, `2gE`, `4j`, `2fx`, `2<C-d>`, `2}`. `Ctrl-D` and `Ctrl-U` clamp safely at prompt bounds and move the cursor so existing rendering reveals the new location.
+Counts work for supported motions: `3w`, `2e`, `2W`, `2gE`, `4j`, `2fx`,
+`2<C-d>`, `2}`. `Ctrl-D` and `Ctrl-U` clamp safely at prompt bounds and move the
+cursor so existing rendering reveals the new location.
 
-Paragraph motions are prompt-local and blank-line based. A paragraph is a contiguous run of non-blank lines separated by one or more whitespace-only blank lines. `}` moves to the first column of the next paragraph, or to the prompt end when no later paragraph exists. `{` moves to the current paragraph start, or to the previous paragraph start when already there. They work in normal and visual modes; visual mode keeps the anchor and moves the active cursor. This is smaller than Vim's full paragraph grammar: no nroff macros, sentence motions, section motions, or language-aware paragraph parsing.
+Paragraph motions are prompt-local and blank-line based. A paragraph is a
+contiguous run of non-blank lines separated by one or more whitespace-only blank
+lines. `}` moves to the first column of the next paragraph, or to the prompt end
+when no later paragraph exists. `{` moves to the current paragraph start, or to
+the previous paragraph start when already there. They work in normal and visual
+modes; visual mode keeps the anchor and moves the active cursor. This is smaller
+than Vim's full paragraph grammar: no nroff macros, sentence motions, section
+motions, or language-aware paragraph parsing.
 
-Motion limitations: this feature set does not add subword/camelCase navigation, display-line motions such as `gj`/`gk`, full-page scroll keys such as `<C-f>`/`<C-b>`, viewport recentering such as `zz`/`zt`/`zb`, recursive mappings, Vimscript, `.vimrc`, or full Vim/Neovim parity. Lowercase `w`, `b`, and `e` keep their current prompt-local boundary behavior.
+Motion limitations: this feature set does not add subword/camelCase navigation,
+display-line motions such as `gj`/`gk`, full-page scroll keys such as
+`<C-f>`/`<C-b>`, viewport recentering such as `zz`/`zt`/`zb`, recursive
+mappings, Vimscript, `.vimrc`, or full Vim/Neovim parity. Lowercase `w`, `b`,
+and `e` keep their current prompt-local boundary behavior.
 
 Example:
 
@@ -230,9 +300,17 @@ Counts work for supported edits:
 10<C-a> increment number by 10
 ```
 
-Dot-repeat is intentionally finite. It repeats supported recorded normal-mode changes such as `x`, `D`, `C`, `Ctrl-a`, `Ctrl-x`, `~`, `r`, `s`, `S`, `dd`, `cc`, `>>`, `<<`, operator motions, operator character-search changes, and text-object changes. It does not replay arbitrary insert-mode text, yanks, macros, Ex substitutions, visual-mode edits, joins, or pastes.
+Dot-repeat is intentionally finite. It repeats supported recorded normal-mode
+changes such as `x`, `D`, `C`, `Ctrl-a`, `Ctrl-x`, `~`, `r`, `s`, `S`, `dd`,
+`cc`, `>>`, `<<`, operator motions, operator character-search changes, and
+text-object changes. It does not replay arbitrary insert-mode text, yanks,
+macros, Ex substitutions, visual-mode edits, joins, or pastes.
 
-Redo is intentionally prompt-local and linear. `Ctrl-r` restores the latest text/cursor state undone by normal-mode `u`, remains a safe no-op when no redo state exists, survives cursor movement, and clears when a new text edit creates a different branch. pi-vimmode does not implement Vim's undo tree, redo counts, `:redo`, `g-`, or `g+`.
+Redo is intentionally prompt-local and linear. `Ctrl-r` restores the latest
+text/cursor state undone by normal-mode `u`, remains a safe no-op when no redo
+state exists, survives cursor movement, and clears when a new text edit creates
+a different branch. pi-vimmode does not implement Vim's undo tree, redo counts,
+`:redo`, `g-`, or `g+`.
 
 ## Operators and operator motions
 
@@ -258,8 +336,10 @@ Line-only shift examples:
 
 Supported operator targets:
 
-- motions: `h`, `j`, `k`, `l`, arrow keys `Left`/`Down`/`Up`/`Right`, `w`, `b`, `e`, `W`, `B`, `E`, `ge`, `gE`, `0`, `^`, `$`, `gg`, `G`, `%`, `{`, `}`
-- character search: `f{char}`, `F{char}`, `t{char}`, `T{char}`, `;`, `,` on the current line
+- motions: `h`, `j`, `k`, `l`, arrow keys `Left`/`Down`/`Up`/`Right`, `w`,
+    `b`, `e`, `W`, `B`, `E`, `ge`, `gE`, `0`, `^`, `$`, `gg`, `G`, `%`, `{`, `}`
+- character search: `f{char}`, `F{char}`, `t{char}`, `T{char}`, `;`, `,` on
+    the current line
 - mark jumps: `` `{mark}`` and `'{mark}`
 - prompt search: `/query<Enter>`
 - text objects listed below
@@ -296,9 +376,26 @@ d2f,      delete through the second next comma on current line
 d/foo⏎    delete from cursor through next literal foo match
 ```
 
-Successful `d`/`c` motion and character-search targets record dot-repeat. Successful normal `gu`/`gU`/`g~` motion, text-object, and doubled line targets also record dot-repeat. Case operators edit text only: they do not write unnamed or named registers and do not enter insert mode. Successful `d`/`c`/`y` character-search targets update `;` and `,` repeat state, and pending operators can use that state with `d;`, `c,`, and matching configured repeat keys. Missing targets and adjacent `t`/`T` empty ranges are safe no-ops that clear the pending operator without changing text, cursor, registers, or repeat state.
+Successful `d`/`c` motion and character-search targets record dot-repeat.
+Successful normal `gu`/`gU`/`g~` motion, text-object, and doubled line targets
+also record dot-repeat. Case operators edit text only: they do not write unnamed
+or named registers and do not enter insert mode. Successful `d`/`c`/`y`
+character-search targets update `;` and `,` repeat state, and pending operators
+can use that state with `d;`, `c,`, and matching configured repeat keys. Missing
+targets and adjacent `t`/`T` empty ranges are safe no-ops that clear the pending
+operator without changing text, cursor, registers, or repeat state.
 
-Operator targets are smaller than Vim's full grammar. Character-search operator targets are current-line only and use configured semantic `findCharForward`, `findCharBackward`, `tillCharForward`, `tillCharBackward`, `repeatCharSearch`, and `repeatCharSearchReverse` bindings. Case operators support finite motions, text objects, and doubled line forms only; mark, prompt-search, and character-search case targets are unsupported safe no-ops. `Ctrl-D` and `Ctrl-U` are motions, not operator targets; `d<C-d>` and `y<C-u>` are unsupported safe no-ops. Shift operators are line-only in normal mode: arbitrary `>{motion}`, `<{motion}`, `>iw`, `>/query`, and mark-based shift ranges are unsupported safe no-ops. In visual modes, counts before `>` or `<` change shift depth, so `2>` indents selected/touched lines by two levels.
+Operator targets are smaller than Vim's full grammar. Character-search operator
+targets are current-line only and use configured semantic `findCharForward`,
+`findCharBackward`, `tillCharForward`, `tillCharBackward`, `repeatCharSearch`,
+and `repeatCharSearchReverse` bindings. Case operators support finite motions,
+text objects, and doubled line forms only; mark, prompt-search, and
+character-search case targets are unsupported safe no-ops. `Ctrl-D` and `Ctrl-U`
+are motions, not operator targets; `d<C-d>` and `y<C-u>` are unsupported safe
+no-ops. Shift operators are line-only in normal mode: arbitrary `>{motion}`,
+`<{motion}`, `>iw`, `>/query`, and mark-based shift ranges are unsupported safe
+no-ops. In visual modes, counts before `>` or `<` change shift depth, so `2>`
+indents selected/touched lines by two levels.
 
 ## Text objects
 
@@ -337,21 +434,35 @@ Limitations:
 
 - Word objects use whitespace boundaries.
 - Quote objects search current line.
-- Bracket objects balance delimiters in prompt text, but do not implement Vim's full syntax awareness.
-- Prompt-native objects use conservative line-oriented scanning, not full Markdown/XML parsing.
-- Paragraph objects use the same blank-line paragraph model as `{` and `}`. `ip` selects the paragraph body only; `ap` adds one adjacent blank separator group when present (following, otherwise preceding) so deleting a paragraph does not leave double blank separators.
-- XML-ish tags support matching `<name ...>` / `</name>` pairs and ignore self-closing tags.
-- Error block detection is heuristic and stops at blank or unrelated prose lines.
+- Bracket objects balance delimiters in prompt text, but do not implement
+    Vim's full syntax awareness.
+- Prompt-native objects use conservative line-oriented scanning, not full
+    Markdown/XML parsing.
+- Paragraph objects use the same blank-line paragraph model as `{` and `}`.
+    `ip` selects the paragraph body only; `ap` adds one adjacent blank separator
+    group when present (following, otherwise preceding) so deleting a paragraph
+    does not leave double blank separators.
+- XML-ish tags support matching `<name ...>` / `</name>` pairs and ignore
+    self-closing tags.
+- Error block detection is heuristic and stops at blank or unrelated prose
+    lines.
 
 ## EasyMotion
 
-EasyMotion is opt-in; it has no default binding. Bind `command.easymotion`, type a target character, then press its label to move the cursor. Matching is case-insensitive and prompt-wide. Up to 52 targets receive deterministic labels: `a` through `z`, then `A` through `Z`.
+EasyMotion is opt-in; it has no default binding. Bind `command.easymotion`, type
+a target character, then press its label to move the cursor. Matching is
+case-insensitive and prompt-wide. Up to 52 targets receive deterministic labels:
+`a` through `z`, then `A` through `Z`.
 
-Labels are render-only substitutions over unchanged prompt cells. Escape, invalid labels, and missing matches leave prompt text and undo/redo history unchanged. Valid labels move the cursor without creating an edit. Configure label color with `piVimMode.easymotion.labelColor`.
+Labels are render-only substitutions over unchanged prompt cells. Escape,
+invalid labels, and missing matches leave prompt text and undo/redo history
+unchanged. Valid labels move the cursor without creating an edit. Configure
+label color with `piVimMode.easymotion.labelColor`.
 
 ## Character search
 
-`f`, `F`, `t`, and `T` search within the current line only. They work as normal-mode motions and as targets after `d`, `c`, or `y`.
+`f`, `F`, `t`, and `T` search within the current line only. They work as
+normal-mode motions and as targets after `d`, `c`, or `y`.
 
 Example:
 
@@ -364,13 +475,18 @@ f_  -> first underscore
 T_  -> character after previous underscore
 ```
 
-Search misses are safe no-ops. After operators, `f`/`F` include the matched character in the operated range; `t`/`T` exclude it. Counts target later/earlier matches, e.g. `d2f,` deletes through the second next comma. Adjacent `t`/`T` matches are treated as empty operator ranges and no-op safely.
+Search misses are safe no-ops. After operators, `f`/`F` include the matched
+character in the operated range; `t`/`T` exclude it. Counts target later/earlier
+matches, e.g. `d2f,` deletes through the second next comma. Adjacent `t`/`T`
+matches are treated as empty operator ranges and no-op safely.
 
 <!-- runtime-help:search -->
 
 ## Prompt search
 
-`/` starts literal forward search in current prompt. `?` starts literal backward search. Type query text, then press `Enter`. `n` repeats last search direction and `N` searches opposite direction. Matches wrap around the prompt.
+`/` starts literal forward search in current prompt. `?` starts literal backward
+search. Type query text, then press `Enter`. `n` repeats last search direction
+and `N` searches opposite direction. Matches wrap around the prompt.
 
 Examples:
 
@@ -388,20 +504,35 @@ y?TODO⏎    yank through previous literal TODO match
 
 Word search:
 
-- `*` searches forward for the keyword word under the cursor; `#` searches backward.
-- A keyword word is a contiguous run of ASCII letters, digits, and `_`. The cursor on a keyword character uses that containing word; a cursor immediately after a keyword word (including at line end) uses that preceding word.
-- `*` and `#` are normal-mode only and reuse prompt search repeat state, so `n` repeats the chosen direction and `N` searches the opposite direction. They share literal matching, wrapping, search history, and search highlighting with `/` and `?`.
+- `*` searches forward for the keyword word under the cursor; `#` searches
+    backward.
+- A keyword word is a contiguous run of ASCII letters, digits, and `_`. The
+    cursor on a keyword character uses that containing word; a cursor
+    immediately after a keyword word (including at line end) uses that preceding
+    word.
+- `*` and `#` are normal-mode only and reuse prompt search repeat state, so
+    `n` repeats the chosen direction and `N` searches the opposite direction.
+    They share literal matching, wrapping, search history, and search
+    highlighting with `/` and `?`.
 - Insert-mode `*` and `#` delegate to Pi default editing.
-- Limitations: no `iskeyword` configuration, no regex query generation from the word, no smartcase, no search offsets, and no visual or operator-motion `*` / `#`.
+- Limitations: no `iskeyword` configuration, no regex query generation from
+    the word, no smartcase, no search offsets, and no visual or operator-motion
+    `*` / `#`.
 
 Search workbench behavior:
 
-- `/` and `?` render a width-safe workbench row below the prompt and shrink the prompt viewport by one row while pending.
-- `Up` / `Down` navigate prompt-local in-memory search history for the current editor instance.
-- Successful searches enter history; misses, invalid regex, and rejected bounded regex patterns do not.
+- `/` and `?` render a width-safe workbench row below the prompt and shrink
+    the prompt viewport by one row while pending.
+- `Up` / `Down` navigate prompt-local in-memory search history for the current
+    editor instance.
+- Successful searches enter history; misses, invalid regex, and rejected
+    bounded regex patterns do not.
 - Empty `/` or `?` recalls the last successful query and matcher mode.
-- Search is literal by default. Prefix a pending query with `\r` to opt into bounded JavaScript regex matching.
-- Regex search bounds: pattern length 256, prompt text length 50,000 UTF-16 code units, and match-count cap 10,000. Invalid, too-large, or zero-length regex matches are rejected without prompt mutation.
+- Search is literal by default. Prefix a pending query with `\r` to opt into
+    bounded JavaScript regex matching.
+- Regex search bounds: pattern length 256, prompt text length 50,000 UTF-16
+    code units, and match-count cap 10,000. Invalid, too-large, or zero-length
+    regex matches are rejected without prompt mutation.
 
 Visual search moves the active cursor while preserving the visual anchor.
 
@@ -410,12 +541,15 @@ Search highlighting:
 - Successful `/`, `?`, `n`, and `N` can highlight matches.
 - Current match can use distinct styling.
 - Highlight rendering is capped by `piVimMode.search.maxHighlights`.
-- Precedence is: cursor, visual selection, current search match, other search matches, plain text.
-- Search highlight can clear on cancelled search or insert-mode transition depending on settings.
+- Precedence is: cursor, visual selection, current search match, other search
+    matches, plain text.
+- Search highlight can clear on cancelled search or insert-mode transition
+    depending on settings.
 
 Limitations:
 
-- No search offsets, Vim magic modes, Vim highlight groups, or search across previous prompts.
+- No search offsets, Vim magic modes, Vim highlight groups, or search across
+    previous prompts.
 - Regex mode is bounded mitigation, not a sandboxed regex engine.
 
 ## Visual char mode
@@ -424,14 +558,17 @@ Enter with `v` from normal mode.
 
 Supported actions:
 
-- Motions extend selection: `h`, `j`, `k`, `l`, `0`, `$`, `^`, `_`, `w`, `b`, `e`, `gg`, `G`, `%`, search, and mark jumps.
+- Motions extend selection: `h`, `j`, `k`, `l`, `0`, `$`, `^`, `_`, `w`, `b`,
+    `e`, `gg`, `G`, `%`, search, and mark jumps.
 - `V` switches to visual line mode without resetting anchor.
-- A configured `piVimMode.keymap.commands.visualBlock` binding switches to visual block mode without resetting anchor.
+- A configured `piVimMode.keymap.commands.visualBlock` binding switches to
+    visual block mode without resetting anchor.
 - `y` yanks selection and returns normal.
 - `d` / `x` deletes selection and returns normal.
 - `c` deletes selection and enters insert.
 - `r{char}` replaces selected characters and returns normal.
-- `u` lowercases, `U` uppercases, and `~` toggles selected character case; each returns normal without writing registers.
+- `u` lowercases, `U` uppercases, and `~` toggles selected character case;
+    each returns normal without writing registers.
 - `>` / `<` indents or dedents every touched line and returns normal.
 - `:` opens Ex command-line with `'<,'>` prefilled.
 - `"{a-z}` / `"{A-Z}` targets next yank/delete/change with named register.
@@ -451,9 +588,12 @@ Supported actions:
 
 - Motions extend selected line range.
 - `v` switches to visual char mode without resetting anchor.
-- A configured `piVimMode.keymap.commands.visualBlock` binding switches to visual block mode without resetting anchor.
-- `y`, `d`, `x`, `c`, `r{char}`, `u`, `U`, `~`, `>` / `<`, mark jumps, named register targeting, and `:` work linewise.
-- Linewise `p` in visual line mode replaces selected lines with the register content.
+- A configured `piVimMode.keymap.commands.visualBlock` binding switches to
+    visual block mode without resetting anchor.
+- `y`, `d`, `x`, `c`, `r{char}`, `u`, `U`, `~`, `>` / `<`, mark jumps, named
+    register targeting, and `:` work linewise.
+- Linewise `p` in visual line mode replaces selected lines with the register
+    content.
 
 Example:
 
@@ -464,7 +604,12 @@ Vjp     replace selected lines with unnamed register
 
 ## Visual block mode
 
-Enter visual block mode with `piVimMode.keymap.commands.visualBlock`. The default setting is empty because `Ctrl-v`, Windows-style `Alt-v`, and `Ctrl-Alt-v` delegate to Pi for image/clipboard paste in normal and visual modes. Use a non-protected binding such as `<A-b>`, or explicitly allow and bind a paste shortcut if Vim-style visual block is more important than Pi image paste in your workflow.
+Enter visual block mode with `piVimMode.keymap.commands.visualBlock`. The
+default setting is empty because `Ctrl-v`, Windows-style `Alt-v`, and
+`Ctrl-Alt-v` delegate to Pi for image/clipboard paste in normal and visual
+modes. Use a non-protected binding such as `<A-b>`, or explicitly allow and bind
+a paste shortcut if Vim-style visual block is more important than Pi image paste
+in your workflow.
 
 Supported actions:
 
@@ -475,10 +620,14 @@ Supported actions:
 - `d` / `x` delete selected slices.
 - `c` deletes selected slices and enters insert.
 - `r{char}` replaces selected cells.
-- `u` lowercases, `U` uppercases, and `~` toggles selected cell case without writing registers.
-- `>` / `<` indents or dedents every line touched by the block, regardless of selected columns.
-- `I` starts block insert before block on each selected line; typed text is applied when `Esc` is pressed.
-- `A` starts block append after block on each selected line; typed text is applied when `Esc` is pressed.
+- `u` lowercases, `U` uppercases, and `~` toggles selected cell case without
+    writing registers.
+- `>` / `<` indents or dedents every line touched by the block, regardless of
+    selected columns.
+- `I` starts block insert before block on each selected line; typed text is
+    applied when `Esc` is pressed.
+- `A` starts block append after block on each selected line; typed text is
+    applied when `Esc` is pressed.
 - `:` opens Ex command-line with visual line range marker `'<,'>` prefilled.
 
 Example:
@@ -495,7 +644,8 @@ From normal mode, `gv` re-enters the last visual selection when available.
 
 - Preserves the previous visual mode: characterwise, linewise, or blockwise.
 - Restores the visual anchor and active cursor from the most recent visual exit.
-- Safe no-op when no previous selection exists or stored positions are stale after edits.
+- Safe no-op when no previous selection exists or stored positions are stale
+    after edits.
 - Configurable via `piVimMode.keymap.commands.reselectVisual` (default: `gv`).
 
 Example:
@@ -509,7 +659,9 @@ gv       reselect the same three characters
 
 ## Ex command-line
 
-Normal-mode `:` opens a dedicated Ex row below the prompt. Visual `:` opens the same row with `'<,'>` prefilled and keeps the original selection highlighted while editing the command.
+Normal-mode `:` opens a dedicated Ex row below the prompt. Visual `:` opens the
+same row with `'<,'>` prefilled and keeps the original selection highlighted
+while editing the command.
 
 Supported commands:
 
@@ -562,7 +714,8 @@ Supported ranges:
 - `$`: last line
 - single signed offset on a single-line address, e.g. `.+1`, `$-2`, `3+2`, `3-1`
 - comma range, e.g. `2,4`, `.,$`, `$-1,$`
-- semicolon range, e.g. `2;.+2`; first address becomes the base for resolving the second address, so `.` in the second address means line 2 here
+- semicolon range, e.g. `2;.+2`; first address becomes the base for resolving
+    the second address, so `.` in the second address means line 2 here
 - normal-mode count before `:`, e.g. `3:` pre-fills a concrete clamped range
 
 Supported destination addresses for `:copy`/`:t` and `:move`/`:m`:
@@ -571,7 +724,8 @@ Supported destination addresses for `:copy`/`:t` and `:move`/`:m`:
 - numeric line address, e.g. `4`: after that line
 - `.`: after current line
 - `$`: after last line
-- single signed offset on numeric, `.`, or `$` destinations, e.g. `$-1`, `.+1`, `3-1`
+- single signed offset on numeric, `.`, or `$` destinations, e.g. `$-1`,
+    `.+1`, `3-1`
 
 Supported substitution flags:
 
@@ -583,61 +737,126 @@ Supported substitution flags:
 
 Important semantics:
 
-- Pattern matching is literal by default. Add `r` to use bounded regex, e.g. `:%s/TODO|FIXME/done/gr`.
-- Replacement text is always literal. `&`, `$1`, and `\1` insert literally, even in regex mode.
+- Pattern matching is literal by default. Add `r` to use bounded regex, e.g.
+    `:%s/TODO|FIXME/done/gr`.
+- Replacement text is always literal. `&`, `$1`, and `\1` insert literally,
+    even in regex mode.
 - Empty replacement is valid.
 - Empty pattern is an error.
-- Delimiter can be any printable non-alphanumeric, non-whitespace, non-backslash character.
-- `:delete` removes addressed lines and writes the deleted linewise text to the unnamed register.
-- `:yank` copies addressed lines to the unnamed register without editing prompt text.
-- `:put` inserts unnamed register text as prompt-buffer lines after the addressed range.
-- `:delete a` and `:yank a` also write lowercase named register `a` while updating the unnamed register.
-- `:delete A` and `:yank A` append to lowercase named register `a` while the unnamed register receives only the latest addressed text.
-- `:put a` and `:put A` read lowercase named register `a`; uppercase put reads only and does not append.
-- `:copy` duplicates addressed lines after the destination address; destination `0` inserts before line 1.
-- `:move` moves addressed lines after the destination address and rejects destinations inside the moved range.
-- Destination `0` is only the before-first-line sentinel; offset forms like `0+1` are unsupported.
-- `:join` with no explicit range joins current line with next line; explicit ranges join all addressed lines with normalized boundary whitespace.
+- Delimiter can be any printable non-alphanumeric, non-whitespace,
+    non-backslash character.
+- `:delete` removes addressed lines and writes the deleted linewise text to
+    the unnamed register.
+- `:yank` copies addressed lines to the unnamed register without editing
+    prompt text.
+- `:put` inserts unnamed register text as prompt-buffer lines after the
+    addressed range.
+- `:delete a` and `:yank a` also write lowercase named register `a` while
+    updating the unnamed register.
+- `:delete A` and `:yank A` append to lowercase named register `a` while the
+    unnamed register receives only the latest addressed text.
+- `:put a` and `:put A` read lowercase named register `a`; uppercase put reads
+    only and does not append.
+- `:copy` duplicates addressed lines after the destination address;
+    destination `0` inserts before line 1.
+- `:move` moves addressed lines after the destination address and rejects
+    destinations inside the moved range.
+- Destination `0` is only the before-first-line sentinel; offset forms like
+    `0+1` are unsupported.
+- `:join` with no explicit range joins current line with next line; explicit
+    ranges join all addressed lines with normalized boundary whitespace.
 - `:quote` prefixes addressed lines with Markdown quote syntax `> `.
-- `:unquote` removes one leading Markdown quote marker from each addressed quoted line.
-- `:bulletize` converts each nonblank addressed line to a Markdown bullet while preserving indentation.
-- `:fence [language]` wraps addressed lines in a Markdown code fence with optional language tag.
+- `:unquote` removes one leading Markdown quote marker from each addressed
+    quoted line.
+- `:bulletize` converts each nonblank addressed line to a Markdown bullet
+    while preserving indentation.
+- `:fence [language]` wraps addressed lines in a Markdown code fence with
+    optional language tag.
 - `:indent` adds two spaces to each addressed line.
-- `:dedent` removes at most one tab, two spaces, or one leading space from each addressed line without deleting content.
-- `:reflow [width]` rewraps prose paragraphs to the given width or 80 columns; fenced code, error blocks, blank lines, and bullet lines are preserved.
-- `:nohlsearch` clears visible prompt search highlights but keeps repeat-search state for `n`/`N`.
-- `:vimdoctor` opens a read-only popup with live customization health, warning count, and first actionable settings warning behind `vim ⚠`.
-- `:keymap [query]` opens a read-only popup with effective resolved semantic keymap entries, e.g. `:keymap redo`.
-- `:keybindings [query]` opens a read-only popup listing effective bindings by finite category, mode, key, action ID, and description, or showing focused detail for action IDs, descriptions, keys, and protected shortcuts, e.g. `:keybindings redo` or `:keybindings ctrl+p`.
-- `:mapcheck <key>` opens a read-only popup explaining mapped, unmapped, protected, or warning-related key ownership, e.g. `:mapcheck ctrl+p`.
-- `:actions [query]` opens a read-only popup listing/searching finite supported actions without adding arbitrary Vim grammar.
-- `:help [topic]` opens a read-only popup with source-backed runtime help for finite pi-vimmode topics, e.g. `:help search` or `:help ex`.
-- `:features [query]` opens a read-only popup listing/searching supported feature areas, commands, actions, limits, and effective runtime state, e.g. `:features nohlsearch` or `:features redo`.
-- `:messages` opens a read-only popup with a bounded prompt-local summary of retained recent runtime messages without opening a pager.
-- `:changelog` opens packaged current-version release notes as width-safe Markdown in the same read-only popup; it never reads the working directory or network.
-- `:q` and `:quit` request graceful Pi shutdown through the Pi extension runtime without editing prompt text, registers, marks, search state, macros, cursor, or dot-repeat.
-- `:q!`, `:quit!`, `:wq`, `:x`, `:qa`, `:write`, `:edit`, `:shell`, and other file/window/shell Ex commands are intentionally unsupported.
-- `Esc` cancels command-line input. Normal Ex returns to normal mode; visual Ex restores the original visual mode, anchor, cursor, and highlight.
-- `Tab` completes a single matching supported Ex command name or extends to the longest shared supported command prefix when multiple suggestions share it. Completion is limited to the command word; command arguments, range completion, Vimscript abbreviation expansion, and menu cycling are intentionally unsupported.
-- `Left` / `Right` / `Home` / `End`, forward delete, `Alt-Left`, `Alt-Right`, and `Ctrl-W` edit the pending Ex command text without editing prompt text.
-- `Up` / `Down` navigate prompt-local in-memory Ex history for successful commands in the current editor instance and move the command cursor to the end of the recalled command.
+- `:dedent` removes at most one tab, two spaces, or one leading space from
+    each addressed line without deleting content.
+- `:reflow [width]` rewraps prose paragraphs to the given width or 80 columns;
+    fenced code, error blocks, blank lines, and bullet lines are preserved.
+- `:nohlsearch` clears visible prompt search highlights but keeps
+    repeat-search state for `n`/`N`.
+- `:vimdoctor` opens a read-only popup with live customization health, warning
+    count, and first actionable settings warning behind `vim ⚠`.
+- `:keymap [query]` opens a read-only popup with effective resolved semantic
+    keymap entries, e.g. `:keymap redo`.
+- `:keybindings [query]` opens a read-only popup listing effective bindings by
+    finite category, mode, key, action ID, and description, or showing focused
+    detail for action IDs, descriptions, keys, and protected shortcuts, e.g.
+    `:keybindings redo` or `:keybindings ctrl+p`.
+- `:mapcheck <key>` opens a read-only popup explaining mapped, unmapped,
+    protected, or warning-related key ownership, e.g. `:mapcheck ctrl+p`.
+- `:actions [query]` opens a read-only popup listing/searching finite
+    supported actions without adding arbitrary Vim grammar.
+- `:help [topic]` opens a read-only popup with source-backed runtime help for
+    finite pi-vimmode topics, e.g. `:help search` or `:help ex`.
+- `:features [query]` opens a read-only popup listing/searching supported
+    feature areas, commands, actions, limits, and effective runtime state, e.g.
+    `:features nohlsearch` or `:features redo`.
+- `:messages` opens a read-only popup with a bounded prompt-local summary of
+    retained recent runtime messages without opening a pager.
+- `:changelog` opens packaged current-version release notes as width-safe
+    Markdown in the same read-only popup; it never reads the working directory
+    or network.
+- `:q` and `:quit` request graceful Pi shutdown through the Pi extension
+    runtime without editing prompt text, registers, marks, search state, macros,
+    cursor, or dot-repeat.
+- `:q!`, `:quit!`, `:wq`, `:x`, `:qa`, `:write`, `:edit`, `:shell`, and other
+    file/window/shell Ex commands are intentionally unsupported.
+- `Esc` cancels command-line input. Normal Ex returns to normal mode; visual
+    Ex restores the original visual mode, anchor, cursor, and highlight.
+- `Tab` completes a single matching supported Ex command name or extends to
+    the longest shared supported command prefix when multiple suggestions share
+    it. Completion is limited to the command word; command arguments, range
+    completion, Vimscript abbreviation expansion, and menu cycling are
+    intentionally unsupported.
+- `Left` / `Right` / `Home` / `End`, forward delete, `Alt-Left`, `Alt-Right`,
+    and `Ctrl-W` edit the pending Ex command text without editing prompt text.
+- `Up` / `Down` navigate prompt-local in-memory Ex history for successful
+    commands in the current editor instance and move the command cursor to the
+    end of the recalled command.
 - Enter on an empty command closes the Ex row without a message.
-- Substitution is two-phase: first `Enter` highlights matched target text and reports a match count without editing, second unchanged `Enter` applies, `Esc` cancels.
-- `:&`, `:&&`, and range-qualified forms such as `:%&` repeat the last successfully applied substitution through the same preview/apply flow.
+- Substitution is two-phase: first `Enter` highlights matched target text and
+    reports a match count without editing, second unchanged `Enter` applies,
+    `Esc` cancels.
+- `:&`, `:&&`, and range-qualified forms such as `:%&` repeat the last
+    successfully applied substitution through the same preview/apply flow.
 - Editing or history navigation clears a pending substitution match preview.
-- Unsupported command, range, destination, delimiter, argument, flag, register operand, invalid regex, too-large regex input, or zero-length regex match produces transient Ex error text.
-- Unsupported range syntax includes repeated offsets such as `.+1-2`, repeated range separators, expression ranges, search addresses, mark addresses, `+cmd` suffixes, and broader Vimscript grammar.
-- Successful mutating/editing commands show transient count text such as `2 substitutions`, `1 line deleted`, `3 lines moved`, or `2 lines transformed`.
-- Valid read-only help/diagnostic commands open a bounded popup: `:help`, `:help <topic>`, `:features`, `:features <query>`, `:keybindings`, `:keybindings <query>`, `:actions`, `:actions <query>`, `:keymap`, `:keymap <action>`, `:mapcheck <key>`, `:messages`, `:changelog`, `:vimmode inspect`, and `:vimdoctor`.
-- Popup-backed commands do not edit prompt text, registers, marks, search state, visual state, macros, or dot-repeat.
-- Mutating command success/error feedback, parser errors, invalid command feedback, substitution preview/apply messages, `:noh`, prompt transforms, and optional no-op feedback stay in the compact Ex/workbench row.
-- Compact success/error/info messages stay in the Ex row until the next handled input.
+- Unsupported command, range, destination, delimiter, argument, flag, register
+    operand, invalid regex, too-large regex input, or zero-length regex match
+    produces transient Ex error text.
+- Unsupported range syntax includes repeated offsets such as `.+1-2`, repeated
+    range separators, expression ranges, search addresses, mark addresses,
+    `+cmd` suffixes, and broader Vimscript grammar.
+- Successful mutating/editing commands show transient count text such as
+    `2 substitutions`, `1 line deleted`, `3 lines moved`, or
+    `2 lines transformed`.
+- Valid read-only help/diagnostic commands open a bounded popup: `:help`,
+    `:help <topic>`, `:features`, `:features <query>`, `:keybindings`,
+    `:keybindings <query>`, `:actions`, `:actions <query>`, `:keymap`,
+    `:keymap <action>`, `:mapcheck <key>`, `:messages`, `:changelog`,
+    `:vimmode inspect`, and `:vimdoctor`.
+- Popup-backed commands do not edit prompt text, registers, marks, search
+    state, visual state, macros, or dot-repeat.
+- Mutating command success/error feedback, parser errors, invalid command
+    feedback, substitution preview/apply messages, `:noh`, prompt transforms,
+    and optional no-op feedback stay in the compact Ex/workbench row.
+- Compact success/error/info messages stay in the Ex row until the next
+    handled input.
 - `Ctrl-C` and `Ctrl-G` reset Vim transient state and delegate to Pi.
 - Text-changing Ex commands clear visible prompt search highlights.
-- Ex commands do not update dot-repeat. Only documented register operands on `:delete`, `:yank`, and `:put` touch named registers.
-- Bare single-address line jumps such as `:3`, `:.`, `:$`, and offset forms like `:2+1` move the cursor to the addressed line without editing prompt text. Column is preserved when possible, clamped to target line length.
-- Commandless ranges such as `:%`, `:2,4`, `:2;.+1`, and `:'<,'>` are unsupported and produce an Ex error without editing prompt text.
-- Line jumps from visual Ex exit to normal mode, clear the visual selection, and move the cursor.
+- Ex commands do not update dot-repeat. Only documented register operands on
+    `:delete`, `:yank`, and `:put` touch named registers.
+- Bare single-address line jumps such as `:3`, `:.`, `:$`, and offset forms
+    like `:2+1` move the cursor to the addressed line without editing prompt
+    text. Column is preserved when possible, clamped to target line length.
+- Commandless ranges such as `:%`, `:2,4`, `:2;.+1`, and `:'<,'>` are
+    unsupported and produce an Ex error without editing prompt text.
+- Line jumps from visual Ex exit to normal mode, clear the visual selection,
+    and move the cursor.
 
 Transform examples:
 
@@ -648,7 +867,8 @@ Transform examples:
 :reflow 72
 ```
 
-Prompt transform actions can also be bound to normal/visual keys through `piVimMode.keymap.actions` using canonical `prompt.transform.*` IDs:
+Prompt transform actions can also be bound to normal/visual keys through
+`piVimMode.keymap.actions` using canonical `prompt.transform.*` IDs:
 
 ```json
 {
@@ -665,23 +885,66 @@ Prompt transform actions can also be bound to normal/visual keys through `piVimM
 }
 ```
 
-Action keybinding presets are opt-in bundles selected with `piVimMode.keymap.actionPresets`; recipes are copy-paste snippets for `piVimMode.keymap.actions`. Both are backed by the same finite canonical action metadata. They are not defaults, not recursive mappings, not runtime `:map`, not `.vimrc`, not plugin API, not diagnostic/help action dispatch, and not Vim/Neovim parity. Run `:features keybindings` or `:features action presets` to discover recommended presets and recipes at runtime.
+Action keybinding presets are opt-in bundles selected with
+`piVimMode.keymap.actionPresets`; recipes are copy-paste snippets for
+`piVimMode.keymap.actions`. Both are backed by the same finite canonical action
+metadata. They are not defaults, not recursive mappings, not runtime `:map`, not
+`.vimrc`, not plugin API, not diagnostic/help action dispatch, and not
+Vim/Neovim parity. Run `:features keybindings` or `:features action presets` to
+discover recommended presets and recipes at runtime.
 
 <!-- runtime-help:keybinding-discovery-popup -->
 
 ### Read-only Ex popup and keybinding discovery
 
-Valid read-only Ex help and diagnostic commands open a dedicated bounded read-only overlay popup, similar to Pi picker-style overlay UIs. Popup-backed commands include `:help`, `:help <topic>`, `:features`, `:features <query>`, `:features keybindings`, `:keybindings`, `:keybindings <query>`, `:actions`, `:actions <query>`, `:keymap`, `:keymap <action>`, `:mapcheck <key>`, `:messages`, `:changelog`, `:vimmode inspect`, and `:vimdoctor`.
+Valid read-only Ex help and diagnostic commands open a dedicated bounded
+read-only overlay popup, similar to Pi picker-style overlay UIs. Popup-backed
+commands include `:help`, `:help <topic>`, `:features`, `:features <query>`,
+`:features keybindings`, `:keybindings`, `:keybindings <query>`, `:actions`,
+`:actions <query>`, `:keymap`, `:keymap <action>`, `:mapcheck <key>`,
+`:messages`, `:changelog`, `:vimmode inspect`, and `:vimdoctor`.
 
-`:keybindings` is the direct keybinding discovery entry point. It lists effective pi-vimmode bindings from resolved settings by finite category: commands, motions, operators, text objects, macros, marks, searches, prompt transform actions, and protected Pi shortcuts. Each binding row shows key, supported mode scope, action ID, and description in a fixed grid. `:keybindings <query>` shows focused detail for action IDs (`redo`, `wordForward`, `prompt.transform.reflow`), descriptions, current keys, protected shortcuts such as `ctrl+p`, rejected metadata/action binding warnings, and bounded no-match output. Ex commands and diagnostic/help metadata IDs are excluded from the catalog because they are not keybindings. It is read-only discovery: it does not edit settings, create mappings, run a command palette, or dispatch metadata actions.
+`:keybindings` is the direct keybinding discovery entry point. It lists
+effective pi-vimmode bindings from resolved settings by finite category:
+commands, motions, operators, text objects, macros, marks, searches, prompt
+transform actions, and protected Pi shortcuts. Each binding row shows key,
+supported mode scope, action ID, and description in a fixed grid.
+`:keybindings <query>` shows focused detail for action IDs (`redo`,
+`wordForward`, `prompt.transform.reflow`), descriptions, current keys, protected
+shortcuts such as `ctrl+p`, rejected metadata/action binding warnings, and
+bounded no-match output. Ex commands and diagnostic/help metadata IDs are
+excluded from the catalog because they are not keybindings. It is read-only
+discovery: it does not edit settings, create mappings, run a command palette, or
+dispatch metadata actions.
 
-`:features keybindings` remains supported as the recipe-oriented keybinding discovery entry point. That popup summarizes runtime help topics, feature discovery results, action keybinding recipes and presets, canonical `prompt.transform.*` action IDs, accepted configured bindings from `piVimMode.keymap.actions`, the `piVimMode.keymap.actionPresets` surface, customization diagnostics, message-history summaries, inspectability summaries, and hints for `:actions <query>`, `:keymap <action>`, `:keybindings <query>`, and `:mapcheck <key>`. Detailed setting shapes, defaults, and validation rules remain in [`settings.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/settings.md).
+`:features keybindings` remains supported as the recipe-oriented keybinding
+discovery entry point. That popup summarizes runtime help topics, feature
+discovery results, action keybinding recipes and presets, canonical
+`prompt.transform.*` action IDs, accepted configured bindings from
+`piVimMode.keymap.actions`, the `piVimMode.keymap.actionPresets` surface,
+customization diagnostics, message-history summaries, inspectability summaries,
+and hints for `:actions <query>`, `:keymap <action>`, `:keybindings <query>`,
+and `:mapcheck <key>`. Detailed setting shapes, defaults, and validation rules
+remain in
+[`settings.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/settings.md).
 
-When popup content overflows the bounded body, scroll inside the overlay with `j`/`k` or arrow-down/arrow-up to reach hidden rows. The popup scroll position is local overlay state only; it does not edit the prompt, move the prompt cursor, or append `:messages` history. Popup content, popup scroll, popup dismissal, and the output of `:messages` itself are not retained as runtime message history.
+When popup content overflows the bounded body, scroll inside the overlay with
+`j`/`k` or arrow-down/arrow-up to reach hidden rows. The popup scroll position
+is local overlay state only; it does not edit the prompt, move the prompt
+cursor, or append `:messages` history. Popup content, popup scroll, popup
+dismissal, and the output of `:messages` itself are not retained as runtime
+message history.
 
-Dismiss the popup with `Esc`, `Ctrl-C`, or `Ctrl-G`. Mutating Ex commands, parser errors, edit-flow success/errors, prompt transforms, `:noh`, substitution preview/apply feedback, and optional no-op feedback keep compact inline/workbench behavior rather than opening the read-only popup.
+Dismiss the popup with `Esc`, `Ctrl-C`, or `Ctrl-G`. Mutating Ex commands,
+parser errors, edit-flow success/errors, prompt transforms, `:noh`, substitution
+preview/apply feedback, and optional no-op feedback keep compact
+inline/workbench behavior rather than opening the read-only popup.
 
-Popup non-goals: no Vim help tags, no command palette, no runtime `:map`, no runtime `:action`, no recursive mappings, no Vimscript, no plugin API, no diagnostic/help action keybinding dispatch, no default action keybindings, no default keybinding for `:keybindings`, no persistent logs, and no unbounded output log.
+Popup non-goals: no Vim help tags, no command palette, no runtime `:map`, no
+runtime `:action`, no recursive mappings, no Vimscript, no plugin API, no
+diagnostic/help action keybinding dispatch, no default action keybindings, no
+default keybinding for `:keybindings`, no persistent logs, and no unbounded
+output log.
 
 <!-- action-keybinding-preset:paragraph-editing -->
 <!-- action-keybinding-preset:markdown-wrapping -->
@@ -700,15 +963,19 @@ Preset example:
 }
 ```
 
-Explicit `piVimMode.keymap.actions` entries override preset-provided entries for the same action ID; explicit empty action arrays clear preset-provided entries.
+Explicit `piVimMode.keymap.actions` entries override preset-provided entries for
+the same action ID; explicit empty action arrays clear preset-provided entries.
 
 <!-- action-keybinding-recipe:paragraph-editing -->
 
-Paragraph editing recipe: `prompt.transform.reflow` on `gq`, `prompt.transform.quote` on `g>`, and `prompt.transform.unquote` on `g<`.
+Paragraph editing recipe: `prompt.transform.reflow` on `gq`,
+`prompt.transform.quote` on `g>`, and `prompt.transform.unquote` on `g<`.
 
 <!-- action-keybinding-recipe:markdown-wrapping -->
 
-Markdown wrapping recipe: `prompt.transform.fence` on `gT` with no default language specifier, plus `prompt.transform.quote` on `g>` and `prompt.transform.unquote` on `g<`.
+Markdown wrapping recipe: `prompt.transform.fence` on `gT` with no default
+language specifier, plus `prompt.transform.quote` on `g>` and
+`prompt.transform.unquote` on `g<`.
 
 Examples:
 
@@ -719,13 +986,31 @@ gT    " fence current line with no language specifier
 vjjg> " quote touched visual lines, then return to normal mode
 ```
 
-Action keybindings call the same prompt transform behavior as Ex commands, but changed action edits are silent and do not update dot-repeat in this milestone. Visual actions use touched lines; visual-block action transforms are linewise, not rectangular. `piVimMode.promptTransforms.commands` remains the Ex command-name config surface. `piVimMode.promptTransforms.actions` remains the transform enable-flag surface. `piVimMode.keymap.actions` is only for key bindings.
+Action keybindings call the same prompt transform behavior as Ex commands, but
+changed action edits are silent and do not update dot-repeat in this milestone.
+Visual actions use touched lines; visual-block action transforms are linewise,
+not rectangular. `piVimMode.promptTransforms.commands` remains the Ex
+command-name config surface. `piVimMode.promptTransforms.actions` remains the
+transform enable-flag surface. `piVimMode.keymap.actions` is only for key
+bindings.
 
-Canonical config and diagnostic IDs are required: `prompt.transform.quote`, `prompt.transform.unquote`, `prompt.transform.bulletize`, `prompt.transform.fence`, `prompt.transform.indent`, `prompt.transform.dedent`, and `prompt.transform.reflow`. Non-canonical action IDs are rejected in config and do not match diagnostic/help searches.
+Canonical config and diagnostic IDs are required: `prompt.transform.quote`,
+`prompt.transform.unquote`, `prompt.transform.bulletize`,
+`prompt.transform.fence`, `prompt.transform.indent`, `prompt.transform.dedent`,
+and `prompt.transform.reflow`. Non-canonical action IDs are rejected in config
+and do not match diagnostic/help searches.
 
-Regex substitution bounds: pattern length 256, addressed prompt text length 50,000 UTF-16 code units, and match-count cap 10,000.
+Regex substitution bounds: pattern length 256, addressed prompt text length
+50,000 UTF-16 code units, and match-count cap 10,000.
 
-Limitations: no confirmation flag (`c`), print/list flags (`p`, `#`, `l`), special Ex registers, quoted Ex register operands such as `:delete \"a`, `:global`, shell/file/window/buffer commands, replacement backrefs, Vimscript evaluation, `.vimrc`, recursive mappings, Neovim Lua, full Vim help tags, a help pager, full interactive command palette, runtime `:map`, runtime `:action`, plugin API, quickref parity, or rectangular visual-block prompt transform actions. Transform command names are configurable through settings but do not add arbitrary Ex grammar.
+Limitations: no confirmation flag (`c`), print/list flags (`p`, `#`, `l`),
+special Ex registers, quoted Ex register operands such as `:delete \"a`,
+`:global`, shell/file/window/buffer commands, replacement backrefs, Vimscript
+evaluation, `.vimrc`, recursive mappings, Neovim Lua, full Vim help tags, a help
+pager, full interactive command palette, runtime `:map`, runtime `:action`,
+plugin API, quickref parity, or rectangular visual-block prompt transform
+actions. Transform command names are configurable through settings but do not
+add arbitrary Ex grammar.
 
 <!-- runtime-help:runtime-help -->
 <!-- runtime-help:customization-diagnostics -->
@@ -733,7 +1018,9 @@ Limitations: no confirmation flag (`c`), print/list flags (`p`, `#`, `l`), speci
 
 ### Runtime help and diagnostics
 
-Runtime help is finite, popup-backed, source-backed, and prompt-local. It reports supported pi-vimmode behavior and limits; it does not read Vim help files or imply Vimscript/Neovim parity.
+Runtime help is finite, popup-backed, source-backed, and prompt-local. It
+reports supported pi-vimmode behavior and limits; it does not read Vim help
+files or imply Vimscript/Neovim parity.
 
 Examples:
 
@@ -748,30 +1035,55 @@ Examples:
 :messages         " retained recent runtime message summary
 ```
 
-`:actions` remains action-focused, `:keymap` remains binding-focused, `:mapcheck` explains one key or sequence, and `:vimdoctor` reports retained settings warnings behind `vim ⚠`. Use `:features` for broader feature/limit discovery. Diagnostic/help metadata IDs use the `vimmode.*` namespace for search and docs classification only; they are metadata-only, not bindable, and do not create a plugin action API.
+`:actions` remains action-focused, `:keymap` remains binding-focused,
+`:mapcheck` explains one key or sequence, and `:vimdoctor` reports retained
+settings warnings behind `vim ⚠`. Use `:features` for broader feature/limit
+discovery. Diagnostic/help metadata IDs use the `vimmode.*` namespace for search
+and docs classification only; they are metadata-only, not bindable, and do not
+create a plugin action API.
 
-`:vimmode inspect` is read-only and bounded. It summarizes mode, cursor, pending workbench state, selection kind/anchor, register slots/types/lengths, mark slots/positions, macro slots/token counts, search/Ex history counts, retained warning count, and render-layer activity. It does not dump full prompt text, full register contents, raw macro token streams, Vimscript state, or Neovim/runtime internals.
+`:vimmode inspect` is read-only and bounded. It summarizes mode, cursor, pending
+workbench state, selection kind/anchor, register slots/types/lengths, mark
+slots/positions, macro slots/token counts, search/Ex history counts, retained
+warning count, and render-layer activity. It does not dump full prompt text,
+full register contents, raw macro token streams, Vimscript state, or
+Neovim/runtime internals.
 
-Runtime messages are in-memory for the current editor, bounded to 20 retained entries, and shown by `:messages` in the read-only popup. Popup display, popup scroll/dismissal, and `:messages` output itself do not add retained history entries. There is no message pager, persistent log, `:messages clear`, or full Vim `:messages` parity.
+Runtime messages are in-memory for the current editor, bounded to 20 retained
+entries, and shown by `:messages` in the read-only popup. Popup display, popup
+scroll/dismissal, and `:messages` output itself do not add retained history
+entries. There is no message pager, persistent log, `:messages clear`, or full
+Vim `:messages` parity.
 
 <!-- runtime-help:registers -->
 
 ## Registers
 
-pi-vimmode supports one unnamed register, named edit registers `a-z`, and a finite subset of special registers, all in memory for the current editor session.
+pi-vimmode supports one unnamed register, named edit registers `a-z`, and a
+finite subset of special registers, all in memory for the current editor
+session.
 
 Behavior:
 
 - Yank/delete/change update unnamed register by default.
-- `""` explicitly targets the unnamed register for supported yank/delete/change/paste.
+- `""` explicitly targets the unnamed register for supported
+    yank/delete/change/paste.
 - `"{a-z}` targets next supported yank/delete/change/paste with named register.
 - `"{A-Z}` appends yank/delete/change text to lowercase named register.
 - Uppercase paste reads lowercase register.
-- `"_` is a black-hole target: yank/delete/change discard captured text and preserve unnamed/named/clipboard registers; paste is a safe no-op.
-- `"+` and `"*` write captured yank/delete/change text to Pi's host clipboard helper and a prompt-local typed clipboard mirror.
-- `"+p`, `"+P`, `"*p`, and `"*P` read current host clipboard text for normal-mode paste, then fall back to the prompt-local typed clipboard mirror if host clipboard read fails.
-- Host clipboard paste uses charwise paste semantics because OS clipboard text does not carry Vim linewise/charwise metadata; fallback mirror paste preserves typed register metadata.
-- Ex line commands accept bare register operands: `:delete a`, `:yank +`, `:put *`, `:delete _`, `:delete "`. Quoted Ex operands such as `:yank "+` remain unsupported.
+- `"_` is a black-hole target: yank/delete/change discard captured text and
+    preserve unnamed/named/clipboard registers; paste is a safe no-op.
+- `"+` and `"*` write captured yank/delete/change text to Pi's host clipboard
+    helper and a prompt-local typed clipboard mirror.
+- `"+p`, `"+P`, `"*p`, and `"*P` read current host clipboard text for
+    normal-mode paste, then fall back to the prompt-local typed clipboard mirror
+    if host clipboard read fails.
+- Host clipboard paste uses charwise paste semantics because OS clipboard text
+    does not carry Vim linewise/charwise metadata; fallback mirror paste
+    preserves typed register metadata.
+- Ex line commands accept bare register operands: `:delete a`, `:yank +`,
+    `:put *`, `:delete _`, `:delete "`. Quoted Ex operands such as `:yank "+`
+    remain unsupported.
 - Linewise registers paste below with `p` and above with `P`.
 - Charwise registers paste after with `p` and before with `P`.
 - Empty or missing register paste is a no-op.
@@ -791,7 +1103,12 @@ Examples:
 :put *
 ```
 
-Limitations: no full Vim/Neovim register parity; clipboard reads depend on platform clipboard tools (`pbpaste`, `win32yank.exe`/PowerShell on WSL/Windows, `wl-paste`, `xclip`, `xsel`, or Termux) and are only wired for normal-mode `"+p`/`"+P`/`"*p`/`"*P`; no numbered registers, yank register `"0`, small-delete register, expression register `"=`, or read-only filename/command/search registers such as `"%`, `":`, `".`, and `"/`.
+Limitations: no full Vim/Neovim register parity; clipboard reads depend on
+platform clipboard tools (`pbpaste`, `win32yank.exe`/PowerShell on WSL/Windows,
+`wl-paste`, `xclip`, `xsel`, or Termux) and are only wired for normal-mode
+`"+p`/`"+P`/`"*p`/`"*P`; no numbered registers, yank register `"0`, small-delete
+register, expression register `"=`, or read-only filename/command/search
+registers such as `"%`, `":`, `".`, and `"/`.
 
 <!-- runtime-help:marks -->
 
@@ -820,7 +1137,8 @@ ma      set mark a
 d'a     delete line range through mark a
 ```
 
-Limitations: no global marks, special marks, automatic marks, mark list, persistence, or full Vim mark adjustment after edits.
+Limitations: no global marks, special marks, automatic marks, mark list,
+persistence, or full Vim mark adjustment after edits.
 
 <!-- runtime-help:macros -->
 
@@ -835,9 +1153,12 @@ Behavior:
 - Insert-mode `q` inserts and records literal `q`.
 - `@{a-z}` plays a macro slot.
 - `@@` repeats last successfully played macro.
-- Ex command-line input, command text, `Enter`, and `Esc` are recorded and replayed.
+- Ex command-line input, command text, `Enter`, and `Esc` are recorded and
+    replayed.
 - Playback is non-recursive; playback commands inside replay are ignored.
-- Reset/submit keys (`Enter`, `Ctrl-C`, `Ctrl-G`), insert autocomplete-closing `Esc`, and delegated non-insert inputs are not recorded; insert-mode delegated keys outside those exceptions are recorded.
+- Reset/submit keys (`Enter`, `Ctrl-C`, `Ctrl-G`), insert autocomplete-closing
+    `Esc`, and delegated non-insert inputs are not recorded; insert-mode
+    delegated keys outside those exceptions are recorded.
 - Replay input count is capped by `piVimMode.macros.maxReplaySteps`.
 
 Example:
@@ -868,49 +1189,86 @@ Optional status item:
 
 Rendering behavior:
 
-- Status items are left-aligned by default; `piVimMode.ui.status.position: "right"` moves the complete ordered status group to the far-right border slot.
-- Mode, pending state, selection, cursor position, and active macro recording (`REC {slot}`) always move together.
-- Narrow widths use narrow labels: `I`, `N`, `V`, `VL`, `VB`, and truncate the aligned status group to fit.
+- Status items are left-aligned by default;
+    `piVimMode.ui.status.position: "right"` moves the complete ordered status
+    group to the far-right border slot.
+- Mode, pending state, selection, cursor position, and active macro recording
+    (`REC {slot}`) always move together.
+- Narrow widths use narrow labels: `I`, `N`, `V`, `VL`, `VB`, and truncate the
+    aligned status group to fit.
 - Visual selections are highlighted inline.
-- Selected empty lines in visual line mode render a highlighted blank cell when width permits.
-- Insert-mode autocomplete rows remain Pi-owned and visible; Vim status feedback renders on a separate row while completion UI is open.
-- Pending `/`, `?`, and `:` workbench input plus search/Ex errors, info diagnostics, optional no-op feedback, and substitution match previews render in a dedicated row below the prompt and shrink prompt viewport by one row by default.
-- `piVimMode.ui.workbench.reservedRows` can reserve 0-5 width-safe workbench rows; active feedback uses the first reserved row and blank reserved rows keep the prompt viewport height stable.
-- Pending workbench input also appears in status with an ellipsis when the pending-status item is enabled.
-- Long prompt content wraps and scrolls around cursor with `↑ more` / `↓ more` indicators; normal/visual mode transitions keep the current visible prompt rows stable while the cursor remains visible.
+- Selected empty lines in visual line mode render a highlighted blank cell
+    when width permits.
+- Insert-mode autocomplete rows remain Pi-owned and visible; Vim status
+    feedback renders on a separate row while completion UI is open.
+- Pending `/`, `?`, and `:` workbench input plus search/Ex errors, info
+    diagnostics, optional no-op feedback, and substitution match previews render
+    in a dedicated row below the prompt and shrink prompt viewport by one row by
+    default.
+- `piVimMode.ui.workbench.reservedRows` can reserve 0-5 width-safe workbench
+    rows; active feedback uses the first reserved row and blank reserved rows
+    keep the prompt viewport height stable.
+- Pending workbench input also appears in status with an ellipsis when the
+    pending-status item is enabled.
+- Long prompt content wraps and scrolls around cursor with `↑ more` / `↓ more`
+    indicators; normal/visual mode transitions keep the current visible prompt
+    rows stable while the cursor remains visible.
 - Cursor styles support `block`, `bar`, and `underline` by mode.
 - Terminal cursor-shape hints use best-effort DECSCUSR escapes.
-- `bar` cursor enables Pi TUI hardware cursor visibility while interactive and while Pi agent work is active; non-bar cursors suppress hardware cursor visibility while busy. Reset restores original visibility.
+- `bar` cursor enables Pi TUI hardware cursor visibility while interactive and
+    while Pi agent work is active; non-bar cursors suppress hardware cursor
+    visibility while busy. Reset restores original visibility.
 
 Limitations:
 
 - Search and cursor colors are fixed ANSI styles for now.
-- Cursor behavior does not implement full Neovim cursor option parity such as blink timing.
+- Cursor behavior does not implement full Neovim cursor option parity such as
+    blink timing.
 - Unsupported terminals may ignore cursor-shape hints.
-- Editing uses Pi cursor coordinates, not full grapheme-cluster Vim semantics. Complex Unicode can differ from Vim.
+- Editing uses Pi cursor coordinates, not full grapheme-cluster Vim semantics.
+    Complex Unicode can differ from Vim.
 
 ## Pi shortcut compatibility
 
 Pi remains owner of app-level shortcuts.
 
-- `Enter` submits from base prompt-editing modes when no `/` search or `:` Ex command-line is pending. Pending search uses Enter to complete the search; pending Ex uses Enter to execute the command.
-- `Ctrl-C`, `Ctrl-D`, `Ctrl-G`, `Ctrl-v`, `Alt-v`, `Ctrl-Alt-v`, model/thinking shortcuts, autocomplete controls, external editor shortcuts, and image paste stay Pi-owned unless a shortcut is explicitly implemented or explicitly bound by pi-vimmode.
-- Protected Pi shortcut names are rejected from `piVimMode.keymap` with warnings that include the protected key reason. Use `:mapcheck <key>` for runtime ownership details.
-- Protected key rejection can be explicitly overridden per settings layer through `piVimMode.keymap.allowProtectedOverrides`. See `docs/settings.md` for allow-list rules, scope, and limits.
-- Overrides are not OS or terminal guarantees. pi-vimmode can only handle keys Pi delivers distinctly. Chorded shortcuts such as `ctrl+j` may arrive as `enter` depending on terminal configuration.
-- `Ctrl-a`, `Ctrl-x`, and `Ctrl-r` are owned by pi-vimmode only in normal mode for numeric adjustment and redo.
+- `Enter` submits from base prompt-editing modes when no `/` search or `:` Ex
+    command-line is pending. Pending search uses Enter to complete the search;
+    pending Ex uses Enter to execute the command.
+- `Ctrl-C`, `Ctrl-D`, `Ctrl-G`, `Ctrl-v`, `Alt-v`, `Ctrl-Alt-v`,
+    model/thinking shortcuts, autocomplete controls, external editor shortcuts,
+    and image paste stay Pi-owned unless a shortcut is explicitly implemented or
+    explicitly bound by pi-vimmode.
+- Protected Pi shortcut names are rejected from `piVimMode.keymap` with
+    warnings that include the protected key reason. Use `:mapcheck <key>` for
+    runtime ownership details.
+- Protected key rejection can be explicitly overridden per settings layer
+    through `piVimMode.keymap.allowProtectedOverrides`. See `docs/settings.md`
+    for allow-list rules, scope, and limits.
+- Overrides are not OS or terminal guarantees. pi-vimmode can only handle keys
+    Pi delivers distinctly. Chorded shortcuts such as `ctrl+j` may arrive as
+    `enter` depending on terminal configuration.
+- `Ctrl-a`, `Ctrl-x`, and `Ctrl-r` are owned by pi-vimmode only in normal mode
+    for numeric adjustment and redo.
 
 <!-- runtime-help:settings -->
 
 ## Configuration features
 
-Most keys map to semantic actions through `piVimMode.keymap`; settings do not add arbitrary Vim grammar. Optional `piVimMode.leader` and trusted `vim.g.mapleader` settings expand leading `<leader>` mapping keys with one final global/JS/project value. Advanced users can add trusted global JS keybindings in `~/.pi/agent/pi-vimmode.config.js` with `vim.keymap.set(mode, key, vim.prompt.<builtin>(args?))` or simple replay mappings such as `vim.keymap.set("n", "zz", "llll")`.
+Most keys map to semantic actions through `piVimMode.keymap`; settings do not
+add arbitrary Vim grammar. Optional `piVimMode.leader` and trusted
+`vim.g.mapleader` settings expand leading `<leader>` mapping keys with one final
+global/JS/project value. Advanced users can add trusted global JS keybindings in
+`~/.pi/agent/pi-vimmode.config.js` with
+`vim.keymap.set(mode, key, vim.prompt.<builtin>(args?))` or simple replay
+mappings such as `vim.keymap.set("n", "zz", "llll")`.
 
 Examples of configurable features:
 
 - startup mode
 - cursor style per mode
-- presets (`minimal`, `prompt-safe`, `vim-heavy`) that apply before explicit fields
+- presets (`minimal`, `prompt-safe`, `vim-heavy`) that apply before explicit
+    fields
 - semantic key bindings for supported actions
 - optional leader prefix for JSON and trusted JS normal/visual mappings
 - trusted global JS keybinding additions via `vim.prompt.*` built-ins
@@ -926,23 +1284,33 @@ Examples of configurable features:
 - search highlight behavior
 - prompt-native structure enablement per target
 - prompt transform enablement and command names
-- optional no-op feedback (`piVimMode.feedback.noop`) for selected confusing ignored inputs
+- optional no-op feedback (`piVimMode.feedback.noop`) for selected confusing
+    ignored inputs
 
-See [`settings.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/settings.md) for complete settings reference.
+See
+[`settings.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/settings.md)
+for complete settings reference.
 
 ## Architecture source map
 
 Useful files when verifying feature behavior:
 
-- `src/lifecycle.ts`: extension activation, settings refresh, status, shutdown cursor reset.
-- `src/config.ts`: settings defaults, parser, validation, merge precedence, warnings.
-- `src/config-js.ts`: trusted global JS config loader and `vim.prompt.*` keymap builder.
+- `src/lifecycle.ts`: extension activation, settings refresh, status, shutdown
+    cursor reset.
+- `src/config.ts`: settings defaults, parser, validation, merge precedence,
+    warnings.
+- `src/config-js.ts`: trusted global JS config loader and `vim.prompt.*`
+    keymap builder.
 - `src/types.ts`: public option and behavior types.
-- `src/commands.ts`: finite semantic key parser, counts, text objects, macro control parser.
-- `src/buffer.ts`: pure prompt-buffer navigation, edit, search, visual, mark, register, and substitution operations.
+- `src/commands.ts`: finite semantic key parser, counts, text objects, macro
+    control parser.
+- `src/buffer.ts`: pure prompt-buffer navigation, edit, search, visual, mark,
+    register, and substitution operations.
 - `src/ex.ts`: finite Ex command-line parser.
-- `src/runtime-help.ts`: finite runtime help/feature registry and compact help output.
-- `src/keybinding-discovery-popup.ts`: source-backed multi-line keybinding discovery popup content.
+- `src/runtime-help.ts`: finite runtime help/feature registry and compact help
+    output.
+- `src/keybinding-discovery-popup.ts`: source-backed multi-line keybinding
+    discovery popup content.
 - `src/modal/engine.ts`: modal state machine and Vim semantics.
 - `src/modal/view.ts`: mode/status/selection display derivation.
 - `src/render.ts`: prompt rendering, visual/search/cursor composition.
@@ -962,8 +1330,11 @@ Manual smoke checklist:
 
 1. Load extension in Pi and confirm `pi-vimmode` status shows `vim`.
 2. Type in insert mode, press `Esc`, move with normal motions.
-3. Use `v`, `V`, and a configured visual-block binding such as `Alt-b`; confirm highlighting and yank/delete/change behavior.
-4. Use `/query`, `n`, and `N`; confirm literal wraparound search and highlighting.
+3. Use `v`, `V`, and a configured visual-block binding such as `Alt-b`; confirm
+    highlighting and yank/delete/change behavior.
+4. Use `/query`, `n`, and `N`; confirm literal wraparound search and
+    highlighting.
 5. Use `:%s/old/new/g` and visual `:'<,'>s/old/new/`; confirm Ex row messages.
 6. Use named registers, marks, and macros.
-7. Submit from normal mode and start a new prompt; confirm configured startup mode behavior.
+7. Submit from normal mode and start a new prompt; confirm configured startup
+    mode behavior.

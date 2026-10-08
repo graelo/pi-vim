@@ -6,27 +6,27 @@ labels: bug
 assignees: ""
 ---
 
-**Describe the bug**
+## Describe the bug
 
 <!-- What happened? What did you expect? -->
 
-**Steps to reproduce**
+## Steps to reproduce
 
 1.
 2.
 3.
 
-**Expected behavior**
+## Expected behavior
 
-**Actual behavior**
+## Actual behavior
 
-**Environment**
+## Environment
 
 - pi-vimmode version (`@graelo/pi-vimmode`):
 - Pi version (`pi --version`):
 - OS / terminal:
 
-**Config (if relevant)**
+## Config (if relevant)
 
 ```json
 // piVimMode settings from ~/.pi/agent/settings.json or .pi/settings.json
@@ -36,6 +36,6 @@ assignees: ""
 // ~/.pi/agent/pi-vimmode.config.js, if you use trusted JavaScript config
 ```
 
-**Additional context**
+## Additional context
 
 <!-- Vim mode, motion, command involved? Error messages? -->
