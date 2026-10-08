@@ -1,6 +1,6 @@
 ---
 number: 6
-title: Remove prompt transforms, :features, and :changelog
+title: Remove prompt transforms, :features, :changelog, and :actions
 date: 2026-10-08
 status: accepted
 tags:
@@ -9,7 +9,7 @@ tags:
 - keymap
 ---
 
-# 6. Remove prompt transforms, :features, and :changelog
+# 6. Remove prompt transforms, :features, :changelog, and :actions
 
 Date: 2026-10-08
 
@@ -25,16 +25,18 @@ transforms (`:quote`, `:unquote`, `:bulletize`, `:fence`, `:indent`, `:dedent`,
 recipes and presets that existed only to bind those transforms. It also added
 `:features`, which overlapped `:help`, `:keybindings`, `:actions`, and
 `:mapcheck`, and `:changelog`, which rendered packaged release notes in a
-Markdown popup. The fork (ADR-0005) wants a focused Vim editor, and the
-upcoming surround feature belongs in operator grammar, not in a separate action
-layer.
+Markdown popup. Without transforms, `:actions` was left duplicating
+`:keymap <query>` and `:keybindings <query>`. The fork (ADR-0005) wants a
+focused Vim editor, and the upcoming surround feature belongs in operator
+grammar, not in a separate action layer.
 
 ## Decision
 
 Remove prompt transforms end to end, including the action keymap layer, its
 presets and recipes, `piVimMode.promptTransforms`, and the transform factories
 in trusted JavaScript config. Remove `:features` and `:changelog`, along with
-the Markdown popup renderer only `:changelog` used. Keep Vim line shifts
+the Markdown popup renderer only `:changelog` used. Remove `:actions` as well;
+`:keymap <query>` searches the same action metadata. Keep Vim line shifts
 (`>>`, `<<`, visual `>`/`<`) on a private indent/dedent helper.
 
 Removed settings produce a "removed in 1.0.0" warning instead of the silent
