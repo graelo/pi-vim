@@ -15,7 +15,7 @@ async function load(name: string) {
 
 describe("trusted config examples", () => {
   test("basic workflow", async () => {
-    expect(await load("pi-vimmode.config.js")).toContainEqual({
+    expect(await load("pi-vim.config.js")).toContainEqual({
       kind: "leaf",
       path: "startMode",
       value: "normal",

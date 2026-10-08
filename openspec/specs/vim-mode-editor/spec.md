@@ -52,7 +52,7 @@ implementation.
 
 - **WHEN** the editor is in insert mode and Pi autocomplete or slash-command
     completion renders one or more visible completion rows
-- **THEN** pi-vimmode preserves the completion rows and does not replace them
+- **THEN** pi-vim preserves the completion rows and does not replace them
     with Vim status feedback
 
 ### Requirement: Normal mode supports core Vim navigation
@@ -203,21 +203,21 @@ completion is active.
 
 #### Scenario: Configured mode label updates
 
-- **WHEN** the editor switches modes and `piVimMode.ui.mode.labels` configures
+- **WHEN** the editor switches modes and `piVim.ui.mode.labels` configures
     labels for those modes
 - **THEN** the rendered editor shows the configured active-mode label where
     the mode status item is enabled and width permits
 
 #### Scenario: Status group can be right-aligned
 
-- **WHEN** `piVimMode.ui.status.position` is set to `"right"`
+- **WHEN** `piVim.ui.status.position` is set to `"right"`
 - **THEN** the complete ordered status group, including mode, pending state,
     visual selection status, cursor position, and macro recording, renders at
     the right edge
 
 #### Scenario: Mode status can be hidden by config
 
-- **WHEN** `piVimMode.ui.mode.enabled` is set to `false` or the status item
+- **WHEN** `piVim.ui.mode.enabled` is set to `false` or the status item
     list omits `mode`
 - **THEN** the rendered editor omits mode feedback from both border slots
     while preserving prompt editing behavior
@@ -238,7 +238,7 @@ completion is active.
 #### Scenario: Visual selection status hidden by config
 
 - **WHEN** the editor is in visual mode with a non-empty selection and
-    `piVimMode.ui.selection.enabled` is set to `false`
+    `piVim.ui.selection.enabled` is set to `false`
 - **THEN** visual highlighting remains active but visual selection summary
     text is omitted from the status UI
 
@@ -345,7 +345,7 @@ registers, marks, macro state, or dot-repeat state.
 
 - **WHEN** the editor is in insert mode and the user presses `Ctrl+R`
 - **THEN** the key is delegated to Pi's default editor behavior unless
-    pi-vimmode explicitly supports insert-mode `Ctrl+R` in a future change
+    pi-vim explicitly supports insert-mode `Ctrl+R` in a future change
 
 ### Requirement: Redo behavior is documented and validated
 
@@ -368,18 +368,18 @@ behavior and current limitations.
 
 - **WHEN** the user opens `docs/features.md`
 - **THEN** it documents normal-mode `Ctrl+R` redo, redo limitations, and the
-    fact that pi-vimmode does not implement a Vim undo tree
+    fact that pi-vim does not implement a Vim undo tree
 
 ### Requirement: Configured escape aliases leave insert, visual, and Ex command-line states
 
-The Vim editor SHALL treat configured `piVimMode.keymap.escape` sequences as
+The Vim editor SHALL treat configured `piVim.keymap.escape` sequences as
 aliases for physical `Esc` in insert mode when autocomplete is inactive, in
 visual modes, and while an Ex command-line is pending, while preserving default
 insert-mode delegation for all unrelated input.
 
 #### Scenario: Configured alias exits insert mode
 
-- **WHEN** `piVimMode.keymap.escape` includes `<D-j>`, autocomplete is
+- **WHEN** `piVim.keymap.escape` includes `<D-j>`, autocomplete is
     inactive, and the editor is in insert mode
 - **THEN** pressing the corresponding modified `j` key enters normal mode and
     does not insert text into the prompt
@@ -392,41 +392,41 @@ insert-mode delegation for all unrelated input.
 
 #### Scenario: Unrelated insert text remains delegated
 
-- **WHEN** `piVimMode.keymap.escape` includes `<D-j>` and the editor receives
+- **WHEN** `piVim.keymap.escape` includes `<D-j>` and the editor receives
     ordinary insert-mode text
 - **THEN** the text is delegated to Pi's default editor behavior and inserted
     normally
 
 #### Scenario: Raw text chords remain text
 
-- **WHEN** `piVimMode.keymap.escape` is configured with raw text such as `jk`
+- **WHEN** `piVim.keymap.escape` is configured with raw text such as `jk`
 - **THEN** the invalid alias is ignored, typing `j` followed by `k` inserts
     `jk`, and the editor remains in insert mode
 
 #### Scenario: Alias does not fire while autocomplete is open
 
-- **WHEN** `piVimMode.keymap.escape` includes `<D-j>`, Pi autocomplete is
+- **WHEN** `piVim.keymap.escape` includes `<D-j>`, Pi autocomplete is
     open, and the editor is in insert mode
 - **THEN** pressing the configured modified key delegates to Pi
     autocomplete/default editing behavior instead of entering normal mode
 
 #### Scenario: Configured alias exits visual modes
 
-- **WHEN** `piVimMode.keymap.escape` includes `<D-j>` and the editor is in
+- **WHEN** `piVim.keymap.escape` includes `<D-j>` and the editor is in
     visual, visual-line, or visual-block mode
 - **THEN** pressing the corresponding modified key cancels visual selection
     and enters normal mode like physical `Esc`
 
 #### Scenario: Configured alias cancels pending Ex command-line
 
-- **WHEN** `piVimMode.keymap.escape` includes `<D-j>` and the editor has a
+- **WHEN** `piVim.keymap.escape` includes `<D-j>` and the editor has a
     pending `:` Ex command-line
 - **THEN** pressing the corresponding modified key cancels the pending Ex
     command-line like physical `Esc` without delegating to Pi
 
 #### Scenario: Normal mode keeps existing key behavior
 
-- **WHEN** `piVimMode.keymap.escape` includes `<D-j>` and the editor is in
+- **WHEN** `piVim.keymap.escape` includes `<D-j>` and the editor is in
     normal mode
 - **THEN** existing normal-mode behavior remains unchanged and the escape
     alias is not evaluated
@@ -439,7 +439,7 @@ default behavior when aliases are absent.
 
 #### Scenario: Fast path remains safe
 
-- **WHEN** `piVimMode.keymap.escape` includes `<D-j>`
+- **WHEN** `piVim.keymap.escape` includes `<D-j>`
 - **THEN** ordinary insert text may still use the guarded insert fast path,
     while configured alias input is routed through modal handling
 
@@ -459,7 +459,7 @@ default behavior when aliases are absent.
 
 #### Scenario: Default behavior is unchanged without aliases
 
-- **WHEN** no `piVimMode.keymap.escape` setting is configured
+- **WHEN** no `piVim.keymap.escape` setting is configured
 - **THEN** insert-mode typing, physical `Esc`, autocomplete, Pi shortcuts,
     macro recording/replay, and fast-path delegation behave as they did before
     this change
@@ -482,12 +482,12 @@ and default Pi delegation for unconfigured input.
 - **WHEN** the editor is in insert mode with no configured insert newline
     binding and receives a non-escape key such as `Ctrl+J`
 - **THEN** the input delegates to Pi/default insert behavior and prompt text
-    is not changed by pi-vimmode line-opening logic
+    is not changed by pi-vim line-opening logic
 
 #### Scenario: Configured insert command opens line below
 
 - **WHEN** the editor is in insert mode, autocomplete is inactive,
-    `piVimMode.keymap.insert.openLineBelow` includes `ctrl+j`, and the user
+    `piVim.keymap.insert.openLineBelow` includes `ctrl+j`, and the user
     presses `Ctrl+J`
 - **THEN** a blank line is inserted below the current prompt line, the cursor
     moves to that blank line, and the editor remains in insert mode
@@ -495,7 +495,7 @@ and default Pi delegation for unconfigured input.
 #### Scenario: Configured insert command opens line above
 
 - **WHEN** the editor is in insert mode, autocomplete is inactive,
-    `piVimMode.keymap.insert.openLineAbove` includes `ctrl+k`, and the user
+    `piVim.keymap.insert.openLineAbove` includes `ctrl+k`, and the user
     presses `Ctrl+K`
 - **THEN** a blank line is inserted above the current prompt line, the cursor
     moves to that blank line, and the editor remains in insert mode
@@ -513,7 +513,7 @@ and default Pi delegation for unconfigured input.
     completion is active, and the user presses a configured insert newline
     binding
 - **THEN** the input delegates to Pi/default autocomplete behavior instead of
-    opening a prompt line through pi-vimmode
+    opening a prompt line through pi-vim
 
 #### Scenario: Insert line opening preserves modal side state boundaries
 

@@ -7,14 +7,22 @@ project uses [Semantic Versioning](https://semver.org/).
 ## [1.0.0] - 2026-10-08
 
 Hard fork of [pekochan069/pi-vimmode](https://github.com/pekochan069/pi-vimmode)
-at v0.9.0, published as `@graelo/pi-vimmode`. Apart from the changes below,
+at v0.9.0, published as `@graelo/pi-vim`. Apart from the changes below,
 editor behavior is unchanged from 0.9.0.
 
 ### Changed
 
-- Published as `@graelo/pi-vimmode`. Install with
-  `pi install npm:@graelo/pi-vimmode`, and update the JSDoc import of trusted
-  JavaScript config to `./npm/node_modules/@graelo/pi-vimmode/config`.
+- Published as `@graelo/pi-vim`. Install with
+  `pi install npm:@graelo/pi-vim`, and update the JSDoc import of trusted
+  JavaScript config to `./npm/node_modules/@graelo/pi-vim/config`.
+- Renamed from pi-vimmode to pi-vim throughout:
+  - the settings key `piVimMode` is now `piVim`;
+  - `~/.pi/agent/pi-vimmode.config.js` is now `~/.pi/agent/pi-vim.config.js`;
+  - `/vimmode` is now `/vim`, and `:vimmode inspect` is now `:vim inspect`;
+  - diagnostic metadata IDs moved from `vimmode.*` to `pi-vim.*`.
+
+    The old settings key and config file are ignored, with a warning (see
+    `:vimdoctor`).
 - The package now ships TypeScript sources directly; there is no bundled
   `dist/` build anymore.
 - `RELEASE.md` is replaced by this `CHANGELOG.md`.
@@ -34,8 +42,8 @@ editor behavior is unchanged from 0.9.0.
   actions, and their `vim.prompt.*` and `vim.action.prompt.transform.*`
   factories in trusted JavaScript config. Use Vim line shifts (`>>`, `<<`,
   visual `>`/`<`) for indentation.
-- The action keymap layer and its presets: `piVimMode.keymap.actions`,
-  `piVimMode.keymap.actionPresets`, and `piVimMode.promptTransforms`. These
+- The action keymap layer and its presets: `piVim.keymap.actions`,
+  `piVim.keymap.actionPresets`, and `piVim.promptTransforms`. These
   settings now produce a "removed in 1.0.0" warning (see `:vimdoctor`) and are
   ignored.
 - `:features`; use `:help`, `:keybindings`, and `:mapcheck`.
@@ -46,7 +54,7 @@ editor behavior is unchanged from 0.9.0.
 
 - Configured `easymotion` options (such as `labelColor`) are no longer dropped
   when resolved editor options are cloned.
-- An empty array under `piVimMode.keymap.insert.<action>` now clears that
+- An empty array under `piVim.keymap.insert.<action>` now clears that
   action's inherited bindings, including ones added by global JS config, as it
   already did for other keymap groups.
 

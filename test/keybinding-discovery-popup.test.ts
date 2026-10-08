@@ -6,7 +6,7 @@ import { keybindingsPopup } from "../src/keybinding-discovery-popup.ts";
 describe("keybinding discovery popups", () => {
   test("builds dedicated keybindings catalog popup", () => {
     const { options } = resolveVimOptions({
-      piVimMode: {
+      piVim: {
         keymap: {
           commands: { redo: ["U"] },
         },
@@ -20,11 +20,11 @@ describe("keybinding discovery popups", () => {
       source: "keybindings",
       scrollOffset: 0,
     });
-    expect(text).not.toContain("Effective pi-vimmode keybindings");
+    expect(text).not.toContain("Effective pi-vim keybindings");
     expect(text).toContain("▸ Commands");
     expect(text).toContain("Key            Mode        Action");
     expect(text).toContain("U              normal      command.redo");
-    expect(text).not.toContain("vimmode.keybindings metadata-only not bindable");
+    expect(text).not.toContain("pi-vim.keybindings metadata-only not bindable");
     expect(text).toContain("ctrl+p");
     expect(text).toContain("protected for Pi command/model palette");
     expect(text).toContain("no runtime :map");

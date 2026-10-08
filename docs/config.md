@@ -1,25 +1,25 @@
-# pi-vimmode trusted JavaScript config
+# pi-vim trusted JavaScript config
 
 <a id="basic-setup"></a>
 
 ## Basic setup
 
-> **Warning:** `~/.pi/agent/pi-vimmode.config.js` is unsandboxed trusted code.
+> **Warning:** `~/.pi/agent/pi-vim.config.js` is unsandboxed trusted code.
 > It runs with full Pi process privileges. Only put code and imports you trust
 > in this file.
 
-Create exactly `~/.pi/agent/pi-vimmode.config.js`:
+Create exactly `~/.pi/agent/pi-vim.config.js`:
 
 ```js
-/** @type {import("./npm/node_modules/@graelo/pi-vimmode/config").VimConfig} */
+/** @type {import("./npm/node_modules/@graelo/pi-vim/config").VimConfig} */
 export default (vim) => {
   vim.startMode = "normal";
 };
 ```
 
 `vim.startMode` is validated: only `"insert"` or `"normal"` is accepted. Run
-`/vimmode reload` after editing root config. See checked
-[`examples/pi-vimmode.config.js`](../examples/pi-vimmode.config.js) for a larger
+`/vim reload` after editing root config. See checked
+[`examples/pi-vim.config.js`](../examples/pi-vim.config.js) for a larger
 basic workflow.
 
 Generated reference blocks below come from canonical source metadata. Regenerate
@@ -44,7 +44,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `one printable character or null`
 - Built-in default: `unset`
 - Assignment semantics: replaces leader; null clears it
-- JSON crosswalk: `piVimMode.leader`
+- JSON crosswalk: `piVim.leader`
 - Compatibility aliases: [`vim.g.mapleader`](#config-property-leader)
 
 #### `vim.preset`
@@ -54,7 +54,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `"minimal" | "prompt-safe" | "vim-heavy"`
 - Built-in default: `unset`
 - Assignment semantics: applies selected preset baseline, then replaces preset value
-- JSON crosswalk: `piVimMode.preset`
+- JSON crosswalk: `piVim.preset`
 - Compatibility aliases: none
 
 #### `vim.startMode`
@@ -64,7 +64,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `"insert" | "normal"`
 - Built-in default: `"insert"`
 - Assignment semantics: replaces startup mode
-- JSON crosswalk: `piVimMode.startMode`
+- JSON crosswalk: `piVim.startMode`
 - Compatibility aliases: none
 
 ### `vim.cursor`
@@ -76,7 +76,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `"block" | "bar" | "underline"`
 - Built-in default: `"bar"`
 - Assignment semantics: replaces cursor style
-- JSON crosswalk: `piVimMode.cursor.insert`
+- JSON crosswalk: `piVim.cursor.insert`
 - Compatibility aliases: none
 
 #### `vim.cursor.normal`
@@ -86,7 +86,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `"block" | "bar" | "underline"`
 - Built-in default: `"block"`
 - Assignment semantics: replaces cursor style
-- JSON crosswalk: `piVimMode.cursor.normal`
+- JSON crosswalk: `piVim.cursor.normal`
 - Compatibility aliases: none
 
 #### `vim.cursor.visual`
@@ -96,7 +96,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `"block" | "bar" | "underline"`
 - Built-in default: `"block"`
 - Assignment semantics: replaces cursor style
-- JSON crosswalk: `piVimMode.cursor.visual`
+- JSON crosswalk: `piVim.cursor.visual`
 - Compatibility aliases: none
 
 #### `vim.cursor.visualBlock`
@@ -106,7 +106,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `"block" | "bar" | "underline"`
 - Built-in default: `"block"`
 - Assignment semantics: replaces cursor style
-- JSON crosswalk: `piVimMode.cursor.visualBlock`
+- JSON crosswalk: `piVim.cursor.visualBlock`
 - Compatibility aliases: none
 
 #### `vim.cursor.visualLine`
@@ -116,7 +116,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `"block" | "bar" | "underline"`
 - Built-in default: `"block"`
 - Assignment semantics: replaces cursor style
-- JSON crosswalk: `piVimMode.cursor.visualLine`
+- JSON crosswalk: `piVim.cursor.visualLine`
 - Compatibility aliases: none
 
 ### `vim.exCommand`
@@ -128,7 +128,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.exCommand.autocomplete`
+- JSON crosswalk: `piVim.exCommand.autocomplete`
 - Compatibility aliases: none
 
 ### `vim.feedback`
@@ -140,7 +140,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `"off" | "status"`
 - Built-in default: `"off"`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.feedback.noop`
+- JSON crosswalk: `piVim.feedback.noop`
 - Compatibility aliases: none
 
 ### `vim.keymap`
@@ -152,7 +152,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `partial record of operator names to motion-name arrays`
 - Built-in default: `{"change": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "delete": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "lowercase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "toggleCase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "uppercase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "yank": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"]}`
 - Assignment semantics: replaces operator-motion allow-list
-- JSON crosswalk: `piVimMode.keymap.operatorMotions`
+- JSON crosswalk: `piVim.keymap.operatorMotions`
 - Compatibility aliases: none
 
 ### `vim.macros`
@@ -164,7 +164,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.macros.enabled`
+- JSON crosswalk: `piVim.macros.enabled`
 - Compatibility aliases: none
 
 #### `vim.macros.maxReplaySteps`
@@ -174,7 +174,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `positive integer`
 - Built-in default: `1000`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.macros.maxReplaySteps`
+- JSON crosswalk: `piVim.macros.maxReplaySteps`
 - Compatibility aliases: none
 
 #### `vim.macros.slots`
@@ -184,7 +184,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `readonly lowercase register-name[]`
 - Built-in default: `["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]`
 - Assignment semantics: replaces slot list
-- JSON crosswalk: `piVimMode.macros.slots`
+- JSON crosswalk: `piVim.macros.slots`
 - Compatibility aliases: none
 
 ### `vim.marks`
@@ -196,7 +196,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.marks.enabled`
+- JSON crosswalk: `piVim.marks.enabled`
 - Compatibility aliases: none
 
 #### `vim.marks.slots`
@@ -206,7 +206,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `readonly lowercase register-name[]`
 - Built-in default: `["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]`
 - Assignment semantics: replaces slot list
-- JSON crosswalk: `piVimMode.marks.slots`
+- JSON crosswalk: `piVim.marks.slots`
 - Compatibility aliases: none
 
 ### `vim.promptStructures`
@@ -218,7 +218,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.promptStructures.enabled`
+- JSON crosswalk: `piVim.promptStructures.enabled`
 - Compatibility aliases: none
 
 #### `vim.promptStructures.targets`
@@ -228,7 +228,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `partial record of prompt-structure targets to booleans`
 - Built-in default: `{"codeFence": true, "errorBlock": true, "headingSection": true, "listItem": true, "tag": true}`
 - Assignment semantics: replaces whole record; does not merge keys
-- JSON crosswalk: `piVimMode.promptStructures.targets`
+- JSON crosswalk: `piVim.promptStructures.targets`
 - Compatibility aliases: none
 
 ### `vim.search`
@@ -240,7 +240,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.search.clearOnCancel`
+- JSON crosswalk: `piVim.search.clearOnCancel`
 - Compatibility aliases: none
 
 #### `vim.search.clearOnInsert`
@@ -250,7 +250,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.search.clearOnInsert`
+- JSON crosswalk: `piVim.search.clearOnInsert`
 - Compatibility aliases: none
 
 #### `vim.search.highlight`
@@ -260,7 +260,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.search.highlight`
+- JSON crosswalk: `piVim.search.highlight`
 - Compatibility aliases: none
 
 #### `vim.search.highlightCurrent`
@@ -270,7 +270,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.search.highlightCurrent`
+- JSON crosswalk: `piVim.search.highlightCurrent`
 - Compatibility aliases: none
 
 #### `vim.search.maxHighlights`
@@ -280,7 +280,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `non-negative integer`
 - Built-in default: `200`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.search.maxHighlights`
+- JSON crosswalk: `piVim.search.maxHighlights`
 - Compatibility aliases: none
 
 ### `vim.ui`
@@ -292,7 +292,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `0 | 1`
 - Built-in default: `1`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.cursorPosition.base`
+- JSON crosswalk: `piVim.ui.cursorPosition.base`
 - Compatibility aliases: none
 
 #### `vim.ui.cursorPosition.enabled`
@@ -302,7 +302,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.cursorPosition.enabled`
+- JSON crosswalk: `piVim.ui.cursorPosition.enabled`
 - Compatibility aliases: none
 
 #### `vim.ui.cursorPosition.format`
@@ -312,7 +312,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `string`
 - Built-in default: `"{line}:{column}"`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.cursorPosition.format`
+- JSON crosswalk: `piVim.ui.cursorPosition.format`
 - Compatibility aliases: none
 
 #### `vim.ui.mode.enabled`
@@ -322,7 +322,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.mode.enabled`
+- JSON crosswalk: `piVim.ui.mode.enabled`
 - Compatibility aliases: none
 
 #### `vim.ui.mode.labels`
@@ -332,7 +332,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `partial record of Vim modes to strings`
 - Built-in default: `{"insert": "INSERT", "normal": "NORMAL", "visual": "VISUAL", "visualBlock": "V-BLOCK", "visualLine": "V-LINE"}`
 - Assignment semantics: replaces whole record; does not merge keys
-- JSON crosswalk: `piVimMode.ui.mode.labels`
+- JSON crosswalk: `piVim.ui.mode.labels`
 - Compatibility aliases: none
 
 #### `vim.ui.mode.narrowLabels`
@@ -342,7 +342,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `partial record of Vim modes to strings`
 - Built-in default: `{"insert": "I", "normal": "N", "visual": "V", "visualBlock": "VB", "visualLine": "VL"}`
 - Assignment semantics: replaces whole record; does not merge keys
-- JSON crosswalk: `piVimMode.ui.mode.narrowLabels`
+- JSON crosswalk: `piVim.ui.mode.narrowLabels`
 - Compatibility aliases: none
 
 #### `vim.ui.selection.enabled`
@@ -352,7 +352,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.selection.enabled`
+- JSON crosswalk: `piVim.ui.selection.enabled`
 - Compatibility aliases: none
 
 #### `vim.ui.selection.previewMaxChars`
@@ -362,7 +362,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `non-negative integer`
 - Built-in default: `16`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.selection.previewMaxChars`
+- JSON crosswalk: `piVim.ui.selection.previewMaxChars`
 - Compatibility aliases: none
 
 #### `vim.ui.status.enabled`
@@ -372,7 +372,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.status.enabled`
+- JSON crosswalk: `piVim.ui.status.enabled`
 - Compatibility aliases: none
 
 #### `vim.ui.status.items`
@@ -382,7 +382,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `readonly ("mode" | "pendingOperator" | "selection" | "cursorPosition")[]`
 - Built-in default: `["mode", "pendingOperator", "selection", "cursorPosition"]`
 - Assignment semantics: replaces item list
-- JSON crosswalk: `piVimMode.ui.status.items`
+- JSON crosswalk: `piVim.ui.status.items`
 - Compatibility aliases: none
 
 #### `vim.ui.status.position`
@@ -392,7 +392,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `"left" | "right"`
 - Built-in default: `"left"`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.status.position`
+- JSON crosswalk: `piVim.ui.status.position`
 - Compatibility aliases: none
 
 #### `vim.ui.workbench.reservedRows`
@@ -402,7 +402,7 @@ in [`docs/settings.md`](settings.md).
 - Accepted shape: `integer from 0 through 5`
 - Built-in default: `0`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.workbench.reservedRows`
+- JSON crosswalk: `piVim.ui.workbench.reservedRows`
 - Compatibility aliases: none
 
 <!-- END GENERATED CONFIG PROPERTIES -->
@@ -1368,13 +1368,13 @@ discard that evaluation.
 
 Checked workflows:
 
-- [Basic properties](../examples/pi-vimmode.config.js)
+- [Basic properties](../examples/pi-vim.config.js)
 - [Keymaps](../examples/keymaps.config.js)
 - [Async config](../examples/async.config.js)
 - [Imported preset](../examples/imported-preset.config.js) using typed
     [`VimConfigApi` helper](../examples/presets/markdown.js)
 
-`/vimmode reload` always imports a fresh root module. Native ESM caching can
+`/vim reload` always imports a fresh root module. Native ESM caching can
 retain imported helpers, including `examples/presets/markdown.js`; restart Pi
 after editing an imported helper. No file watcher reloads either file.
 
@@ -1402,7 +1402,7 @@ scopes, stays within macro replay limit, and never recursively expands mappings.
 
 Options accept only `{ allowProtected?: boolean, desc?: string }`. Protected Pi
 shortcuts warn unless mapping sets `allowProtected: true`; override only claims
-pi-vimmode ownership and cannot make terminal or Pi deliver an indistinguishable
+pi-vim ownership and cannot make terminal or Pi deliver an indistinguishable
 key. Insert mappings accept finite insert actions only and defer to Pi while
 autocomplete is active.
 
@@ -1417,7 +1417,7 @@ expand `<leader>`.
 
 ### Trust boundary and precedence
 
-Executable config is global-only at `~/.pi/agent/pi-vimmode.config.js`.
+Executable config is global-only at `~/.pi/agent/pi-vim.config.js`.
 Project-local executable config is never loaded. Resolution order:
 
 1. Built-in defaults
@@ -1460,6 +1460,6 @@ require a major release; removals should warn for at least one minor release
 when feasible.
 
 No sandbox, project JavaScript config, TypeScript config, runtime
-`@graelo/pi-vimmode/config` module, `defineConfig`, file watching, plugin
+`@graelo/pi-vim/config` module, `defineConfig`, file watching, plugin
 discovery, arbitrary custom action execution, recursive mappings, timeout-based
 prefix resolution, Vimscript, `.vimrc`, Neovim Lua, or full Vim/Neovim parity.

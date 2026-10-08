@@ -165,24 +165,24 @@ line mark jumps producing linewise ranges.
 ### Requirement: Mark behavior is configurable
 
 The Vim editor SHALL allow mark behavior to be configured with
-`piVimMode.marks.enabled`, `piVimMode.marks.slots`, and mark prefix keys under
-`piVimMode.keymap.marks`.
+`piVim.marks.enabled`, `piVim.marks.slots`, and mark prefix keys under
+`piVim.keymap.marks`.
 
 #### Scenario: Disable mark controls
 
-- **WHEN** `piVimMode.marks.enabled` is `false`
+- **WHEN** `piVim.marks.enabled` is `false`
 - **THEN** mark set and jump controls are ignored as mark controls and do not
     set pending mark state
 
 #### Scenario: Restrict mark slots
 
-- **WHEN** `piVimMode.marks.slots` is configured to `["x"]`
+- **WHEN** `piVim.marks.slots` is configured to `["x"]`
 - **THEN** only local mark slot `x` can be set or jumped to and other slot
     targets are ignored as invalid mark targets
 
 #### Scenario: Remap mark prefix keys
 
-- **WHEN** `piVimMode.keymap.marks` configures set, exact-jump, and line-jump
+- **WHEN** `piVim.keymap.marks` configures set, exact-jump, and line-jump
     prefix keys
 - **THEN** configured keys replace the default `m`, backtick, and single-quote
     mark prefixes for normal, visual, and operator mark behavior
@@ -226,14 +226,14 @@ the actual `VimEditor` adapter.
 
 #### Scenario: VimEditor honors disabled marks
 
-- **WHEN** `VimEditor` is constructed with `piVimMode.marks.enabled` resolved
+- **WHEN** `VimEditor` is constructed with `piVim.marks.enabled` resolved
     to `false`
 - **THEN** mark set and jump controls are ignored as mark controls in the live
     editor and do not set pending mark state
 
 #### Scenario: VimEditor honors restricted mark slots
 
-- **WHEN** `VimEditor` is constructed with `piVimMode.marks.slots` resolved to
+- **WHEN** `VimEditor` is constructed with `piVim.marks.slots` resolved to
     `["x"]`
 - **THEN** only local mark slot `x` can be set or jumped to in the live editor
     and other slot targets are ignored as invalid mark targets

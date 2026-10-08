@@ -10,16 +10,16 @@ learnings; direct edits are fine. Glossary only, not a spec or catch-all.
 ### Pi-owned shortcut
 
 A key sequence whose application-level behavior belongs to Pi rather than to
-pi-vimmode, even when pi-vimmode is active.
+pi-vim, even when pi-vim is active.
 
-Pi-owned shortcuts should be delegated as raw input unless pi-vimmode
+Pi-owned shortcuts should be delegated as raw input unless pi-vim
 intentionally implements or explicitly binds them. This keeps app actions such
 as prompt submission, cancellation, autocomplete, model controls,
 external-editor actions, and clipboard/image paste in Pi's keybinding layer.
 
 ### Protected shortcut
 
-A Pi-owned shortcut that pi-vimmode recognizes in configuration and diagnostics
+A Pi-owned shortcut that pi-vim recognizes in configuration and diagnostics
 so accidental keymap ownership is rejected or explained.
 
 Protected shortcuts can still be reclaimed, but only through explicit override
@@ -28,16 +28,16 @@ or terminal guarantee that Pi will deliver the chord distinctly.
 
 ### Modal delegation
 
-The act of returning an input sequence from pi-vimmode to Pi without treating it
+The act of returning an input sequence from pi-vim to Pi without treating it
 as a Vim command.
 
-Delegation preserves Pi application behavior while letting pi-vimmode reset or
+Delegation preserves Pi application behavior while letting pi-vim reset or
 clear transient Vim state when appropriate. A delegated input is not a
 repeatable Vim edit and should not be recorded as a macro command.
 
 ### Visual block mode
 
-The pi-vimmode mode for rectangular selections across prompt lines.
+The pi-vim mode for rectangular selections across prompt lines.
 
 Visual block mode is available through configured keymap ownership rather than
 through an unconditional protected paste shortcut. This keeps blockwise editing

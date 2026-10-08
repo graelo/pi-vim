@@ -1,5 +1,5 @@
 /**
- * @param {import("@graelo/pi-vimmode/config").VimConfigApi} vim
+ * @param {import("@graelo/pi-vim/config").VimConfigApi} vim
  */
 export default function applyMarkdownPreset(vim) {
   vim.g.mapleader = " ";

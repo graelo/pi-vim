@@ -68,7 +68,7 @@ export type ParsedExKeybindingsCommand = {
 
 export type ParsedExInspectCommand = {
   type: "inspect";
-  command: "vimmode";
+  command: "vim";
   query: "inspect";
 };
 
@@ -115,7 +115,7 @@ type ParsedCommandName =
   | "help"
   | "messages"
   | "keybindings"
-  | "vimmode"
+  | "vim"
   | "noh"
   | "nohlsearch"
   | "q"
@@ -162,7 +162,7 @@ const COMMAND_TYPES: Record<ParsedCommandName, ParsedCommandType> = {
   help: "runtimeHelp",
   messages: "runtimeHelp",
   keybindings: "keybindings",
-  vimmode: "inspect",
+  vim: "inspect",
   noh: "nohlsearch",
   nohlsearch: "nohlsearch",
   q: "quit",
@@ -203,7 +203,7 @@ function parseCommand(
     "help",
     "messages",
     "keybindings",
-    "vimmode",
+    "vim",
     "noh",
     "nohlsearch",
     "q",
@@ -424,7 +424,7 @@ function parseMetadataCommand(command: ParsedCommandInput): ExParseResult {
       : { type: "keybindings", command: "keybindings" };
   }
   return command.rest.trim() === "inspect"
-    ? { type: "inspect", command: "vimmode", query: "inspect" }
+    ? { type: "inspect", command: "vim", query: "inspect" }
     : { type: "error", message: "Unexpected Ex command arguments" };
 }
 
@@ -506,7 +506,7 @@ const CANDIDATE_NAMES_BY_COMMAND_TYPE: Record<string, string[]> = {
   diagnostic: ["vimdoctor", "keymap", "mapcheck"],
   runtimeHelp: ["help", "messages"],
   keybindings: ["keybindings"],
-  inspect: ["vimmode"],
+  inspect: ["vim"],
 };
 
 const allBuiltInCandidateNames = Object.values(CANDIDATE_NAMES_BY_COMMAND_TYPE).flat().sort();

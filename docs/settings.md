@@ -1,6 +1,6 @@
-# pi-vimmode settings reference
+# pi-vim settings reference
 
-pi-vimmode reads one `piVimMode` object from Pi settings plus an optional
+pi-vim reads one `piVim` object from Pi settings plus an optional
 trusted global JS config. This document lists every supported setting, default,
 accepted value, and effect.
 
@@ -13,10 +13,10 @@ Source of truth:
 
 ## Settings files and precedence
 
-pi-vimmode loads settings from:
+pi-vim loads settings from:
 
 1. Global settings: `~/.pi/agent/settings.json`
-2. Trusted global JS config: `~/.pi/agent/pi-vimmode.config.js`
+2. Trusted global JS config: `~/.pi/agent/pi-vim.config.js`
 3. Project settings: `.pi/settings.json` in the current project
 
 Global JS config applies after global settings and before project settings.
@@ -32,7 +32,7 @@ Example:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "startMode": "normal",
     "cursor": {
       "insert": "bar",
@@ -51,7 +51,7 @@ complete settings reference.
 Common warning causes:
 
 - Invalid JSON in a settings file.
-- `piVimMode` is not an object.
+- `piVim` is not an object.
 - Unsupported startup mode or cursor style.
 - Invalid leader value or `<leader>` mapping without an effective leader.
 - Unknown keymap action name.
@@ -59,8 +59,8 @@ Common warning causes:
 - Unsupported operator motion.
 - Duplicate or shadowed key bindings.
 - Invalid UI/search/macro/mark/feedback field type.
-- Invalid `piVimMode.ui.workbench.reservedRows` value outside `0` through `5`.
-- Legacy `piVimMode.vimOptions` present.
+- Invalid `piVim.ui.workbench.reservedRows` value outside `0` through `5`.
+- Legacy `piVim.vimOptions` present.
 - Invalid global JS config import, export shape, mode, key string, or mapping
     target.
 
@@ -69,7 +69,7 @@ Common warning causes:
 Canonical setup, generated API reference, checked workflows, reload behavior,
 and safety contract live in [`docs/config.md`](config.md#basic-setup).
 
-`~/.pi/agent/pi-vimmode.config.js` is trusted local code executed with full Pi
+`~/.pi/agent/pi-vim.config.js` is trusted local code executed with full Pi
 process privileges. It is not sandboxed. Project-local executable JS config is
 intentionally unsupported.
 
@@ -80,7 +80,7 @@ uses JSON key syntax; string targets are replayed keys, never internal action
 IDs.
 
 ```js
-/** @type {import("./npm/node_modules/@graelo/pi-vimmode/config").VimConfig} */
+/** @type {import("./npm/node_modules/@graelo/pi-vim/config").VimConfig} */
 export default (vim) => {
   vim.g.mapleader = " ";
   vim.keymap.set("i", "<A-w>", vim.prompt.deleteWordBackward());
@@ -124,7 +124,7 @@ String targets are replayed through the macro path, so Ex-command remaps such as
 `":vimdoctor<CR>"` work within the normal replay-step limit. `<leader>` is
 expanded only in mapping keys, never in replay target strings.
 
-Run `/vimmode reload` after editing JS config. Use `:vimdoctor`, `:keymap`, and
+Run `/vim reload` after editing JS config. Use `:vimdoctor`, `:keymap`, and
 `:mapcheck <key>` to inspect results. Imported helpers follow native ESM
 caching; see
 [`docs/config.md#exports-async-config-and-imported-presets`](config.md#exports-async-config-and-imported-presets).
@@ -137,7 +137,7 @@ Examples:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "keymap": {
       "motions": {
         "bufferStart": ["gg"]
@@ -159,13 +159,13 @@ Rules:
   - `<S-tab>` / `<Shift-tab>` -> `shift+tab`
   - `<D-x>` / `<Cmd-x>` / `<Super-x>` -> `super+x`
 - Prefer lowercase normalized names such as `ctrl+a` for raw modifier strings.
-- A mapping may begin with case-insensitive `<leader>` when `piVimMode.leader`
+- A mapping may begin with case-insensitive `<leader>` when `piVim.leader`
     is configured. `<leader><leader>` is valid; a lone `<leader>` or
     `g<leader>x` is rejected.
 - An empty array clears that action's bindings, including defaults and
     bindings inherited from lower layers such as global JS config. A list whose
     keys are all rejected warns and keeps the inherited bindings.
-- `piVimMode.keymap.escape` defaults to `[]` and replaces the inherited escape
+- `piVim.keymap.escape` defaults to `[]` and replaces the inherited escape
     alias list when set.
 - Escape aliases are key aliases such as `<D-j>` or `<C-j>`, not raw text
     chords such as `jk` or `jj`.
@@ -188,23 +188,23 @@ Protected Pi shortcuts cannot be mapped:
 Protected or unsupported keys are ignored with a warning that names the
 protected key and reason. Use `:mapcheck <key>` at runtime for current ownership
 and binding details. `ctrl+a`, `ctrl+x`, `ctrl+r`, `ctrl+d`, `ctrl+u`, `/`, and
-`?` are explicitly owned by pi-vimmode in normal mode for numeric adjustment,
+`?` are explicitly owned by pi-vim in normal mode for numeric adjustment,
 redo, half-page scroll, and prompt search; insert mode still delegates them to
 Pi.
 
 Protected keys can be overridden by listing them in
-`piVimMode.keymap.allowProtectedOverrides` within the same settings layer. See
+`piVim.keymap.allowProtectedOverrides` within the same settings layer. See
 the allow-list section below.
 
 ## Top-level settings
 
 | Path                   | Default     | Accepted values                             | Effect                                                                                                                                                             |
 | ---------------------- | ----------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `piVimMode`            | absent      | object                                      | Root config object. Missing object means all defaults. Non-object produces warning and defaults.                                                                   |
-| `piVimMode.preset`     | absent      | `"minimal"`, `"prompt-safe"`, `"vim-heavy"` | Applies a curated baseline before explicit fields in the same settings object. Invalid values warn and are ignored.                                                |
-| `piVimMode.leader`     | absent      | one printable character or `null`           | Replaces leading `<leader>` tokens after all settings layers resolve. `null` clears an inherited leader.                                                           |
-| `piVimMode.startMode`  | `"insert"`  | `"insert"`, `"normal"`                      | Mode used for new editor instances and Vim reset paths that explicitly reset transient modal state. Visual modes are invalid because they need a selection anchor. |
-| `piVimMode.vimOptions` | unsupported | none                                        | Legacy alias object. Ignored with warning: use `piVimMode.ui`.                                                                                                     |
+| `piVim`            | absent      | object                                      | Root config object. Missing object means all defaults. Non-object produces warning and defaults.                                                                   |
+| `piVim.preset`     | absent      | `"minimal"`, `"prompt-safe"`, `"vim-heavy"` | Applies a curated baseline before explicit fields in the same settings object. Invalid values warn and are ignored.                                                |
+| `piVim.leader`     | absent      | one printable character or `null`           | Replaces leading `<leader>` tokens after all settings layers resolve. `null` clears an inherited leader.                                                           |
+| `piVim.startMode`  | `"insert"`  | `"insert"`, `"normal"`                      | Mode used for new editor instances and Vim reset paths that explicitly reset transient modal state. Visual modes are invalid because they need a selection anchor. |
+| `piVim.vimOptions` | unsupported | none                                        | Legacy alias object. Ignored with warning: use `piVim.ui`.                                                                                                     |
 
 ### Presets
 
@@ -221,7 +221,7 @@ Example explicit override:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "preset": "vim-heavy",
     "startMode": "insert",
     "keymap": { "commands": { "visualBlock": ["B"] } }
@@ -241,7 +241,7 @@ inherited leader.
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "leader": " ",
     "keymap": {
       "commands": {
@@ -281,28 +281,28 @@ Allowed cursor styles: `"block"`, `"bar"`, `"underline"`.
 
 | Path                           | Default   | Effect                                                                                          |
 | ------------------------------ | --------- | ----------------------------------------------------------------------------------------------- |
-| `piVimMode.cursor.insert`      | `"bar"`   | Cursor style in insert mode. `bar` also enables Pi TUI hardware cursor visibility while active. |
-| `piVimMode.cursor.normal`      | `"block"` | Cursor style in normal mode.                                                                    |
-| `piVimMode.cursor.visual`      | `"block"` | Cursor style in visual character mode.                                                          |
-| `piVimMode.cursor.visualLine`  | `"block"` | Cursor style in visual line mode.                                                               |
-| `piVimMode.cursor.visualBlock` | `"block"` | Cursor style in visual block mode.                                                              |
+| `piVim.cursor.insert`      | `"bar"`   | Cursor style in insert mode. `bar` also enables Pi TUI hardware cursor visibility while active. |
+| `piVim.cursor.normal`      | `"block"` | Cursor style in normal mode.                                                                    |
+| `piVim.cursor.visual`      | `"block"` | Cursor style in visual character mode.                                                          |
+| `piVim.cursor.visualLine`  | `"block"` | Cursor style in visual line mode.                                                               |
+| `piVim.cursor.visualBlock` | `"block"` | Cursor style in visual block mode.                                                              |
 
 Invalid cursor styles fall back per mode, so one bad value does not discard the
 rest of `cursor`.
 
-Terminal cursor support is best effort. pi-vimmode writes DECSCUSR cursor-shape
+Terminal cursor support is best effort. pi-vim writes DECSCUSR cursor-shape
 hints, but terminals can ignore them.
 
 ## Keymap settings
 
-`piVimMode.keymap` maps key sequences to supported semantic actions. It does not
+`piVim.keymap` maps key sequences to supported semantic actions. It does not
 add arbitrary Vim grammar.
 
 ### Escape aliases
 
 | Path                      | Default | Effect                                                                                                                       |
 | ------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `piVimMode.keymap.escape` | `[]`    | Optional key aliases for leaving insert mode, visual modes, and pending Ex commands, for example `["<D-j>"]` or `["<C-j>"]`. |
+| `piVim.keymap.escape` | `[]`    | Optional key aliases for leaving insert mode, visual modes, and pending Ex commands, for example `["<D-j>"]` or `["<C-j>"]`. |
 
 Configured escape aliases act like physical `Esc` while insert mode is active
 and Pi autocomplete is closed, while visual/visual-line/visual-block mode is
@@ -310,7 +310,7 @@ active, or while a `:` Ex command-line is pending. Example:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "keymap": {
       "escape": ["<D-j>", "<C-j>"]
     }
@@ -339,22 +339,22 @@ Rules:
 
 | Path                                         | Default | Effect                                                                                                                    |
 | -------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `piVimMode.keymap.insert.openLineBelow`      | `[]`    | Insert a blank line below the current line and stay in insert mode. Accepts only modified or protected single-key chords. |
-| `piVimMode.keymap.insert.openLineAbove`      | `[]`    | Insert a blank line above the current line and stay in insert mode. Accepts only modified or protected single-key chords. |
-| `piVimMode.keymap.insert.deleteWordBackward` | `[]`    | Delete backward to the previous small-word start in insert mode.                                                          |
-| `piVimMode.keymap.insert.deleteWordForward`  | `[]`    | Delete forward to the next small-word start in insert mode.                                                               |
-| `piVimMode.keymap.insert.deleteLineBackward` | `[]`    | Delete backward to current line start without joining the previous line.                                                  |
-| `piVimMode.keymap.insert.deleteLineForward`  | `[]`    | Delete forward to current line end. At EOL, delete exactly one newline without trimming spaces.                           |
-| `piVimMode.keymap.insert.moveWordBackward`   | `[]`    | Move backward to the previous small-word start in insert mode.                                                            |
-| `piVimMode.keymap.insert.moveWordForward`    | `[]`    | Move forward to the next small-word start in insert mode.                                                                 |
-| `piVimMode.keymap.insert.moveLineStart`      | `[]`    | Move to current line start in insert mode.                                                                                |
-| `piVimMode.keymap.insert.moveLineEnd`        | `[]`    | Move to current line end in insert mode.                                                                                  |
+| `piVim.keymap.insert.openLineBelow`      | `[]`    | Insert a blank line below the current line and stay in insert mode. Accepts only modified or protected single-key chords. |
+| `piVim.keymap.insert.openLineAbove`      | `[]`    | Insert a blank line above the current line and stay in insert mode. Accepts only modified or protected single-key chords. |
+| `piVim.keymap.insert.deleteWordBackward` | `[]`    | Delete backward to the previous small-word start in insert mode.                                                          |
+| `piVim.keymap.insert.deleteWordForward`  | `[]`    | Delete forward to the next small-word start in insert mode.                                                               |
+| `piVim.keymap.insert.deleteLineBackward` | `[]`    | Delete backward to current line start without joining the previous line.                                                  |
+| `piVim.keymap.insert.deleteLineForward`  | `[]`    | Delete forward to current line end. At EOL, delete exactly one newline without trimming spaces.                           |
+| `piVim.keymap.insert.moveWordBackward`   | `[]`    | Move backward to the previous small-word start in insert mode.                                                            |
+| `piVim.keymap.insert.moveWordForward`    | `[]`    | Move forward to the next small-word start in insert mode.                                                                 |
+| `piVim.keymap.insert.moveLineStart`      | `[]`    | Move to current line start in insert mode.                                                                                |
+| `piVim.keymap.insert.moveLineEnd`        | `[]`    | Move to current line end in insert mode.                                                                                  |
 
 Example:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "keymap": {
       "insert": {
         "openLineBelow": ["ctrl+j"],
@@ -377,34 +377,34 @@ Rules:
 - Only modified or protected single-key chords are accepted. Raw printable
     text such as `"j"` or `"oo"` is rejected so normal typing stays normal.
 - Protected keys such as `"enter"` require same-layer
-    `piVimMode.keymap.allowProtectedOverrides` before they are accepted.
+    `piVim.keymap.allowProtectedOverrides` before they are accepted.
 - Insert bindings only work in insert mode when Pi autocomplete is inactive.
     Normal and visual modes use the existing `openLineBelow` / `openLineAbove`
-    commands under `piVimMode.keymap.commands`.
+    commands under `piVim.keymap.commands`.
 - Insert delete bindings do not write Vim registers, marks, visual state,
     macro slots, or dot-repeat state.
 - Insert movement bindings preserve prompt text, search highlights, and
     registers.
-- Insert word movement and deletion reuse pi-vimmode lowercase small-word
+- Insert word movement and deletion reuse pi-vim lowercase small-word
     semantics where keyword runs, punctuation runs, and whitespace are separate
     groups.
-- `piVimMode.keymap.insert` owns only physical insert edits and movement.
+- `piVim.keymap.insert` owns only physical insert edits and movement.
 - Autocomplete-active input keeps Pi ownership and does not run insert bindings.
-- These are opt-in: with no `piVimMode.keymap.insert` config, every
+- These are opt-in: with no `piVim.keymap.insert` config, every
     insert-mode key delegates to Pi default behavior.
 
 ### Operators
 
 | Path                                    | Default  | Effect                                                                                               |
 | --------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------- |
-| `piVimMode.keymap.operators.delete`     | `["d"]`  | Prefix for delete operator. Doubled operator deletes line when same operator sequence repeats.       |
-| `piVimMode.keymap.operators.change`     | `["c"]`  | Prefix for change operator. Deletes range/line and enters insert.                                    |
-| `piVimMode.keymap.operators.yank`       | `["y"]`  | Prefix for yank operator. Updates registers without changing text.                                   |
-| `piVimMode.keymap.operators.lowercase`  | `["gu"]` | Prefix for lowercase operator. Supports finite motions, text objects, and doubled line form.         |
-| `piVimMode.keymap.operators.uppercase`  | `["gU"]` | Prefix for uppercase operator. Supports finite motions, text objects, and doubled line form.         |
-| `piVimMode.keymap.operators.toggleCase` | `["g~"]` | Prefix for range toggle-case operator. Supports finite motions, text objects, and doubled line form. |
-| `piVimMode.keymap.operators.indent`     | `[">"]`  | Line-only shift operator. Doubled operator indents addressed line(s) by two spaces.                  |
-| `piVimMode.keymap.operators.dedent`     | `["<"]`  | Line-only shift operator. Doubled operator dedents addressed line(s).                                |
+| `piVim.keymap.operators.delete`     | `["d"]`  | Prefix for delete operator. Doubled operator deletes line when same operator sequence repeats.       |
+| `piVim.keymap.operators.change`     | `["c"]`  | Prefix for change operator. Deletes range/line and enters insert.                                    |
+| `piVim.keymap.operators.yank`       | `["y"]`  | Prefix for yank operator. Updates registers without changing text.                                   |
+| `piVim.keymap.operators.lowercase`  | `["gu"]` | Prefix for lowercase operator. Supports finite motions, text objects, and doubled line form.         |
+| `piVim.keymap.operators.uppercase`  | `["gU"]` | Prefix for uppercase operator. Supports finite motions, text objects, and doubled line form.         |
+| `piVim.keymap.operators.toggleCase` | `["g~"]` | Prefix for range toggle-case operator. Supports finite motions, text objects, and doubled line form. |
+| `piVim.keymap.operators.indent`     | `[">"]`  | Line-only shift operator. Doubled operator indents addressed line(s) by two spaces.                  |
+| `piVim.keymap.operators.dedent`     | `["<"]`  | Line-only shift operator. Doubled operator dedents addressed line(s).                                |
 
 `lowercase`, `uppercase`, and `toggleCase` do not write registers and do not
 enter insert mode. Their doubled line forms are `gugu`, `gUgU`, and `g~g~` by
@@ -423,79 +423,79 @@ mark-target shift ranges are unsupported safe no-ops.
 
 | Path                                          | Default          | Effect                                                                                                      |
 | --------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------- |
-| `piVimMode.keymap.motions.left`               | `["h", "left"]`  | Move left. Arrow key `Left` alias included. Count repeats movement.                                         |
-| `piVimMode.keymap.motions.down`               | `["j", "down"]`  | Move down. Arrow key `Down` alias included. Count repeats movement.                                         |
-| `piVimMode.keymap.motions.up`                 | `["k", "up"]`    | Move up. Arrow key `Up` alias included. Count repeats movement.                                             |
-| `piVimMode.keymap.motions.right`              | `["l", "right"]` | Move right. Arrow key `Right` alias included. Count repeats movement.                                       |
-| `piVimMode.keymap.motions.wordForward`        | `["w"]`          | Move to next word.                                                                                          |
-| `piVimMode.keymap.motions.wordBackward`       | `["b"]`          | Move to previous word.                                                                                      |
-| `piVimMode.keymap.motions.wordEnd`            | `["e"]`          | Move to word end.                                                                                           |
-| `piVimMode.keymap.motions.wordForwardBig`     | `["W"]`          | Move to next whitespace-delimited WORD.                                                                     |
-| `piVimMode.keymap.motions.wordBackwardBig`    | `["B"]`          | Move to previous whitespace-delimited WORD.                                                                 |
-| `piVimMode.keymap.motions.wordEndBig`         | `["E"]`          | Move to end of current or next whitespace-delimited WORD.                                                   |
-| `piVimMode.keymap.motions.wordPreviousEnd`    | `["ge"]`         | Move to previous word end.                                                                                  |
-| `piVimMode.keymap.motions.wordPreviousEndBig` | `["gE"]`         | Move to previous whitespace-delimited WORD end.                                                             |
-| `piVimMode.keymap.motions.lineStart`          | `["0"]`          | Move to start of current line.                                                                              |
-| `piVimMode.keymap.motions.lineEnd`            | `["$"]`          | Move to end of current line.                                                                                |
-| `piVimMode.keymap.motions.firstNonBlank`      | `["^", "_"]`     | Move to first non-blank character on current line.                                                          |
-| `piVimMode.keymap.motions.bufferStart`        | `["gg"]`         | Move to prompt start.                                                                                       |
-| `piVimMode.keymap.motions.bufferEnd`          | `["G"]`          | Move to prompt end.                                                                                         |
-| `piVimMode.keymap.motions.matchingPair`       | `["%"]`          | Jump to matching `()`, `[]`, or `{}` pair under/after cursor on current line.                               |
-| `piVimMode.keymap.motions.halfPageDown`       | `["ctrl+d"]`     | Move down by half the visible prompt page; count multiplies the distance.                                   |
-| `piVimMode.keymap.motions.halfPageUp`         | `["ctrl+u"]`     | Move up by half the visible prompt page; count multiplies the distance.                                     |
-| `piVimMode.keymap.motions.paragraphBackward`  | `["{"]`          | Move to current paragraph start, or previous paragraph start when already there. Blank-line-separated runs. |
-| `piVimMode.keymap.motions.paragraphForward`   | `["}"]`          | Move to next paragraph first column, or prompt end when none remain. Blank-line-separated runs.             |
+| `piVim.keymap.motions.left`               | `["h", "left"]`  | Move left. Arrow key `Left` alias included. Count repeats movement.                                         |
+| `piVim.keymap.motions.down`               | `["j", "down"]`  | Move down. Arrow key `Down` alias included. Count repeats movement.                                         |
+| `piVim.keymap.motions.up`                 | `["k", "up"]`    | Move up. Arrow key `Up` alias included. Count repeats movement.                                             |
+| `piVim.keymap.motions.right`              | `["l", "right"]` | Move right. Arrow key `Right` alias included. Count repeats movement.                                       |
+| `piVim.keymap.motions.wordForward`        | `["w"]`          | Move to next word.                                                                                          |
+| `piVim.keymap.motions.wordBackward`       | `["b"]`          | Move to previous word.                                                                                      |
+| `piVim.keymap.motions.wordEnd`            | `["e"]`          | Move to word end.                                                                                           |
+| `piVim.keymap.motions.wordForwardBig`     | `["W"]`          | Move to next whitespace-delimited WORD.                                                                     |
+| `piVim.keymap.motions.wordBackwardBig`    | `["B"]`          | Move to previous whitespace-delimited WORD.                                                                 |
+| `piVim.keymap.motions.wordEndBig`         | `["E"]`          | Move to end of current or next whitespace-delimited WORD.                                                   |
+| `piVim.keymap.motions.wordPreviousEnd`    | `["ge"]`         | Move to previous word end.                                                                                  |
+| `piVim.keymap.motions.wordPreviousEndBig` | `["gE"]`         | Move to previous whitespace-delimited WORD end.                                                             |
+| `piVim.keymap.motions.lineStart`          | `["0"]`          | Move to start of current line.                                                                              |
+| `piVim.keymap.motions.lineEnd`            | `["$"]`          | Move to end of current line.                                                                                |
+| `piVim.keymap.motions.firstNonBlank`      | `["^", "_"]`     | Move to first non-blank character on current line.                                                          |
+| `piVim.keymap.motions.bufferStart`        | `["gg"]`         | Move to prompt start.                                                                                       |
+| `piVim.keymap.motions.bufferEnd`          | `["G"]`          | Move to prompt end.                                                                                         |
+| `piVim.keymap.motions.matchingPair`       | `["%"]`          | Jump to matching `()`, `[]`, or `{}` pair under/after cursor on current line.                               |
+| `piVim.keymap.motions.halfPageDown`       | `["ctrl+d"]`     | Move down by half the visible prompt page; count multiplies the distance.                                   |
+| `piVim.keymap.motions.halfPageUp`         | `["ctrl+u"]`     | Move up by half the visible prompt page; count multiplies the distance.                                     |
+| `piVim.keymap.motions.paragraphBackward`  | `["{"]`          | Move to current paragraph start, or previous paragraph start when already there. Blank-line-separated runs. |
+| `piVim.keymap.motions.paragraphForward`   | `["}"]`          | Move to next paragraph first column, or prompt end when none remain. Blank-line-separated runs.             |
 
 ### Commands
 
 | Path                                                | Default      | Effect                                                                                                                                                                   |
 | --------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `piVimMode.keymap.commands.insertBefore`            | `["i"]`      | Enter insert mode at cursor.                                                                                                                                             |
-| `piVimMode.keymap.commands.insertAfter`             | `["a"]`      | Move right, then enter insert.                                                                                                                                           |
-| `piVimMode.keymap.commands.insertLineStart`         | `["I"]`      | Move to line start, then insert. In visual block mode, starts block insert before selected block.                                                                        |
-| `piVimMode.keymap.commands.insertLineEnd`           | `["A"]`      | Move to line end, then insert. In visual block mode, starts block append after selected block.                                                                           |
-| `piVimMode.keymap.commands.openLineBelow`           | `["o"]`      | Open blank line below and enter insert.                                                                                                                                  |
-| `piVimMode.keymap.commands.openLineAbove`           | `["O"]`      | Open blank line above and enter insert.                                                                                                                                  |
-| `piVimMode.keymap.commands.visualChar`              | `["v"]`      | Enter/switch visual character mode.                                                                                                                                      |
-| `piVimMode.keymap.commands.visualLine`              | `["V"]`      | Enter/switch visual line mode.                                                                                                                                           |
-| `piVimMode.keymap.commands.visualBlock`             | `[]`         | Bindings for visual block mode. Default `Ctrl-v` / `Alt-v` / `Ctrl-Alt-v` delegates to Pi image/clipboard paste; bind another key or explicitly allow the protected key. |
-| `piVimMode.keymap.commands.deleteChar`              | `["x"]`      | Delete character under cursor. In visual modes, deletes selection.                                                                                                       |
-| `piVimMode.keymap.commands.deleteToLineEnd`         | `["D"]`      | Delete from cursor through line end.                                                                                                                                     |
-| `piVimMode.keymap.commands.changeToLineEnd`         | `["C"]`      | Delete from cursor through line end and enter insert.                                                                                                                    |
-| `piVimMode.keymap.commands.yankLine`                | `["Y"]`      | Yank current line into linewise register.                                                                                                                                |
-| `piVimMode.keymap.commands.joinLine`                | `["J"]`      | Join current line with next line.                                                                                                                                        |
-| `piVimMode.keymap.commands.pasteAfter`              | `["p"]`      | Paste register after cursor or below current line. In visual line mode, replaces selected lines.                                                                         |
-| `piVimMode.keymap.commands.pasteBefore`             | `["P"]`      | Paste register before cursor or above current line.                                                                                                                      |
-| `piVimMode.keymap.commands.incrementNumber`         | `["ctrl+a"]` | Increment signed integer under or after cursor. Count changes delta.                                                                                                     |
-| `piVimMode.keymap.commands.decrementNumber`         | `["ctrl+x"]` | Decrement signed integer under or after cursor. Count changes delta.                                                                                                     |
-| `piVimMode.keymap.commands.toggleCase`              | `["~"]`      | Toggle case under cursor or visual selection. Count toggles current-line span. Visual `u` / `U` lower/uppercase selections.                                              |
-| `piVimMode.keymap.commands.replaceChar`             | `["r"]`      | Wait for one printable char, replace character(s) or visual selection.                                                                                                   |
-| `piVimMode.keymap.commands.substituteChar`          | `["s"]`      | Delete character(s), then enter insert.                                                                                                                                  |
-| `piVimMode.keymap.commands.substituteLine`          | `["S"]`      | Change line(s), then enter insert.                                                                                                                                       |
-| `piVimMode.keymap.commands.findCharForward`         | `["f"]`      | Wait for char and find it forward on current line. Also works after delete/change/yank as `f{char}` target.                                                              |
-| `piVimMode.keymap.commands.findCharBackward`        | `["F"]`      | Wait for char and find it backward on current line. Also works after delete/change/yank as `F{char}` target.                                                             |
-| `piVimMode.keymap.commands.tillCharForward`         | `["t"]`      | Wait for char and move before it on current line. Also works after delete/change/yank as `t{char}` target.                                                               |
-| `piVimMode.keymap.commands.tillCharBackward`        | `["T"]`      | Wait for char and move after it on current line. Also works after delete/change/yank as `T{char}` target.                                                                |
-| `piVimMode.keymap.commands.repeatCharSearch`        | `[";"]`      | Repeat last character search same direction.                                                                                                                             |
-| `piVimMode.keymap.commands.repeatCharSearchReverse` | `[","]`      | Repeat last character search opposite direction.                                                                                                                         |
-| `piVimMode.keymap.commands.startSearch`             | `["/"]`      | Start prompt-local forward search. Also works after operator as search motion.                                                                                           |
-| `piVimMode.keymap.commands.startSearchBackward`     | `["?"]`      | Start prompt-local backward search. Also works after operator as search motion.                                                                                          |
-| `piVimMode.keymap.commands.repeatSearch`            | `["n"]`      | Repeat last prompt search direction.                                                                                                                                     |
-| `piVimMode.keymap.commands.repeatSearchReverse`     | `["N"]`      | Repeat prompt search opposite direction.                                                                                                                                 |
-| `piVimMode.keymap.commands.searchWordForward`       | `["*"]`      | Normal-mode only: search forward for the keyword word under the cursor; reuses prompt search repeat state.                                                               |
-| `piVimMode.keymap.commands.searchWordBackward`      | `["#"]`      | Normal-mode only: search backward for the keyword word under the cursor; reuses prompt search repeat state.                                                              |
-| `piVimMode.keymap.commands.startExCommand`          | `[":"]`      | Open Ex command-line row. Count in normal mode pre-fills a line range.                                                                                                   |
-| `piVimMode.keymap.commands.repeatChange`            | `["."]`      | Repeat last supported completed normal-mode change.                                                                                                                      |
-| `piVimMode.keymap.commands.reselectVisual`          | `["gv"]`     | Re-enter the last valid visual selection from normal mode.                                                                                                               |
-| `piVimMode.keymap.commands.undo`                    | `["u"]`      | Delegate to Pi native undo.                                                                                                                                              |
-| `piVimMode.keymap.commands.redo`                    | `["ctrl+r"]` | Redo the latest prompt text/cursor state undone by normal-mode undo.                                                                                                     |
-| `piVimMode.keymap.commands.showKeybindings`         | `[]`         | Optional normal-mode shortcut that opens the same bounded read-only popup as `:keybindings`.                                                                             |
+| `piVim.keymap.commands.insertBefore`            | `["i"]`      | Enter insert mode at cursor.                                                                                                                                             |
+| `piVim.keymap.commands.insertAfter`             | `["a"]`      | Move right, then enter insert.                                                                                                                                           |
+| `piVim.keymap.commands.insertLineStart`         | `["I"]`      | Move to line start, then insert. In visual block mode, starts block insert before selected block.                                                                        |
+| `piVim.keymap.commands.insertLineEnd`           | `["A"]`      | Move to line end, then insert. In visual block mode, starts block append after selected block.                                                                           |
+| `piVim.keymap.commands.openLineBelow`           | `["o"]`      | Open blank line below and enter insert.                                                                                                                                  |
+| `piVim.keymap.commands.openLineAbove`           | `["O"]`      | Open blank line above and enter insert.                                                                                                                                  |
+| `piVim.keymap.commands.visualChar`              | `["v"]`      | Enter/switch visual character mode.                                                                                                                                      |
+| `piVim.keymap.commands.visualLine`              | `["V"]`      | Enter/switch visual line mode.                                                                                                                                           |
+| `piVim.keymap.commands.visualBlock`             | `[]`         | Bindings for visual block mode. Default `Ctrl-v` / `Alt-v` / `Ctrl-Alt-v` delegates to Pi image/clipboard paste; bind another key or explicitly allow the protected key. |
+| `piVim.keymap.commands.deleteChar`              | `["x"]`      | Delete character under cursor. In visual modes, deletes selection.                                                                                                       |
+| `piVim.keymap.commands.deleteToLineEnd`         | `["D"]`      | Delete from cursor through line end.                                                                                                                                     |
+| `piVim.keymap.commands.changeToLineEnd`         | `["C"]`      | Delete from cursor through line end and enter insert.                                                                                                                    |
+| `piVim.keymap.commands.yankLine`                | `["Y"]`      | Yank current line into linewise register.                                                                                                                                |
+| `piVim.keymap.commands.joinLine`                | `["J"]`      | Join current line with next line.                                                                                                                                        |
+| `piVim.keymap.commands.pasteAfter`              | `["p"]`      | Paste register after cursor or below current line. In visual line mode, replaces selected lines.                                                                         |
+| `piVim.keymap.commands.pasteBefore`             | `["P"]`      | Paste register before cursor or above current line.                                                                                                                      |
+| `piVim.keymap.commands.incrementNumber`         | `["ctrl+a"]` | Increment signed integer under or after cursor. Count changes delta.                                                                                                     |
+| `piVim.keymap.commands.decrementNumber`         | `["ctrl+x"]` | Decrement signed integer under or after cursor. Count changes delta.                                                                                                     |
+| `piVim.keymap.commands.toggleCase`              | `["~"]`      | Toggle case under cursor or visual selection. Count toggles current-line span. Visual `u` / `U` lower/uppercase selections.                                              |
+| `piVim.keymap.commands.replaceChar`             | `["r"]`      | Wait for one printable char, replace character(s) or visual selection.                                                                                                   |
+| `piVim.keymap.commands.substituteChar`          | `["s"]`      | Delete character(s), then enter insert.                                                                                                                                  |
+| `piVim.keymap.commands.substituteLine`          | `["S"]`      | Change line(s), then enter insert.                                                                                                                                       |
+| `piVim.keymap.commands.findCharForward`         | `["f"]`      | Wait for char and find it forward on current line. Also works after delete/change/yank as `f{char}` target.                                                              |
+| `piVim.keymap.commands.findCharBackward`        | `["F"]`      | Wait for char and find it backward on current line. Also works after delete/change/yank as `F{char}` target.                                                             |
+| `piVim.keymap.commands.tillCharForward`         | `["t"]`      | Wait for char and move before it on current line. Also works after delete/change/yank as `t{char}` target.                                                               |
+| `piVim.keymap.commands.tillCharBackward`        | `["T"]`      | Wait for char and move after it on current line. Also works after delete/change/yank as `T{char}` target.                                                                |
+| `piVim.keymap.commands.repeatCharSearch`        | `[";"]`      | Repeat last character search same direction.                                                                                                                             |
+| `piVim.keymap.commands.repeatCharSearchReverse` | `[","]`      | Repeat last character search opposite direction.                                                                                                                         |
+| `piVim.keymap.commands.startSearch`             | `["/"]`      | Start prompt-local forward search. Also works after operator as search motion.                                                                                           |
+| `piVim.keymap.commands.startSearchBackward`     | `["?"]`      | Start prompt-local backward search. Also works after operator as search motion.                                                                                          |
+| `piVim.keymap.commands.repeatSearch`            | `["n"]`      | Repeat last prompt search direction.                                                                                                                                     |
+| `piVim.keymap.commands.repeatSearchReverse`     | `["N"]`      | Repeat prompt search opposite direction.                                                                                                                                 |
+| `piVim.keymap.commands.searchWordForward`       | `["*"]`      | Normal-mode only: search forward for the keyword word under the cursor; reuses prompt search repeat state.                                                               |
+| `piVim.keymap.commands.searchWordBackward`      | `["#"]`      | Normal-mode only: search backward for the keyword word under the cursor; reuses prompt search repeat state.                                                              |
+| `piVim.keymap.commands.startExCommand`          | `[":"]`      | Open Ex command-line row. Count in normal mode pre-fills a line range.                                                                                                   |
+| `piVim.keymap.commands.repeatChange`            | `["."]`      | Repeat last supported completed normal-mode change.                                                                                                                      |
+| `piVim.keymap.commands.reselectVisual`          | `["gv"]`     | Re-enter the last valid visual selection from normal mode.                                                                                                               |
+| `piVim.keymap.commands.undo`                    | `["u"]`      | Delegate to Pi native undo.                                                                                                                                              |
+| `piVim.keymap.commands.redo`                    | `["ctrl+r"]` | Redo the latest prompt text/cursor state undone by normal-mode undo.                                                                                                     |
+| `piVim.keymap.commands.showKeybindings`         | `[]`         | Optional normal-mode shortcut that opens the same bounded read-only popup as `:keybindings`.                                                                             |
 
 `halfPageDown` and `halfPageUp` are prompt-local cursor motions in normal and
 visual modes. Their default `ctrl+d` / `ctrl+u` keys are only allowed for these
 motion actions; mapping those protected control keys to unrelated actions is
 rejected with a warning. They are not supported operator motions, so adding them
-to `piVimMode.keymap.operatorMotions` is ignored with a warning.
+to `piVim.keymap.operatorMotions` is ignored with a warning.
 
 `findCharForward`, `findCharBackward`, `tillCharForward`, and `tillCharBackward`
 are character-argument commands. Their configured semantic key sequences work as
@@ -508,33 +508,33 @@ make shift operators (`>`/`<`) accept character-search targets.
 
 `showKeybindings` has no default keybinding. Configure it like other semantic
 normal-mode commands, for example
-`{ "piVimMode": { "keymap": { "commands": { "showKeybindings": ["gk"] } } } }`.
+`{ "piVim": { "keymap": { "commands": { "showKeybindings": ["gk"] } } } }`.
 It follows normal keymap validation: protected Pi shortcuts such as `ctrl+p`,
 `enter`, and `tab` are rejected; exact conflicts and prefix-shadow conflicts
 with the finite grammar are rejected; valid sibling settings stay intact;
 multi-key sequences use the same finite pending-prefix matcher as other
 commands. Insert mode remains Pi-owned, so the same physical key sequence
-delegates to Pi while inserting text unless pi-vimmode otherwise supports that
+delegates to Pi while inserting text unless pi-vim otherwise supports that
 insert-mode input.
 
-Use this command path for a shortcut to keybinding discovery. `vimmode.*`
-diagnostic/help metadata IDs such as `vimmode.keybindings`, `vimmode.keymap`,
-and `vimmode.help` are metadata-only and cannot be bound.
+Use this command path for a shortcut to keybinding discovery. `pi-vim.*`
+diagnostic/help metadata IDs such as `pi-vim.keybindings`, `pi-vim.keymap`,
+and `pi-vim.help` are metadata-only and cannot be bound.
 
 ### Macro keymap
 
 | Path                             | Default | Effect                                                                             |
 | -------------------------------- | ------- | ---------------------------------------------------------------------------------- |
-| `piVimMode.keymap.macros.record` | `["q"]` | Prefix to start/stop macro recording. `q{slot}` starts; `q` stops while recording. |
-| `piVimMode.keymap.macros.play`   | `["@"]` | Prefix to play macro. `@{slot}` plays; `@@` repeats last played macro.             |
+| `piVim.keymap.macros.record` | `["q"]` | Prefix to start/stop macro recording. `q{slot}` starts; `q` stops while recording. |
+| `piVim.keymap.macros.play`   | `["@"]` | Prefix to play macro. `@{slot}` plays; `@@` repeats last played macro.             |
 
 ### Mark keymap
 
 | Path                               | Default | Effect                                                                               |
 | ---------------------------------- | ------- | ------------------------------------------------------------------------------------ |
-| `piVimMode.keymap.marks.set`       | `["m"]` | Prefix to set local mark, e.g. `ma`.                                                 |
-| `piVimMode.keymap.marks.jumpExact` | ``["`"]`` | Prefix for exact mark jump, e.g. `` `a ``. Works in normal/operator/visual contexts. |
-| `piVimMode.keymap.marks.jumpLine`  | `["'"]` | Prefix for line mark jump, e.g. `'a`. Works in normal/operator/visual contexts.      |
+| `piVim.keymap.marks.set`       | `["m"]` | Prefix to set local mark, e.g. `ma`.                                                 |
+| `piVim.keymap.marks.jumpExact` | ``["`"]`` | Prefix for exact mark jump, e.g. `` `a ``. Works in normal/operator/visual contexts. |
+| `piVim.keymap.marks.jumpLine`  | `["'"]` | Prefix for line mark jump, e.g. `'a`. Works in normal/operator/visual contexts.      |
 
 ### Text object keymap
 
@@ -543,26 +543,26 @@ Defaults preserve Vim-style `iw`, `aw`, plus prompt-native objects.
 
 | Path                                                  | Default      | Effect                                                  |
 | ----------------------------------------------------- | ------------ | ------------------------------------------------------- |
-| `piVimMode.keymap.textObjects.kinds.inner`            | `["i"]`      | Kind key for inner text objects, e.g. `diw`, `cif`.     |
-| `piVimMode.keymap.textObjects.kinds.around`           | `["a"]`      | Kind key for around text objects, e.g. `daw`, `yaf`.    |
-| `piVimMode.keymap.textObjects.targets.word`           | `["w"]`      | Word text object target.                                |
-| `piVimMode.keymap.textObjects.targets.singleQuote`    | `["'"]`      | Single-quoted string target.                            |
-| `piVimMode.keymap.textObjects.targets.doubleQuote`    | `["\""]`     | Double-quoted string target.                            |
-| `piVimMode.keymap.textObjects.targets.paren`          | `["(", ")"]` | Parenthesized target.                                   |
-| `piVimMode.keymap.textObjects.targets.bracket`        | `["[", "]"]` | Bracketed target.                                       |
-| `piVimMode.keymap.textObjects.targets.brace`          | `["{", "}"]` | Braced target.                                          |
-| `piVimMode.keymap.textObjects.targets.codeFence`      | `["f"]`      | Markdown code fence target.                             |
-| `piVimMode.keymap.textObjects.targets.headingSection` | `["h"]`      | Markdown heading section target.                        |
-| `piVimMode.keymap.textObjects.targets.listItem`       | `["l"]`      | Markdown list item target.                              |
-| `piVimMode.keymap.textObjects.targets.tag`            | `["t"]`      | XML-ish tag block target.                               |
-| `piVimMode.keymap.textObjects.targets.errorBlock`     | `["e"]`      | Pasted error/stack-trace block target.                  |
-| `piVimMode.keymap.textObjects.targets.paragraph`      | `["p"]`      | Blank-line paragraph target for `ip`/`ap` text objects. |
+| `piVim.keymap.textObjects.kinds.inner`            | `["i"]`      | Kind key for inner text objects, e.g. `diw`, `cif`.     |
+| `piVim.keymap.textObjects.kinds.around`           | `["a"]`      | Kind key for around text objects, e.g. `daw`, `yaf`.    |
+| `piVim.keymap.textObjects.targets.word`           | `["w"]`      | Word text object target.                                |
+| `piVim.keymap.textObjects.targets.singleQuote`    | `["'"]`      | Single-quoted string target.                            |
+| `piVim.keymap.textObjects.targets.doubleQuote`    | `["\""]`     | Double-quoted string target.                            |
+| `piVim.keymap.textObjects.targets.paren`          | `["(", ")"]` | Parenthesized target.                                   |
+| `piVim.keymap.textObjects.targets.bracket`        | `["[", "]"]` | Bracketed target.                                       |
+| `piVim.keymap.textObjects.targets.brace`          | `["{", "}"]` | Braced target.                                          |
+| `piVim.keymap.textObjects.targets.codeFence`      | `["f"]`      | Markdown code fence target.                             |
+| `piVim.keymap.textObjects.targets.headingSection` | `["h"]`      | Markdown heading section target.                        |
+| `piVim.keymap.textObjects.targets.listItem`       | `["l"]`      | Markdown list item target.                              |
+| `piVim.keymap.textObjects.targets.tag`            | `["t"]`      | XML-ish tag block target.                               |
+| `piVim.keymap.textObjects.targets.errorBlock`     | `["e"]`      | Pasted error/stack-trace block target.                  |
+| `piVim.keymap.textObjects.targets.paragraph`      | `["p"]`      | Blank-line paragraph target for `ip`/`ap` text objects. |
 
 Example:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "keymap": {
       "textObjects": {
         "kinds": { "inner": ["I"], "around": ["A"] },
@@ -584,12 +584,12 @@ left, down, up, right, wordForward, wordBackward, wordEnd, wordForwardBig, wordB
 
 | Path                                          | Default                                                          | Effect                                                                         |
 | --------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `piVimMode.keymap.operatorMotions.delete`     | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after delete operator. Remove entries to disable combinations. |
-| `piVimMode.keymap.operatorMotions.change`     | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after change operator.                                         |
-| `piVimMode.keymap.operatorMotions.yank`       | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after yank operator.                                           |
-| `piVimMode.keymap.operatorMotions.lowercase`  | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after lowercase operator.                                      |
-| `piVimMode.keymap.operatorMotions.uppercase`  | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after uppercase operator.                                      |
-| `piVimMode.keymap.operatorMotions.toggleCase` | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after range toggle-case operator.                              |
+| `piVim.keymap.operatorMotions.delete`     | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after delete operator. Remove entries to disable combinations. |
+| `piVim.keymap.operatorMotions.change`     | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after change operator.                                         |
+| `piVim.keymap.operatorMotions.yank`       | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after yank operator.                                           |
+| `piVim.keymap.operatorMotions.lowercase`  | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after lowercase operator.                                      |
+| `piVim.keymap.operatorMotions.uppercase`  | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after uppercase operator.                                      |
+| `piVim.keymap.operatorMotions.toggleCase` | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after range toggle-case operator.                              |
 
 WORD and previous-end actions can be customized and used in `operatorMotions`
 like other finite motions. This example makes `dgw` and `dg-` valid delete
@@ -597,7 +597,7 @@ targets:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "keymap": {
       "motions": { "wordForwardBig": ["gw"], "wordPreviousEnd": ["g-"] },
       "operatorMotions": { "delete": ["wordForwardBig", "wordPreviousEnd"] }
@@ -606,7 +606,7 @@ targets:
 }
 ```
 
-Character-search commands are configured under `piVimMode.keymap.commands`, not
+Character-search commands are configured under `piVim.keymap.commands`, not
 `operatorMotions`; they are current-line operator targets for motion-capable
 `delete`, `change`, and `yank` when their `findCharForward`, `findCharBackward`,
 `tillCharForward`, `tillCharBackward`, `repeatCharSearch`, or
@@ -625,7 +625,7 @@ added by these settings.
 
 | Path                                       | Default | Effect                                                                                           |
 | ------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------ |
-| `piVimMode.keymap.allowProtectedOverrides` | `[]`    | Opt-in array of protected key sequences to allow pi-vimmode to bind instead of delegating to Pi. |
+| `piVim.keymap.allowProtectedOverrides` | `[]`    | Opt-in array of protected key sequences to allow pi-vim to bind instead of delegating to Pi. |
 
 Protected Pi shortcuts such as `ctrl+p`, `ctrl+v`, `alt+v`, `ctrl+alt+v`,
 `ctrl+t`, and `tab` are rejected from all keymap groups by default. Adding a key
@@ -636,7 +636,7 @@ Example:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "keymap": {
       "commands": {
         "showKeybindings": ["ctrl+p"]
@@ -657,7 +657,7 @@ Rules:
 - Invalid or unparseable entries produce a warning without affecting valid
     siblings.
 - Protected keys not listed remain rejected regardless of the keymap group.
-- Overrides are not OS or terminal guarantees. pi-vimmode can only handle keys
+- Overrides are not OS or terminal guarantees. pi-vim can only handle keys
     Pi delivers distinctly. For example, Ctrl+J often arrives as `enter` and
     cannot be distinguished from the Enter key in many terminal configurations.
 - Insert mode still delegates protected shortcuts to Pi unless the key is
@@ -673,7 +673,7 @@ Example shift operator remap:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "keymap": {
       "operators": {
         "indent": ["]"],
@@ -701,9 +701,9 @@ and visual `]` / `[` shifts selected lines.
 
 | Path                              | Default             | Accepted values                          | Effect                                                                                       |
 | --------------------------------- | ------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `piVimMode.macros.enabled`        | `true`              | boolean                                  | Enables/disables macro recording and playback. When false, macro keymap controls do nothing. |
-| `piVimMode.macros.slots`          | all lowercase `a-z` | array of lowercase single-letter strings | Allowed macro slots. Invalid slots warn; duplicates are deduplicated.                        |
-| `piVimMode.macros.maxReplaySteps` | `1000`              | positive integer                         | Maximum input tokens replayed by one macro invocation. Prevents runaway replay.              |
+| `piVim.macros.enabled`        | `true`              | boolean                                  | Enables/disables macro recording and playback. When false, macro keymap controls do nothing. |
+| `piVim.macros.slots`          | all lowercase `a-z` | array of lowercase single-letter strings | Allowed macro slots. Invalid slots warn; duplicates are deduplicated.                        |
+| `piVim.macros.maxReplaySteps` | `1000`              | positive integer                         | Maximum input tokens replayed by one macro invocation. Prevents runaway replay.              |
 
 Macros are in-memory only. They do not persist across sessions.
 
@@ -711,8 +711,8 @@ Macros are in-memory only. They do not persist across sessions.
 
 | Path                      | Default             | Accepted values                          | Effect                                                                     |
 | ------------------------- | ------------------- | ---------------------------------------- | -------------------------------------------------------------------------- |
-| `piVimMode.marks.enabled` | `true`              | boolean                                  | Enables/disables all mark set and jump controls.                           |
-| `piVimMode.marks.slots`   | all lowercase `a-z` | array of lowercase single-letter strings | Allowed local mark slots. Invalid slots warn; duplicates are deduplicated. |
+| `piVim.marks.enabled` | `true`              | boolean                                  | Enables/disables all mark set and jump controls.                           |
+| `piVim.marks.slots`   | all lowercase `a-z` | array of lowercase single-letter strings | Allowed local mark slots. Invalid slots warn; duplicates are deduplicated. |
 
 Marks are in-memory only. They do not persist across sessions.
 
@@ -722,11 +722,11 @@ These settings control search highlighting, not search motion semantics.
 
 | Path                                | Default | Accepted values      | Effect                                                                                                |
 | ----------------------------------- | ------- | -------------------- | ----------------------------------------------------------------------------------------------------- |
-| `piVimMode.search.highlight`        | `true`  | boolean              | Enables visible highlights after successful `/`, `n`, or `N`. Search movement still works when false. |
-| `piVimMode.search.highlightCurrent` | `true`  | boolean              | Uses distinct style for current match.                                                                |
-| `piVimMode.search.clearOnCancel`    | `true`  | boolean              | Clears visible highlights when pending `/` search is cancelled with `Esc`.                            |
-| `piVimMode.search.clearOnInsert`    | `true`  | boolean              | Clears visible highlights when entering insert mode. Does not erase repeat-search state.              |
-| `piVimMode.search.maxHighlights`    | `200`   | non-negative integer | Maximum non-current match ranges rendered. `0` disables non-current ranges.                           |
+| `piVim.search.highlight`        | `true`  | boolean              | Enables visible highlights after successful `/`, `n`, or `N`. Search movement still works when false. |
+| `piVim.search.highlightCurrent` | `true`  | boolean              | Uses distinct style for current match.                                                                |
+| `piVim.search.clearOnCancel`    | `true`  | boolean              | Clears visible highlights when pending `/` search is cancelled with `Esc`.                            |
+| `piVim.search.clearOnInsert`    | `true`  | boolean              | Clears visible highlights when entering insert mode. Does not erase repeat-search state.              |
+| `piVim.search.maxHighlights`    | `200`   | non-negative integer | Maximum non-current match ranges rendered. `0` disables non-current ranges.                           |
 
 ## EasyMotion settings
 
@@ -735,7 +735,7 @@ labels.
 
 | Path                              | Default    | Accepted values         | Effect                                                                                        |
 | --------------------------------- | ---------- | ----------------------- | --------------------------------------------------------------------------------------------- |
-| `piVimMode.easymotion.labelColor` | `\x1b[31m` | ANSI escape code string | Color applied to EasyMotion label characters (e.g. `\x1b[31m` for red, `\x1b[32m` for green). |
+| `piVim.easymotion.labelColor` | `\x1b[31m` | ANSI escape code string | Color applied to EasyMotion label characters (e.g. `\x1b[31m` for red, `\x1b[32m` for green). |
 
 Search is literal by default and prompt-local. `?` starts backward search, empty
 `/` or `?` recalls the previous successful query, and `Up` / `Down` navigate
@@ -751,7 +751,7 @@ understand confusing no-ops.
 
 | Path                      | Default | Accepted values     | Effect                                                                                                           |
 | ------------------------- | ------- | ------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `piVimMode.feedback.noop` | `"off"` | `"off"`, `"status"` | `"status"` shows one transient info row for selected no-ops such as unmapped normal keys or protected shortcuts. |
+| `piVim.feedback.noop` | `"off"` | `"off"`, `"status"` | `"status"` shows one transient info row for selected no-ops such as unmapped normal keys or protected shortcuts. |
 
 Invalid feedback values warn and fall back to `"off"` without discarding valid
 sibling settings.
@@ -760,7 +760,7 @@ Example:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "feedback": { "noop": "status" }
   }
 }
@@ -774,25 +774,25 @@ objects still work.
 
 | Path                                                | Default | Effect                                 |
 | --------------------------------------------------- | ------- | -------------------------------------- |
-| `piVimMode.promptStructures.enabled`                | `true`  | Enables all prompt-native structures.  |
-| `piVimMode.promptStructures.targets.codeFence`      | `true`  | Enables code fence text object target. |
-| `piVimMode.promptStructures.targets.headingSection` | `true`  | Enables heading section target.        |
-| `piVimMode.promptStructures.targets.listItem`       | `true`  | Enables list item target.              |
-| `piVimMode.promptStructures.targets.tag`            | `true`  | Enables XML-ish tag target.            |
-| `piVimMode.promptStructures.targets.errorBlock`     | `true`  | Enables pasted error block target.     |
+| `piVim.promptStructures.enabled`                | `true`  | Enables all prompt-native structures.  |
+| `piVim.promptStructures.targets.codeFence`      | `true`  | Enables code fence text object target. |
+| `piVim.promptStructures.targets.headingSection` | `true`  | Enables heading section target.        |
+| `piVim.promptStructures.targets.listItem`       | `true`  | Enables list item target.              |
+| `piVim.promptStructures.targets.tag`            | `true`  | Enables XML-ish tag target.            |
+| `piVim.promptStructures.targets.errorBlock`     | `true`  | Enables pasted error block target.     |
 
 ## UI settings
 
-`piVimMode.ui` is the only supported status/UI config surface. Vim/Neovim
+`piVim.ui` is the only supported status/UI config surface. Vim/Neovim
 aliases such as `showmode`, `showcmd`, and `ruler` are not supported.
 
 ### Status
 
 | Path                           | Default                                                      | Accepted values                                                   | Effect                                                                |
 | ------------------------------ | ------------------------------------------------------------ | ----------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `piVimMode.ui.status.enabled`  | `true`                                                       | boolean                                                           | Enables/disables all status text in the editor border.                |
-| `piVimMode.ui.status.position` | `"left"`                                                     | `"left"`, `"right"`                                               | Aligns the complete ordered status group at the selected border edge. |
-| `piVimMode.ui.status.items`    | `["mode", "pendingOperator", "selection", "cursorPosition"]` | array of `mode`, `pendingOperator`, `selection`, `cursorPosition` | Ordered status items to render. Empty/invalid arrays do not override. |
+| `piVim.ui.status.enabled`  | `true`                                                       | boolean                                                           | Enables/disables all status text in the editor border.                |
+| `piVim.ui.status.position` | `"left"`                                                     | `"left"`, `"right"`                                               | Aligns the complete ordered status group at the selected border edge. |
+| `piVim.ui.status.items`    | `["mode", "pendingOperator", "selection", "cursorPosition"]` | array of `mode`, `pendingOperator`, `selection`, `cursorPosition` | Ordered status items to render. Empty/invalid arrays do not override. |
 
 Status item meanings:
 
@@ -811,17 +811,17 @@ aligned group is truncated as needed to preserve terminal width.
 
 | Path                                         | Default     | Accepted values  | Effect                                                     |
 | -------------------------------------------- | ----------- | ---------------- | ---------------------------------------------------------- |
-| `piVimMode.ui.mode.enabled`                  | `true`      | boolean          | Shows/hides mode label when `mode` status item is present. |
-| `piVimMode.ui.mode.labels.insert`            | `"INSERT"`  | non-empty string | Full-width insert label.                                   |
-| `piVimMode.ui.mode.labels.normal`            | `"NORMAL"`  | non-empty string | Full-width normal label.                                   |
-| `piVimMode.ui.mode.labels.visual`            | `"VISUAL"`  | non-empty string | Full-width visual char label.                              |
-| `piVimMode.ui.mode.labels.visualLine`        | `"V-LINE"`  | non-empty string | Full-width visual line label.                              |
-| `piVimMode.ui.mode.labels.visualBlock`       | `"V-BLOCK"` | non-empty string | Full-width visual block label.                             |
-| `piVimMode.ui.mode.narrowLabels.insert`      | `"I"`       | non-empty string | Narrow insert label.                                       |
-| `piVimMode.ui.mode.narrowLabels.normal`      | `"N"`       | non-empty string | Narrow normal label.                                       |
-| `piVimMode.ui.mode.narrowLabels.visual`      | `"V"`       | non-empty string | Narrow visual char label.                                  |
-| `piVimMode.ui.mode.narrowLabels.visualLine`  | `"VL"`      | non-empty string | Narrow visual line label.                                  |
-| `piVimMode.ui.mode.narrowLabels.visualBlock` | `"VB"`      | non-empty string | Narrow visual block label.                                 |
+| `piVim.ui.mode.enabled`                  | `true`      | boolean          | Shows/hides mode label when `mode` status item is present. |
+| `piVim.ui.mode.labels.insert`            | `"INSERT"`  | non-empty string | Full-width insert label.                                   |
+| `piVim.ui.mode.labels.normal`            | `"NORMAL"`  | non-empty string | Full-width normal label.                                   |
+| `piVim.ui.mode.labels.visual`            | `"VISUAL"`  | non-empty string | Full-width visual char label.                              |
+| `piVim.ui.mode.labels.visualLine`        | `"V-LINE"`  | non-empty string | Full-width visual line label.                              |
+| `piVim.ui.mode.labels.visualBlock`       | `"V-BLOCK"` | non-empty string | Full-width visual block label.                             |
+| `piVim.ui.mode.narrowLabels.insert`      | `"I"`       | non-empty string | Narrow insert label.                                       |
+| `piVim.ui.mode.narrowLabels.normal`      | `"N"`       | non-empty string | Narrow normal label.                                       |
+| `piVim.ui.mode.narrowLabels.visual`      | `"V"`       | non-empty string | Narrow visual char label.                                  |
+| `piVim.ui.mode.narrowLabels.visualLine`  | `"VL"`      | non-empty string | Narrow visual line label.                                  |
+| `piVim.ui.mode.narrowLabels.visualBlock` | `"VB"`      | non-empty string | Narrow visual block label.                                 |
 
 Narrow labels are used when the prompt width is too small for the full label.
 
@@ -829,16 +829,16 @@ Narrow labels are used when the prompt width is too small for the full label.
 
 | Path                                     | Default | Accepted values      | Effect                                                                                               |
 | ---------------------------------------- | ------- | -------------------- | ---------------------------------------------------------------------------------------------------- |
-| `piVimMode.ui.selection.enabled`         | `true`  | boolean              | Shows/hides visual selection summary and preview in status. Does not affect inline visual highlight. |
-| `piVimMode.ui.selection.previewMaxChars` | `16`    | non-negative integer | Max visible characters in status selection preview before truncation.                                |
+| `piVim.ui.selection.enabled`         | `true`  | boolean              | Shows/hides visual selection summary and preview in status. Does not affect inline visual highlight. |
+| `piVim.ui.selection.previewMaxChars` | `16`    | non-negative integer | Max visible characters in status selection preview before truncation.                                |
 
 ### Cursor position status
 
 | Path                                  | Default             | Accepted values                                | Effect                                                                                            |
 | ------------------------------------- | ------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `piVimMode.ui.cursorPosition.enabled` | `true`              | boolean                                        | Enables cursor position status when `cursorPosition` item is present.                             |
-| `piVimMode.ui.cursorPosition.base`    | `1`                 | `0` or `1`                                     | Display base for line and column. `1` matches common editor UI; `0` matches internal coordinates. |
-| `piVimMode.ui.cursorPosition.format`  | `"{line}:{column}"` | string containing both `{line}` and `{column}` | Format template for cursor position. Both placeholders are required.                              |
+| `piVim.ui.cursorPosition.enabled` | `true`              | boolean                                        | Enables cursor position status when `cursorPosition` item is present.                             |
+| `piVim.ui.cursorPosition.base`    | `1`                 | `0` or `1`                                     | Display base for line and column. `1` matches common editor UI; `0` matches internal coordinates. |
+| `piVim.ui.cursorPosition.format`  | `"{line}:{column}"` | string containing both `{line}` and `{column}` | Format template for cursor position. Both placeholders are required.                              |
 
 Example cursor formats:
 
@@ -858,7 +858,7 @@ Example cursor formats:
 
 | Path                                  | Default | Accepted values         | Effect                                                                                                            |
 | ------------------------------------- | ------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `piVimMode.ui.workbench.reservedRows` | `0`     | integer from `0` to `5` | Reserves width-safe rows below the prompt for `/`, `?`, `:` input, Ex/search messages, and substitution results. |
+| `piVim.ui.workbench.reservedRows` | `0`     | integer from `0` to `5` | Reserves width-safe rows below the prompt for `/`, `?`, `:` input, Ex/search messages, and substitution results. |
 
 Default `0` preserves the existing idle layout: no blank workbench row is
 reserved until search, Ex input, success, or error feedback is active.
@@ -872,7 +872,7 @@ Example stable two-row command area:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "ui": {
       "workbench": { "reservedRows": 2 }
     }
@@ -887,7 +887,7 @@ omits comments so it can be copied.
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "startMode": "insert",
     "cursor": {
       "insert": "bar",
@@ -1151,7 +1151,7 @@ omits comments so it can be copied.
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "startMode": "normal"
   }
 }
@@ -1164,7 +1164,7 @@ field:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "cursor": {
       "insert": "underline"
     }
@@ -1176,7 +1176,7 @@ field:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "keymap": {
       "commands": {
         "visualBlock": ["<A-b>"]
@@ -1194,7 +1194,7 @@ visual-block example key.
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "keymap": {
       "commands": {
         "visualBlock": ["<C-v>"]
@@ -1212,7 +1212,7 @@ delegating Pi image paste from normal and visual modes.
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "keymap": {
       "operators": {
         "delete": ["z"]
@@ -1232,7 +1232,7 @@ With this config, `zz` deletes a line and `zgw` deletes by the configured
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "keymap": {
       "operatorMotions": {
         "delete": ["wordForward", "lineEnd"],
@@ -1258,7 +1258,7 @@ motions.
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "ui": {
       "status": {
         "enabled": true,
@@ -1278,7 +1278,7 @@ motions.
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "ui": {
       "status": {
         "position": "right"
@@ -1302,7 +1302,7 @@ motions.
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "search": {
       "highlight": true,
       "highlightCurrent": true,
@@ -1318,7 +1318,7 @@ motions.
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "macros": {
       "enabled": false
     }
@@ -1330,7 +1330,7 @@ motions.
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "macros": {
       "slots": ["a", "b", "c"],
       "maxReplaySteps": 100
@@ -1351,19 +1351,19 @@ actionable warning. To isolate the failing setting, check project settings
 first, then global settings:
 
 1. Review `.pi/settings.json` in the current project.
-2. Review `~/.pi/agent/settings.json` for global `piVimMode` values.
-3. Temporarily remove or narrow one `piVimMode` block at a time and start a new
+2. Review `~/.pi/agent/settings.json` for global `piVim` values.
+3. Temporarily remove or narrow one `piVim` block at a time and start a new
     Pi session.
 
 Common fixes:
 
 - Ensure JSON is valid.
-- Ensure `piVimMode` is an object.
+- Ensure `piVim` is an object.
 - Use `"normal"` or `"insert"` for `startMode`.
 - Use `"block"`, `"bar"`, or `"underline"` for cursor styles.
 - Use action names exactly as documented.
 - Do not map protected Pi shortcuts.
-- Use `piVimMode.ui`, not `piVimMode.vimOptions`.
+- Use `piVim.ui`, not `piVim.vimOptions`.
 
 ### Binding does nothing
 
@@ -1379,5 +1379,5 @@ Possible causes:
 ### Cursor style does not change
 
 Cursor shape hints are terminal-dependent. `bar` cursor additionally needs Pi
-TUI hardware cursor visibility, which pi-vimmode manages when the API is
+TUI hardware cursor visibility, which pi-vim manages when the API is
 available. Some terminals still ignore shape escapes.

@@ -19,7 +19,7 @@ type EditorArgs = ConstructorParameters<typeof VimEditor>;
 
 function ctrlVVisualBlockOptions(startMode: "insert" | "normal" = "insert") {
   return resolveVimOptions({
-    piVimMode: {
+    piVim: {
       startMode,
       keymap: {
         commands: { visualBlock: ["ctrl+v"] },
@@ -31,7 +31,7 @@ function ctrlVVisualBlockOptions(startMode: "insert" | "normal" = "insert") {
 
 function easyMotionOptions() {
   return resolveVimOptions({
-    piVimMode: { startMode: "normal", keymap: { commands: { easymotion: ["e"] } } },
+    piVim: { startMode: "normal", keymap: { commands: { easymotion: ["e"] } } },
   }).options;
 }
 
@@ -310,7 +310,7 @@ test("insert mode edits keep long-prompt viewport stable", () => {
 test("constructor clones caller-owned nested keymap options", () => {
   const options = structuredClone(
     resolveVimOptions({
-      piVimMode: {
+      piVim: {
         startMode: "normal",
         leader: ",",
         keymap: { escape: ["<D-j>"], commands: { openLineBelow: ["<leader>k"] } },
@@ -334,7 +334,7 @@ test("constructor clones caller-owned nested keymap options", () => {
 
 test("live editor honors configured case operator keymap", () => {
   const options = resolveVimOptions({
-    piVimMode: { startMode: "normal", keymap: { operators: { lowercase: ["zu"] } } },
+    piVim: { startMode: "normal", keymap: { operators: { lowercase: ["zu"] } } },
   }).options;
   const { editor } = createEditor(options);
 
@@ -349,7 +349,7 @@ test("live editor honors configured case operator keymap", () => {
 test("reconfigure applies new keymaps immediately while clearing pending grammar", () => {
   const { editor } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
   const options = resolveVimOptions({
-    piVimMode: { startMode: "insert", keymap: { commands: { openLineBelow: [",k"] } } },
+    piVim: { startMode: "insert", keymap: { commands: { openLineBelow: [",k"] } } },
   }).options;
 
   editor.setText("one\ntwo");
@@ -412,7 +412,7 @@ test("reconfigure preserves durable state and clears transient grammar", () => {
   const renderRequests = getRenderRequests();
   const plan = createVimConfigPlan(
     resolveVimOptions({
-      piVimMode: {
+      piVim: {
         cursor: { visual: "underline" },
         keymap: { commands: { openLineBelow: [",k"] } },
       },
@@ -595,7 +595,7 @@ test("insert escape stays on modal path and exits insert mode", () => {
 
 test("configured super+j insert escape exits insert without inserting alias", () => {
   const options = resolveVimOptions({
-    piVimMode: { keymap: { escape: ["<D-j>"] } },
+    piVim: { keymap: { escape: ["<D-j>"] } },
   }).options;
   const { editor } = createEditor(options);
 
@@ -607,7 +607,7 @@ test("configured super+j insert escape exits insert without inserting alias", ()
 
 test("configured super+j insert escape exits visual mode", () => {
   const options = resolveVimOptions({
-    piVimMode: { startMode: "normal", keymap: { escape: ["<D-j>"] } },
+    piVim: { startMode: "normal", keymap: { escape: ["<D-j>"] } },
   }).options;
   const { editor } = createEditor(options);
 
@@ -622,7 +622,7 @@ test("configured super+j insert escape exits visual mode", () => {
 
 test("configured ctrl+j insert escape exits insert when sent as enhanced keyboard input", () => {
   const options = resolveVimOptions({
-    piVimMode: { keymap: { escape: ["<C-j>"] } },
+    piVim: { keymap: { escape: ["<C-j>"] } },
   }).options;
   const { editor } = createEditor(options);
 
@@ -633,7 +633,7 @@ test("configured ctrl+j insert escape exits insert when sent as enhanced keyboar
 });
 
 test("raw text insert escape config is ignored by live editor", () => {
-  const options = resolveVimOptions({ piVimMode: { keymap: { escape: ["jk"] } } }).options;
+  const options = resolveVimOptions({ piVim: { keymap: { escape: ["jk"] } } }).options;
   const { editor } = createEditor(options);
 
   typeKeys(editor, ["j", "k"]);
@@ -643,7 +643,7 @@ test("raw text insert escape config is ignored by live editor", () => {
 
 test("configured insert escape delegates while autocomplete is open", async () => {
   const options = resolveVimOptions({
-    piVimMode: { keymap: { escape: ["<D-j>"] } },
+    piVim: { keymap: { escape: ["<D-j>"] } },
   }).options;
   const { editor } = createEditor(options);
   installAutocomplete(editor, ["/super-j-suggestion"], 1);
@@ -661,7 +661,7 @@ test("configured insert escape delegates while autocomplete is open", async () =
 
 test("macro replay preserves configured insert escape behavior", () => {
   const options = resolveVimOptions({
-    piVimMode: { startMode: "normal", keymap: { escape: ["<D-j>"] } },
+    piVim: { startMode: "normal", keymap: { escape: ["<D-j>"] } },
   }).options;
   const { editor } = createEditor(options);
 
@@ -850,7 +850,7 @@ test("diagnostic popups and feedback info rows render width-safely", () => {
     { ...DEFAULT_VIM_OPTIONS, startMode: "normal", feedback: { noop: "status" } },
     {
       warnings: [
-        "project settings: piVimMode.keymap.commands.openLineBelow contains protected key ctrl+p",
+        "project settings: piVim.keymap.commands.openLineBelow contains protected key ctrl+p",
       ],
     },
   );
@@ -968,9 +968,9 @@ test("dedicated keybindings command renders as real overlay panel", () => {
   expect(overlay?.hidden).toBe(false);
   expect(overlay?.options).toMatchObject({ anchor: "center", width: "90%", maxHeight: "90%" });
   expect(editorLines.length).toBe(baseline.length);
-  expect(editorText).not.toContain("Effective pi-vimmode keybindings");
+  expect(editorText).not.toContain("Effective pi-vim keybindings");
   expect(overlayText).toContain(":keybindings");
-  expect(overlayText).not.toContain("Effective pi-vimmode keybindings");
+  expect(overlayText).not.toContain("Effective pi-vim keybindings");
   expect(overlayText).toContain("Key            Mode        Action");
   expect(overlayText).toContain("j/k ↑/↓ scroll");
   expectRenderedWidth(overlayLines, 72);
@@ -993,7 +993,7 @@ test("configured showKeybindings key renders same overlay shell", () => {
   expect(overlay).toBeDefined();
   expect(overlay?.options).toMatchObject({ anchor: "center", width: "90%", maxHeight: "90%" });
   expect(overlayText).toContain(":keybindings");
-  expect(overlayText).not.toContain("Effective pi-vimmode keybindings");
+  expect(overlayText).not.toContain("Effective pi-vim keybindings");
   expect(overlayText).toContain("Key            Mode        Action");
 });
 
@@ -1039,7 +1039,7 @@ test("representative read-only Ex commands open live popups", () => {
     ["mapcheck ctrl+p", ":mapcheck ctrl+p", "protected"],
     ["vimdoctor", ":vimdoctor", "vimdoctor: ok"],
     ["messages", ":messages", "messages:"],
-    ["vimmode inspect", ":vimmode inspect", "inspect:"],
+    ["vim inspect", ":vim inspect", "inspect:"],
   ] as const;
 
   for (const [command, title, body] of cases) {
@@ -1055,7 +1055,7 @@ test("runtime help, inspect, and messages popups render width-safely", () => {
   editor.setText("abc");
   editor.handleInput(":");
   typeKeys(editor, ["s", "/", "m", "i", "s", "s", "i", "n", "g", "/", "x", "/", "\r"]);
-  runEx(editor, "vimmode inspect");
+  runEx(editor, "vim inspect");
   let lines = editor.render(48);
   let overlayLines = overlays.at(-1)?.component.render(48) ?? [];
   expect(lines.join("\n")).not.toContain("inspect: mode=normal");
@@ -1145,7 +1145,7 @@ test("renders configured mode labels", () => {
 test("renders and clones a right-positioned status group", () => {
   const options = structuredClone(
     resolveVimOptions({
-      piVimMode: {
+      piVim: {
         startMode: "normal",
         ui: {
           status: { position: "right" },
@@ -1643,7 +1643,7 @@ test("Ex visual delete and nohlsearch interact with selection and search highlig
 
 test("VimEditor honors configured WORD and previous-end motion keymap", () => {
   const options = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       startMode: "normal",
       keymap: {
         motions: { wordForwardBig: ["gw"], wordPreviousEnd: ["g-"] },
@@ -1684,7 +1684,7 @@ test("VimEditor honors default paragraph motions and text objects", () => {
 
 test("VimEditor honors configured paragraph motion and text object keys", () => {
   const options = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       startMode: "normal",
       keymap: {
         motions: { paragraphForward: ["P"], paragraphBackward: ["N"] },
@@ -1703,7 +1703,7 @@ test("VimEditor honors configured paragraph motion and text object keys", () => 
 
 test("VimEditor propagates configured paragraph options without dropping siblings", () => {
   const options = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       startMode: "normal",
       keymap: {
         motions: { paragraphForward: ["]"] },

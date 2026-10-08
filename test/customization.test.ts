@@ -31,19 +31,19 @@ describe("vim customization helpers", () => {
   });
 
   test("classifies diagnostic help actions as metadata-only", () => {
-    expect(searchActions(keymap, "vimmode.doctor")[0]).toMatchObject({
-      id: "vimmode.doctor",
+    expect(searchActions(keymap, "pi-vim.doctor")[0]).toMatchObject({
+      id: "pi-vim.doctor",
       kind: "diagnostic",
       keys: [],
     });
-    expect(keymapMessage(keymap, "vimdoctor")).toContain("vimmode.doctor");
-    expect(keymapMessage(keymap, "vimmode.help")).toContain("runtimeHelp");
-    expect(keymapMessage(keymap, "vimmode.dump")).toBe("keymap: no match for vimmode.dump");
-    expect(keymapMessage(keymap, "vimmode.doctor")).toContain("metadata-only not bindable");
+    expect(keymapMessage(keymap, "vimdoctor")).toContain("pi-vim.doctor");
+    expect(keymapMessage(keymap, "pi-vim.help")).toContain("runtimeHelp");
+    expect(keymapMessage(keymap, "pi-vim.dump")).toBe("keymap: no match for pi-vim.dump");
+    expect(keymapMessage(keymap, "pi-vim.doctor")).toContain("metadata-only not bindable");
   });
 
   test("hides disabled macro and mark actions from diagnostics", () => {
-    const { options } = resolveVimOptions(undefined, { piVimMode: { preset: "minimal" } });
+    const { options } = resolveVimOptions(undefined, { piVim: { preset: "minimal" } });
     expect(keymapMessage(options.keymap!, "macro", options.macros, options.marks)).toBe(
       "keymap: no match for macro",
     );
@@ -62,7 +62,7 @@ describe("vim customization helpers", () => {
     expect(mapcheckMessage(keymap, "alt+v")).toContain("protected for image/clipboard paste");
     expect(mapcheckMessage(keymap, "ctrl+alt+v")).toContain("protected for image/clipboard paste");
     const { options: ctrlVOptions } = resolveVimOptions({
-      piVimMode: {
+      piVim: {
         keymap: {
           commands: { visualBlock: ["ctrl+v"] },
           allowProtectedOverrides: ["ctrl+v"],
@@ -82,7 +82,7 @@ describe("vim customization helpers", () => {
 
   test("reports configured escape aliases as modal escape bindings", () => {
     const { options } = resolveVimOptions({
-      piVimMode: { keymap: { escape: ["<C-j>", "<D-j>"] } },
+      piVim: { keymap: { escape: ["<C-j>", "<D-j>"] } },
     });
 
     expect(keymapMessage(options.keymap!, "escape")).toContain("escape.alias ctrl+j,super+j");
@@ -95,7 +95,7 @@ describe("vim customization helpers", () => {
 
   test("formats keybinding catalog from effective resolved bindings", () => {
     const { options } = resolveVimOptions({
-      piVimMode: {
+      piVim: {
         leader: ",",
         keymap: {
           escape: ["<D-j>"],
@@ -118,7 +118,7 @@ describe("vim customization helpers", () => {
     expect(lines).toContain("Marks");
     expect(lines).toContain("Searches");
     expect(lines).not.toContain("Prompt transforms");
-    expect(lines).not.toContain("Effective pi-vimmode keybindings");
+    expect(lines).not.toContain("Effective pi-vim keybindings");
     expect(lines).not.toContain("Diagnostic/help metadata");
     expect(lines).toContain("Protected Pi shortcuts");
     expect(lines).toContain("▸ Commands");
@@ -128,7 +128,7 @@ describe("vim customization helpers", () => {
     expect(lines).toContain(",q             normal      command.undo");
     expect(lines).not.toContain("<leader>");
     expect(lines).not.toContain(" → ");
-    expect(lines).not.toContain("vimmode.help metadata-only not bindable");
+    expect(lines).not.toContain("pi-vim.help metadata-only not bindable");
     expect(lines).toContain("ctrl+p");
     expect(lines).toContain("protected for Pi command/model palette");
     expect(lines).toContain("ctrl+v");
@@ -137,7 +137,7 @@ describe("vim customization helpers", () => {
   });
 
   test("catalog reports disabled effective feature families", () => {
-    const { options } = resolveVimOptions(undefined, { piVimMode: { preset: "minimal" } });
+    const { options } = resolveVimOptions(undefined, { piVim: { preset: "minimal" } });
     const lines = keybindingCatalogLines({
       keymap: options.keymap!,
       macros: options.macros,
@@ -152,7 +152,7 @@ describe("vim customization helpers", () => {
 
   test("formats keybinding detail matches and key ownership", () => {
     const { options, warnings } = resolveVimOptions({
-      piVimMode: {
+      piVim: {
         keymap: {
           commands: { redo: ["U"] },
         },

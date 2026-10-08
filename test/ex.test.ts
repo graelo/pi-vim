@@ -347,9 +347,9 @@ test("parses finite runtime help commands", () => {
     type: "runtimeHelp",
     command: "messages",
   });
-  expect(parseExCommand("vimmode inspect", context)).toEqual({
+  expect(parseExCommand("vim inspect", context)).toEqual({
     type: "inspect",
-    command: "vimmode",
+    command: "vim",
     query: "inspect",
   });
 });
@@ -387,15 +387,15 @@ test("rejects unsupported diagnostic/runtime-help abbreviations and missing requ
     type: "error",
     message: "Unexpected Ex command arguments",
   });
-  expect(parseExCommand("vimmode", context)).toEqual({
+  expect(parseExCommand("vim", context)).toEqual({
     type: "error",
     message: "Unexpected Ex command arguments",
   });
-  expect(parseExCommand("vimmode status", context)).toEqual({
+  expect(parseExCommand("vim status", context)).toEqual({
     type: "error",
     message: "Unexpected Ex command arguments",
   });
-  expect(parseExCommand("vimmode inspect raw", context)).toEqual({
+  expect(parseExCommand("vim inspect raw", context)).toEqual({
     type: "error",
     message: "Unexpected Ex command arguments",
   });
@@ -615,7 +615,7 @@ test("suggests commands after a valid range prefix", () => {
 
 test("suppresses suggestions once command arguments appear", () => {
   expect(suggestExCommands("help keybindings", context)).toEqual([]);
-  expect(suggestExCommands("actions vimmode.help", context)).toEqual([]);
+  expect(suggestExCommands("actions pi-vim.help", context)).toEqual([]);
 });
 
 test("returns empty suggestions for invalid input and unsupported commandless ranges", () => {

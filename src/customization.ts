@@ -52,7 +52,7 @@ function diagnosticActionEntry(entry: DiagnosticActionEntry): VimActionEntry {
 export type ProtectedShortcut = {
   key: string;
   aliases: readonly string[];
-  owner: "pi" | "pi-vimmode";
+  owner: "pi" | "pi-vim";
   reason: string;
   behavior: string;
   normalModeOwned?: boolean;
@@ -172,7 +172,7 @@ export const PROTECTED_SHORTCUTS = [
     aliases: ["esc"],
     owner: "pi",
     reason: "cancel/escape application state",
-    behavior: "handled by pi-vimmode mode transitions where supported",
+    behavior: "handled by pi-vim mode transitions where supported",
   },
   {
     key: "tab",
@@ -200,12 +200,12 @@ export const PROTECTED_SHORTCUTS = [
     aliases: ["alt+v", "ctrl+alt+v"],
     owner: "pi",
     reason: "image/clipboard paste",
-    behavior: "delegates to Pi unless explicitly bound by pi-vimmode",
+    behavior: "delegates to Pi unless explicitly bound by pi-vim",
   },
   {
     key: "ctrl+d",
     aliases: [],
-    owner: "pi-vimmode",
+    owner: "pi-vim",
     reason: "normal/visual half-page scroll down; insert-mode EOF/delete remains Pi-owned",
     behavior: "handled by Vim mode in normal/visual modes and delegated to Pi in insert mode",
     normalModeOwned: true,
@@ -213,7 +213,7 @@ export const PROTECTED_SHORTCUTS = [
   {
     key: "ctrl+u",
     aliases: [],
-    owner: "pi-vimmode",
+    owner: "pi-vim",
     reason: "normal/visual half-page scroll up; insert mode remains Pi-owned",
     behavior: "handled by Vim mode in normal/visual modes and delegated to Pi in insert mode",
     normalModeOwned: true,
@@ -307,7 +307,7 @@ function escapeEntry(keymap: ResolvedVimKeymap): VimActionEntry[] {
           description:
             "escape alias for insert, visual, and Ex command-line states; no recursive mappings or timeoutlen",
           keys: keymap.escape,
-          aliases: ["escape", "piVimMode.keymap.escape"],
+          aliases: ["escape", "piVim.keymap.escape"],
         },
       ]
     : [];

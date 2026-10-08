@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Something broken in pi-vimmode
+about: Something broken in pi-vim
 title: "[BUG] "
 labels: bug
 assignees: ""
@@ -22,18 +22,18 @@ assignees: ""
 
 ## Environment
 
-- pi-vimmode version (`@graelo/pi-vimmode`):
+- pi-vim version (`@graelo/pi-vim`):
 - Pi version (`pi --version`):
 - OS / terminal:
 
 ## Config (if relevant)
 
 ```json
-// piVimMode settings from ~/.pi/agent/settings.json or .pi/settings.json
+// piVim settings from ~/.pi/agent/settings.json or .pi/settings.json
 ```
 
 ```js
-// ~/.pi/agent/pi-vimmode.config.js, if you use trusted JavaScript config
+// ~/.pi/agent/pi-vim.config.js, if you use trusted JavaScript config
 ```
 
 ## Additional context

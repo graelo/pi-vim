@@ -131,7 +131,7 @@ describe("canonical config metadata", () => {
       expect(entry.path).toBe(`vim.${entry.configPath}`);
       expect(entry.acceptedShape).not.toBe("");
       expect(entry.assignment).not.toBe("");
-      expect(entry.jsonPaths).toContain(`piVimMode.${entry.configPath}`);
+      expect(entry.jsonPaths).toContain(`piVim.${entry.configPath}`);
     }
     expect(VIM_CONFIG_PROPERTY_METADATA.find(({ configPath }) => configPath === "leader")).toEqual(
       expect.objectContaining({ aliases: ["vim.g.mapleader"] }),

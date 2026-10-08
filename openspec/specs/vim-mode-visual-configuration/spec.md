@@ -103,24 +103,24 @@ prompt editors.
 
 #### Scenario: Default startup mode
 
-- **WHEN** no `piVimMode.startMode` setting is configured
+- **WHEN** no `piVim.startMode` setting is configured
 - **THEN** new Vim editor instances start in insert mode
 
 #### Scenario: Normal startup mode configured
 
-- **WHEN** `piVimMode.startMode` is set to `normal` in the active Pi settings
+- **WHEN** `piVim.startMode` is set to `normal` in the active Pi settings
 - **THEN** new Vim editor instances start in normal mode
 
 #### Scenario: Project startup mode overrides global startup mode
 
 - **WHEN** global Pi settings and project Pi settings both define
-    `piVimMode.startMode`
+    `piVim.startMode`
 - **THEN** the project setting determines the startup mode for sessions in
     that project
 
 #### Scenario: Invalid startup mode setting
 
-- **WHEN** `piVimMode.startMode` is missing or set to an unsupported value
+- **WHEN** `piVim.startMode` is missing or set to an unsupported value
 - **THEN** the Vim editor falls back to insert mode and does not fail session
     startup
 
@@ -131,13 +131,13 @@ characterwise visual, and visual line modes.
 
 #### Scenario: Default cursor styles
 
-- **WHEN** no `piVimMode.cursor` setting is configured
+- **WHEN** no `piVim.cursor` setting is configured
 - **THEN** insert mode uses a bar cursor and normal, visual, and visual line
     modes use block cursors
 
 #### Scenario: Per-mode cursor style configured
 
-- **WHEN** `piVimMode.cursor.<mode>` is set to `block`, `bar`, or `underline`
+- **WHEN** `piVim.cursor.<mode>` is set to `block`, `bar`, or `underline`
 - **THEN** the Vim editor renders that cursor style whenever the corresponding
     mode is active
 
@@ -170,21 +170,21 @@ characterwise visual, and visual line modes.
 
 ### Requirement: Settings are namespaced and read-only
 
-The Vim editor SHALL read extension settings from a `piVimMode` object without
+The Vim editor SHALL read extension settings from a `piVim` object without
 modifying Pi settings files. Supported settings include `startMode`, `cursor`,
 `keymap`, and `ui`.
 
 #### Scenario: Namespaced settings loaded
 
-- **WHEN** Pi starts a session with `piVimMode` configured in global or
+- **WHEN** Pi starts a session with `piVim` configured in global or
     project settings
-- **THEN** the extension reads only supported `piVimMode` fields for Vim
+- **THEN** the extension reads only supported `piVim` fields for Vim
     editor behavior and ignores unrelated settings
 
 #### Scenario: Project settings override global settings
 
 - **WHEN** global Pi settings and project Pi settings both define supported
-    `piVimMode` fields
+    `piVim` fields
 - **THEN** project settings override global settings field by field without
     discarding unrelated global fields
 
@@ -196,7 +196,7 @@ modifying Pi settings files. Supported settings include `startMode`, `cursor`,
 
 #### Scenario: Invalid nested setting falls back
 
-- **WHEN** a nested `piVimMode` field such as `cursor`, `keymap`, or `ui`
+- **WHEN** a nested `piVim` field such as `cursor`, `keymap`, or `ui`
     contains an unsupported value
 - **THEN** the invalid field falls back to its default or lower-precedence
     value, a warning is recorded, and sibling settings remain usable
@@ -221,7 +221,7 @@ line mode, startup mode settings, and per-mode cursor styles.
 
 - **WHEN** the user opens `docs/features.md` and `docs/settings.md`
 - **THEN** they document `V`, visual line operations, visual selection
-    highlighting, `piVimMode.startMode`, and `piVimMode.cursor` settings
+    highlighting, `piVim.startMode`, and `piVim.cursor` settings
 
 ### Requirement: Visual block mode selects rectangular text regions
 
@@ -230,7 +230,7 @@ region bounded by the visual anchor and cursor across prompt lines.
 
 #### Scenario: Enter visual block mode with configured command binding
 
-- **WHEN** `piVimMode.keymap.commands.visualBlock` maps a key sequence and the
+- **WHEN** `piVim.keymap.commands.visualBlock` maps a key sequence and the
     editor receives that sequence in normal mode
 - **THEN** the editor enters visual block mode with the visual anchor at the
     current cursor position
@@ -328,21 +328,21 @@ blockwise visual modes while preserving the current visual anchor.
 
 #### Scenario: Switch from characterwise visual to visual block
 
-- **WHEN** `piVimMode.keymap.commands.visualBlock` maps a key sequence and the
+- **WHEN** `piVim.keymap.commands.visualBlock` maps a key sequence and the
     editor receives that sequence in characterwise visual mode
 - **THEN** the editor switches to visual block mode, keeps the existing visual
     anchor, and keeps the current cursor position
 
 #### Scenario: Switch from visual line to visual block
 
-- **WHEN** `piVimMode.keymap.commands.visualBlock` maps a key sequence and the
+- **WHEN** `piVim.keymap.commands.visualBlock` maps a key sequence and the
     editor receives that sequence in visual line mode
 - **THEN** the editor switches to visual block mode, keeps the existing visual
     anchor, and keeps the current cursor position
 
 #### Scenario: Enter visual block mode with configured command binding
 
-- **WHEN** `piVimMode.keymap.commands.visualBlock` maps a printable key
+- **WHEN** `piVim.keymap.commands.visualBlock` maps a printable key
     sequence or Vim-style modifier sequence such as `<C-v>` / `<A-x>` and the
     editor receives that sequence in normal or visual mode
 - **THEN** the editor enters or switches to visual block mode while preserving

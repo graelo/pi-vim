@@ -1,4 +1,4 @@
-# pi-vimmode-documentation Specification
+# pi-vim-documentation Specification
 
 ## Purpose
 
@@ -8,10 +8,10 @@ stays aligned with runtime behavior.
 
 ## Requirements
 
-### Requirement: Feature guide covers pi-vimmode behavior
+### Requirement: Feature guide covers pi-vim behavior
 
 The project SHALL provide `docs/features.md` as a user-facing guide that
-explains every supported pi-vimmode feature area with concrete examples and
+explains every supported pi-vim feature area with concrete examples and
 explicit limitations.
 
 #### Scenario: User reads feature guide
@@ -29,19 +29,19 @@ explicit limitations.
 - **THEN** the section includes at least one practical example or workflow for
     the documented feature area
 
-### Requirement: Settings reference covers every piVimMode option
+### Requirement: Settings reference covers every piVim option
 
 The project SHALL provide `docs/settings.md` as a complete reference for the
-`piVimMode` settings object.
+`piVim` settings object.
 
 #### Scenario: User checks a setting
 
 - **WHEN** a user opens `docs/settings.md`
-- **THEN** the document lists every supported `piVimMode` key, nested key,
+- **THEN** the document lists every supported `piVim` key, nested key,
     default value, accepted value shape, behavior, and relevant validation or
     fallback behavior
 
-#### Scenario: User configures pi-vimmode
+#### Scenario: User configures pi-vim
 
 - **WHEN** a user reads `docs/settings.md`
 - **THEN** the document explains global settings, project settings, merge
@@ -51,7 +51,7 @@ The project SHALL provide `docs/settings.md` as a complete reference for the
 ### Requirement: Documentation records source-of-truth policy
 
 The project SHALL add an ADR under `docs/adr/` documenting where user-facing
-pi-vimmode docs live and which implementation/spec files are authoritative for
+pi-vim docs live and which implementation/spec files are authoritative for
 future updates.
 
 #### Scenario: Maintainer updates docs later
@@ -85,7 +85,7 @@ would otherwise drift from implementation.
 ### Requirement: Feature guide covers customization diagnostics
 
 The project SHALL document runtime customization diagnostics in
-`docs/features.md` as part of the supported pi-vimmode behavior guide.
+`docs/features.md` as part of the supported pi-vim behavior guide.
 
 #### Scenario: User reads diagnostic command documentation
 
@@ -104,13 +104,13 @@ The project SHALL document runtime customization diagnostics in
 #### Scenario: User checks non-goals
 
 - **WHEN** a user reads the customization diagnostics section
-- **THEN** the document states that pi-vimmode does not support `.vimrc`,
+- **THEN** the document states that pi-vim does not support `.vimrc`,
     recursive mappings, Vimscript, Neovim Lua, or a full interactive Vim command
     palette
 
 ### Requirement: Settings reference covers presets and feedback
 
-The project SHALL document every new `piVimMode` customization setting in
+The project SHALL document every new `piVim` customization setting in
 `docs/settings.md`.
 
 #### Scenario: User reads preset settings
@@ -152,7 +152,7 @@ OpenSpec requirements, and tests before the change is complete.
 
 #### Scenario: Docs mention protected shortcuts
 
-- **WHEN** docs list protected Pi shortcuts or pi-vimmode-owned shortcuts
+- **WHEN** docs list protected Pi shortcuts or pi-vim-owned shortcuts
 - **THEN** the list matches the protected shortcut catalog used by runtime
     diagnostics and validation
 
@@ -211,13 +211,13 @@ change is complete.
 
 ### Requirement: Settings reference remains aligned with config source
 
-The project SHALL keep `docs/settings.md` aligned with supported `piVimMode`
+The project SHALL keep `docs/settings.md` aligned with supported `piVim`
 settings, defaults, accepted value shapes, and validation behavior when runtime
 help or drift guard metadata references settings.
 
 #### Scenario: Settings docs key is missing from source metadata
 
-- **WHEN** `docs/settings.md` lists a `piVimMode` setting path that is neither
+- **WHEN** `docs/settings.md` lists a `piVim` setting path that is neither
     supported by source config/types metadata nor listed as an approved ignored
     legacy setting
 - **THEN** the documentation drift guard fails with the unexpected setting path
@@ -238,8 +238,8 @@ help or drift guard metadata references settings.
 
 ### Requirement: Feature guide quickref classifies diagnostic and help surfaces
 
-The project SHALL document a concise pi-vimmode quick reference that classifies
-supported commands and actions by actual pi-vimmode behavior rather than
+The project SHALL document a concise pi-vim quick reference that classifies
+supported commands and actions by actual pi-vim behavior rather than
 Vim/Neovim parity.
 
 #### Scenario: Quickref separates supported surface categories
@@ -252,15 +252,15 @@ Vim/Neovim parity.
 #### Scenario: Quickref identifies metadata-only diagnostic actions
 
 - **WHEN** a user reads quickref entries for `:vimdoctor`, `:keymap`,
-    `:mapcheck`, `:help`, `:messages`, or `:vimmode inspect`
+    `:mapcheck`, `:help`, `:messages`, or `:vim inspect`
 - **THEN** the document identifies them as finite read-only
-    diagnostic/runtime-help commands and does not present their `vimmode.*`
+    diagnostic/runtime-help commands and does not present their `pi-vim.*`
     metadata IDs as configurable keybinding targets
 
 #### Scenario: Quickref documents unsupported parity boundaries
 
 - **WHEN** a user reads the quick reference or runtime-help documentation
-- **THEN** it states that pi-vimmode does not provide a public plugin action
+- **THEN** it states that pi-vim does not provide a public plugin action
     API, diagnostic action keybinding dispatch, runtime `:map`, runtime
     `:action`, Vimscript, Neovim Lua, full Vim help tags, or broad quickref
     parity
@@ -312,7 +312,7 @@ output from existing compact runtime feedback and edit-flow messages.
 #### Scenario: Docs preserve compact edit feedback expectations
 
 - **WHEN** docs describe `:keymap`, `:mapcheck`, `:help`,
-    `:messages`, `:vimmode inspect`, and `:vimdoctor`
+    `:messages`, `:vim inspect`, and `:vimdoctor`
 - **THEN** they identify those valid read-only help/diagnostic outputs as
     popup-backed while preserving compact inline/workbench expectations for
     mutating Ex commands, parser errors, edit-flow success/errors, `:noh`,
@@ -336,7 +336,7 @@ user-facing feature docs.
 - **WHEN** a user opens `docs/features.md`
 - **THEN** the feature guide lists popup-backed read-only Ex commands
     including `:help`, `:help <topic>`, `:keybindings`, `:keymap <action>`,
-    `:mapcheck <key>`, `:messages`, `:vimmode inspect`, and `:vimdoctor`
+    `:mapcheck <key>`, `:messages`, `:vim inspect`, and `:vimdoctor`
 
 #### Scenario: Docs explain popup controls
 
@@ -397,7 +397,7 @@ normal-mode keybinding for the dedicated keybindings popup command.
 #### Scenario: Settings reference lists command path
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** it lists `piVimMode.keymap.commands.showKeybindings`, its default
+- **THEN** it lists `piVim.keymap.commands.showKeybindings`, its default
     empty binding list, and its effect of opening the keybindings popup
 
 #### Scenario: Settings reference documents validation rules
@@ -410,9 +410,9 @@ normal-mode keybinding for the dedicated keybindings popup command.
 #### Scenario: Settings reference keeps metadata boundary clear
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** it clarifies that `vimmode.*` diagnostic/help metadata IDs cannot
+- **THEN** it clarifies that `pi-vim.*` diagnostic/help metadata IDs cannot
     be bound to keys, and users should configure
-    `piVimMode.keymap.commands.showKeybindings` for a shortcut to the
+    `piVim.keymap.commands.showKeybindings` for a shortcut to the
     keybindings popup
 
 ### Requirement: README remains a quickstart and docs index
@@ -429,7 +429,7 @@ rather than duplicating the full keybindings command reference.
 
 ### Requirement: Documentation explains WORD and previous-end motions
 
-User-facing pi-vimmode documentation SHALL describe supported WORD and
+User-facing pi-vim documentation SHALL describe supported WORD and
 previous-end word motions, including examples, configurable action names,
 operator composition, and explicit non-goals.
 
@@ -496,7 +496,7 @@ preserving public runtime help and discovery behavior.
 
 - **WHEN** users execute supported read-only discovery commands such as
     `:help`, `:keybindings`, `:keymap`, `:mapcheck`, `:vimdoctor`, `:messages`,
-    or `:vimmode inspect`
+    or `:vim inspect`
 - **THEN** the commands keep their existing bounded prompt-local popup or
     message behavior, finite topic coverage, non-goals, and read-only
     prompt-editing state boundaries
@@ -524,19 +524,19 @@ settings references.
 
 - **WHEN** a user opens `docs/settings.md`
 - **THEN** the keymap command reference lists
-    `piVimMode.keymap.commands.reselectVisual`, its default `gv` binding, and
+    `piVim.keymap.commands.reselectVisual`, its default `gv` binding, and
     its normal-mode behavior
 
 ### Requirement: Documentation explains safe insert editing layer
 
-User-facing pi-vimmode documentation SHALL explain the opt-in safe insert
+User-facing pi-vim documentation SHALL explain the opt-in safe insert
 editing layer, including supported actions, examples, validation behavior, and
 explicit non-goals.
 
 #### Scenario: Settings reference lists insert action options
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** the settings reference lists each `piVimMode.keymap.insert` action,
+- **THEN** the settings reference lists each `piVim.keymap.insert` action,
     its empty default, accepted key shape, protected-key allow-list behavior,
     duplicate binding diagnostics, autocomplete delegation, and raw printable
     rejection
@@ -559,14 +559,14 @@ explicit non-goals.
 #### Scenario: Documentation names word semantics
 
 - **WHEN** docs describe insert word movement or deletion
-- **THEN** they state that insert word actions reuse pi-vimmode lowercase
+- **THEN** they state that insert word actions reuse pi-vim lowercase
     small-word semantics where keyword runs, punctuation runs, and whitespace
     are separate groups
 
 #### Scenario: Documentation keeps action surfaces separate
 
 - **WHEN** docs describe safe insert bindings
-- **THEN** they state that `piVimMode.keymap.insert` owns only physical insert
+- **THEN** they state that `piVim.keymap.insert` owns only physical insert
     edits and movement
 
 #### Scenario: Documentation states insert mapping non-goals

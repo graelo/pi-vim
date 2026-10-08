@@ -388,7 +388,7 @@ export function createOutput(
 ) {
   return {
     schemaVersion: 3,
-    baseline: "pi-vimmode-1.0.0-release-gate",
+    baseline: "pi-vim-1.0.0-release-gate",
     revision: environment.revision,
     environment: { runtime: environment.runtime, viewport: environment.viewport },
     samples: args.runs,

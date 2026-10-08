@@ -52,7 +52,7 @@ over target cells and MUST NOT write label text into the prompt buffer.
 
 #### Scenario: Configured label color is applied
 
-- **WHEN** EasyMotion labels are visible and `piVimMode.easymotion.labelColor`
+- **WHEN** EasyMotion labels are visible and `piVim.easymotion.labelColor`
     specifies an ANSI color
 - **THEN** each non-cursor, non-selected target label uses that color followed
     by an ANSI reset

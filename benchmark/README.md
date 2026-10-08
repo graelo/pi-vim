@@ -1,6 +1,6 @@
 # Benchmark
 
-Dependency-free production-path benchmark for pi-vimmode. Harness generates
+Dependency-free production-path benchmark for pi-vim. Harness generates
 corpora in memory; no generated prompt files are committed.
 
 Release-gate runs default to 30 measured samples after 10 warmups:

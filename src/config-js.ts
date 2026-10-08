@@ -31,7 +31,8 @@ import {
 } from "./mapping-scopes.ts";
 import { VIM_PRESETS } from "./types.ts";
 
-export const DEFAULT_JS_CONFIG_PATH = join(homedir(), ".pi", "agent", "pi-vimmode.config.js");
+export const JS_CONFIG_FILE_NAME = "pi-vim.config.js";
+export const DEFAULT_JS_CONFIG_PATH = join(homedir(), ".pi", "agent", JS_CONFIG_FILE_NAME);
 
 type ActionDescriptor = {
   actionId: VimFiniteActionId;

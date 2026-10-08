@@ -38,7 +38,7 @@ const ctrlP = "\u001b[112;5u";
 const altV = "\u001bv";
 const ctrlAltV = "\u001b[118;7u";
 const escapeOptions = resolveVimOptions({
-  piVimMode: { keymap: { escape: ["<D-j>"] } },
+  piVim: { keymap: { escape: ["<D-j>"] } },
 }).options;
 
 function applyAdapterCommand(
@@ -246,7 +246,7 @@ test("physical escape keeps insert-mode behavior", () => {
 });
 
 const insertOptions = resolveVimOptions({
-  piVimMode: {
+  piVim: {
     keymap: { insert: { openLineBelow: ["ctrl+j"], openLineAbove: ["ctrl+k"] } },
   },
 }).options;
@@ -332,7 +332,7 @@ test("unconfigured insert key still delegates", () => {
 });
 
 const editOptions = resolveVimOptions({
-  piVimMode: {
+  piVim: {
     keymap: {
       insert: {
         deleteWordBackward: ["ctrl+w"],
@@ -684,13 +684,12 @@ test("diagnostic Ex commands report info without editing state", () => {
     "a",
     "p",
     " ",
+    "p",
+    "i",
+    "-",
     "v",
     "i",
     "m",
-    "m",
-    "o",
-    "d",
-    "e",
     ".",
     "h",
     "e",
@@ -707,8 +706,8 @@ test("diagnostic Ex commands report info without editing state", () => {
   expect(result.state.searchHighlight).toEqual(initial.searchHighlight);
   expect(result.state.lastRepeatableChange).toEqual(initial.lastRepeatableChange);
   expect(result.state.exMessage).toBeUndefined();
-  expect(result.state.helpPopup?.title).toBe(":keymap vimmode.help");
-  expect(result.state.helpPopup?.lines.join("\n")).toContain("vimmode.help");
+  expect(result.state.helpPopup?.title).toBe(":keymap pi-vim.help");
+  expect(result.state.helpPopup?.lines.join("\n")).toContain("pi-vim.help");
 });
 
 test("visual diagnostic Ex commands preserve visual state", () => {
@@ -748,7 +747,7 @@ test("visual diagnostic Ex commands preserve visual state", () => {
 
 test("keybindings opens catalog popup without editing state", () => {
   const configured = resolveVimOptions({
-    piVimMode: { keymap: { commands: { redo: ["U"] } } },
+    piVim: { keymap: { commands: { redo: ["U"] } } },
   }).options;
   const initial: ModalState = {
     mode: "normal",
@@ -779,7 +778,7 @@ test("keybindings opens catalog popup without editing state", () => {
   expect(result.state.exMessage).toBeUndefined();
   expect(result.state.helpPopup?.title).toBe(":keybindings");
   expect(result.state.helpPopup?.source).toBe("keybindings");
-  expect(popupText).not.toContain("Effective pi-vimmode keybindings");
+  expect(popupText).not.toContain("Effective pi-vim keybindings");
   expect(popupText).toContain("Key            Mode        Action");
   expect(popupText).toContain("command.redo");
   expect(popupText).toContain("U");
@@ -1012,13 +1011,12 @@ test("runtime help Ex commands report info without editing state", () => {
     "l",
     "p",
     " ",
+    "p",
+    "i",
+    "-",
     "v",
     "i",
     "m",
-    "m",
-    "o",
-    "d",
-    "e",
     ".",
     "d",
     "o",
@@ -1040,8 +1038,8 @@ test("runtime help Ex commands report info without editing state", () => {
   expect(result.state.searchHighlight).toEqual(initial.searchHighlight);
   expect(result.state.lastRepeatableChange).toEqual(initial.lastRepeatableChange);
   expect(result.state.exMessage).toBeUndefined();
-  expect(result.state.helpPopup?.title).toBe(":help vimmode.doctor");
-  expect(result.state.helpPopup?.lines.join("\n")).toContain("vimmode.doctor");
+  expect(result.state.helpPopup?.title).toBe(":help pi-vim.doctor");
+  expect(result.state.helpPopup?.lines.join("\n")).toContain("pi-vim.doctor");
 });
 
 test("visual keybindings popup restores visual state after marker deletion", () => {
@@ -1155,7 +1153,7 @@ test("protected shortcut feedback explains delegation when enabled", () => {
   expect(update.state.exMessage?.text).toContain("ctrl+p protected");
 });
 
-test("vimmode inspect reports bounded read-only state", () => {
+test("vim inspect reports bounded read-only state", () => {
   const initial: ModalState = {
     mode: "normal",
     register: { type: "char", text: "secret register payload" },
@@ -1165,7 +1163,7 @@ test("vimmode inspect reports bounded read-only state", () => {
     lastSearch: { query: "abc", direction: "forward" },
     searchHighlight: { query: "abc", current: p(0, 0) },
     lastRepeatableChange: { type: "command", command: "deleteChar" },
-    pendingEx: { command: "vimmode inspect", sourceMode: "normal" },
+    pendingEx: { command: "vim inspect", sourceMode: "normal" },
   };
 
   const result = handleModalInput(initial, snapshot, options, "\r");
@@ -1184,20 +1182,20 @@ test("vimmode inspect reports bounded read-only state", () => {
   expect(result.state.lastRepeatableChange).toEqual(initial.lastRepeatableChange);
   expect(result.state.exMessage).toBeUndefined();
   const popupText = result.state.helpPopup?.lines.join("\n") ?? "";
-  expect(result.state.helpPopup?.title).toBe(":vimmode inspect");
+  expect(result.state.helpPopup?.title).toBe(":vim inspect");
   expect(popupText).toContain("inspect: mode=normal");
   expect(popupText).toContain("registers=unnamed-char:23,named-1(a)");
   expect(popupText).not.toContain("secret register payload");
   expect(popupText).not.toContain("named secret");
 });
 
-test("vimmode inspect from visual Ex restores visual state", () => {
+test("vim inspect from visual Ex restores visual state", () => {
   const result = handleModalInput(
     {
       mode: "visual",
       visualAnchor: p(0, 1),
       pendingEx: {
-        command: "vimmode inspect",
+        command: "vim inspect",
         sourceMode: "visual",
         visualAnchor: p(0, 1),
         visualCursor: p(0, 2),
@@ -1792,7 +1790,7 @@ test("Ex history recall moves command cursor to end", () => {
 
 test("project semantic action exact keys override built-in grammar", () => {
   const options = resolveVimOptions(undefined, {
-    piVimMode: { keymap: { motions: { lineEnd: ["u"] } } },
+    piVim: { keymap: { motions: { lineEnd: ["u"] } } },
   }).options;
 
   const result = applyModalKeys({ mode: "normal" }, "hello", p(0, 0), ["u"], options);
@@ -2136,7 +2134,7 @@ test("scoped prefixes own visual grammar, macros, marks, and easymotion", () => 
 test("scoped unmaps return protected inherited keys to Pi", () => {
   const unmappedOptions = resolveVimOptions(
     {
-      piVimMode: {
+      piVim: {
         keymap: {
           allowProtectedOverrides: ["<C-p>"],
           commands: { undo: ["<C-p>"] },
@@ -2186,7 +2184,7 @@ test("operator-pending protected descriptors keep modal ownership", () => {
 });
 
 test("scoped unmaps remove inherited escape aliases by scope", () => {
-  const options = resolveVimOptions({ piVimMode: { keymap: { escape: ["<D-j>"] } } }, undefined, {
+  const options = resolveVimOptions({ piVim: { keymap: { escape: ["<D-j>"] } } }, undefined, {
     kind: "success",
     warnings: [],
     operations: [{ kind: "unmap", key: "super+j", modes: ["insert"] }],
@@ -2522,7 +2520,7 @@ test("modal status respects UI item config and cursor position format", () => {
 
 test("modal status moves the complete status group to the right", () => {
   const ui = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       ui: {
         status: {
           position: "right",
@@ -2547,7 +2545,7 @@ test("modal status moves the complete status group to the right", () => {
     visualAnchor: cursor,
     width: 40,
     ui: resolveVimOptions({
-      piVimMode: {
+      piVim: {
         ui: { status: { position: "right", items: ["selection", "mode"] } },
       },
     }).options.ui,
@@ -2559,7 +2557,7 @@ test("modal status moves the complete status group to the right", () => {
 
 test("right-positioned status honors mode visibility and narrow labels", () => {
   const configured = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       ui: {
         status: { position: "right", items: ["mode"] },
         mode: {
@@ -2576,7 +2574,7 @@ test("right-positioned status honors mode visibility and narrow labels", () => {
     cursor,
     width: 40,
     ui: resolveVimOptions({
-      piVimMode: { ui: { status: { position: "right" }, mode: { enabled: false } } },
+      piVim: { ui: { status: { position: "right" }, mode: { enabled: false } } },
     }).options.ui,
   });
   const omitted = modalStatus({
@@ -2585,7 +2583,7 @@ test("right-positioned status honors mode visibility and narrow labels", () => {
     cursor,
     width: 40,
     ui: resolveVimOptions({
-      piVimMode: { ui: { status: { position: "right", items: ["cursorPosition"] } } },
+      piVim: { ui: { status: { position: "right", items: ["cursorPosition"] } } },
     }).options.ui,
   });
   const disabled = modalStatus({
@@ -2594,7 +2592,7 @@ test("right-positioned status honors mode visibility and narrow labels", () => {
     cursor,
     width: 40,
     ui: resolveVimOptions({
-      piVimMode: { ui: { status: { enabled: false, position: "right" } } },
+      piVim: { ui: { status: { enabled: false, position: "right" } } },
     }).options.ui,
   });
 
@@ -2674,7 +2672,7 @@ test("normal pending command clears on invalid printable key", () => {
 test("active leader overrides normal structural prefixes", () => {
   for (const leader of ['"', "q", "m"]) {
     const configured = resolveVimOptions({
-      piVimMode: {
+      piVim: {
         leader,
         keymap: { commands: { redo: ["<leader>x"] } },
       },
@@ -2689,7 +2687,7 @@ test("active leader overrides normal structural prefixes", () => {
 
 test("visual leader overrides direct case transform across visual modes", () => {
   const configured = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       leader: "u",
       keymap: { operators: { uppercase: ["<leader>x"] } },
     },
@@ -2706,7 +2704,7 @@ test("visual leader overrides direct case transform across visual modes", () => 
 
 test("invalid leader continuation preserves durable modal state", () => {
   const configured = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       leader: '"',
       feedback: { noop: "status" },
       keymap: { commands: { redo: ["<leader>q"] } },
@@ -2739,7 +2737,7 @@ test("invalid leader continuation preserves durable modal state", () => {
 
 test("pending register keeps ownership of leader character", () => {
   const configured = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       leader: "w",
       keymap: { commands: { redo: ["<leader>x"] } },
     },
@@ -2803,7 +2801,7 @@ test("insert after at line end preserves persistent modal state", () => {
 
 test("normal showKeybindings semantic command opens popup without modal side effects", () => {
   const configured = resolveVimOptions({
-    piVimMode: { keymap: { commands: { showKeybindings: ["gk"] } } },
+    piVim: { keymap: { commands: { showKeybindings: ["gk"] } } },
   }).options;
   const initial: ModalState = {
     mode: "normal",
@@ -2822,9 +2820,7 @@ test("normal showKeybindings semantic command opens popup without modal side eff
   expect(result.cursor).toEqual(p(0, 1));
   expect(result.state.helpPopup?.title).toBe(":keybindings");
   expect(result.state.helpPopup?.source).toBe("keybindings");
-  expect(result.state.helpPopup?.lines.join("\n")).not.toContain(
-    "Effective pi-vimmode keybindings",
-  );
+  expect(result.state.helpPopup?.lines.join("\n")).not.toContain("Effective pi-vim keybindings");
   expect(result.state.helpPopup?.lines.join("\n")).toContain("Key            Mode        Action");
   expect(result.state.register).toEqual(initial.register);
   expect(result.state.namedRegisters).toEqual(initial.namedRegisters);
@@ -2838,7 +2834,7 @@ test("normal showKeybindings semantic command opens popup without modal side eff
 
 test("insert mode delegates configured showKeybindings keys to Pi", () => {
   const configured = resolveVimOptions({
-    piVimMode: { keymap: { commands: { showKeybindings: ["gk"] } } },
+    piVim: { keymap: { commands: { showKeybindings: ["gk"] } } },
   }).options;
   const update = handleModalInput({ mode: "insert" }, snapshot, configured, "g");
 
@@ -5613,7 +5609,7 @@ test("later visual exits replace previous stored selection", () => {
 
 test("configured reselectVisual key works", () => {
   const configuredOptions = resolveVimOptions({
-    piVimMode: { keymap: { commands: { reselectVisual: ["grv"] } } },
+    piVim: { keymap: { commands: { reselectVisual: ["grv"] } } },
   }).options;
 
   // Enter visual, select, escape

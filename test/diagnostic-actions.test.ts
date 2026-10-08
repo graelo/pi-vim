@@ -7,20 +7,20 @@ import {
 } from "../src/diagnostic-actions.ts";
 
 describe("diagnostic/help action metadata", () => {
-  test("registry contains finite metadata-only vimmode actions", () => {
+  test("registry contains finite metadata-only vim actions", () => {
     expect(DIAGNOSTIC_ACTIONS.map((entry) => entry.id)).toEqual([
-      "vimmode.doctor",
-      "vimmode.keymap",
-      "vimmode.keybindings",
-      "vimmode.mapcheck",
-      "vimmode.help",
-      "vimmode.messages",
-      "vimmode.inspect",
+      "pi-vim.doctor",
+      "pi-vim.keymap",
+      "pi-vim.keybindings",
+      "pi-vim.mapcheck",
+      "pi-vim.help",
+      "pi-vim.messages",
+      "pi-vim.inspect",
     ]);
 
     const ids = new Set<string>();
     for (const entry of DIAGNOSTIC_ACTIONS) {
-      expect(entry.id.startsWith("vimmode.")).toBe(true);
+      expect(entry.id.startsWith("pi-vim.")).toBe(true);
       expect(ids.has(entry.id)).toBe(false);
       ids.add(entry.id);
       expect(entry.bindable).toBe(false);
@@ -36,15 +36,15 @@ describe("diagnostic/help action metadata", () => {
   });
 
   test("searches IDs, commands, topics, descriptions, and examples", () => {
-    expect(searchDiagnosticActions("vimmode.doctor")[0]?.id).toBe("vimmode.doctor");
-    expect(searchDiagnosticActions("vimdoctor")[0]?.id).toBe("vimmode.doctor");
+    expect(searchDiagnosticActions("pi-vim.doctor")[0]?.id).toBe("pi-vim.doctor");
+    expect(searchDiagnosticActions("vimdoctor")[0]?.id).toBe("pi-vim.doctor");
     expect(searchDiagnosticActions("metadata-only")[0]?.id).toBeTruthy();
-    expect(searchDiagnosticActions("vimmode.dump")).toEqual([]);
+    expect(searchDiagnosticActions("pi-vim.dump")).toEqual([]);
   });
 
   test("formats compact metadata-only messages", () => {
-    const message = diagnosticActionMessage(searchDiagnosticActions("vimmode.help")[0]!);
-    expect(message).toContain("vimmode.help");
+    const message = diagnosticActionMessage(searchDiagnosticActions("pi-vim.help")[0]!);
+    expect(message).toContain("pi-vim.help");
     expect(message).toContain("runtimeHelp");
     expect(message).toContain("command=:help");
     expect(message).toContain("metadata-only");

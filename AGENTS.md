@@ -1,6 +1,6 @@
 # AGENTS.md
 
-`@graelo/pi-vimmode` is a pi extension that replaces pi's prompt editor with a
+`@graelo/pi-vim` is a pi extension that replaces pi's prompt editor with a
 Vim-style modal editor. It is a hard fork of `pekochan069/pi-vimmode` at v0.9.0
 (see `docs/adr/0005-hard-fork-and-node-toolchain.md`). Product boundary:
 practical prompt editing, not full Vim/Neovim parity.
@@ -62,7 +62,7 @@ no build step. Load a checkout in pi with `pi -e ./src/index.ts`.
 - Releases: bump `package.json`, regenerate the lockfile with
   `npm install --package-lock-only` (never hand-edit it), move `[Unreleased]`
   entries in `CHANGELOG.md` under the new version heading, commit as
-  `build(release): pi-vimmode vX.Y.Z`, tag `vX.Y.Z`. Use Keep a Changelog
+  `build(release): pi-vim vX.Y.Z`, tag `vX.Y.Z`. Use Keep a Changelog
   headings (`## [X.Y.Z] - YYYY-MM-DD`).
-- Issues are tracked in GitHub Issues on `graelo/pi-vimmode`. New PRs use
+- Issues are tracked in GitHub Issues on `graelo/pi-vim`. New PRs use
   `.github/pull_request_template.md`.

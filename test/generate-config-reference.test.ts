@@ -25,7 +25,7 @@ describe("generated config reference", () => {
     validateLocalLinks(first);
     expect(first.match(/<a id="config-property-/g)).toHaveLength(35);
     expect(first.match(/<a id="config-action-/g)).toHaveLength(102);
-    expect(first).not.toContain("vimmode.keybindings");
+    expect(first).not.toContain("pi-vim.keybindings");
     expect(first).toContain("- Default keys: `` ` ``");
   });
 
@@ -69,12 +69,12 @@ describe("generated config reference", () => {
       validateMetadata(
         VIM_CONFIG_PROPERTY_METADATA.map((property) =>
           property.configPath === "leader"
-            ? { ...property, jsonPaths: ["piVimMode.notReal"] }
+            ? { ...property, jsonPaths: ["piVim.notReal"] }
             : property,
         ) as VimConfigPropertyMetadata[],
         VIM_ACTION_METADATA,
       ),
-    ).toThrow(/unsupported JSON crosswalk: piVimMode\.notReal/);
+    ).toThrow(/unsupported JSON crosswalk: piVim\.notReal/);
   });
 
   test("rejects missing or duplicate marker pairs and unresolved links", () => {

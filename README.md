@@ -1,12 +1,21 @@
-# pi-vimmode
+# pi-vim
 
 Vim-style prompt editing for [Pi](https://pi.dev/).
 
-`pi-vimmode` replaces Pi's main input editor with a `CustomEditor`-based modal
+`pi-vim` replaces Pi's main input editor with a `CustomEditor`-based modal
 editor. It targets practical prompt editing for agent prompts, not full Vim
 parity.
 
 ## Breaking changes
+
+### v1.0.0
+
+- The fork is renamed from pi-vimmode to pi-vim. Rename the `piVimMode`
+    settings key to `piVim` and `~/.pi/agent/pi-vimmode.config.js` to
+    `~/.pi/agent/pi-vim.config.js`. Until you do, both are ignored with a
+    warning (see `:vimdoctor`). `/vimmode` is now `/vim`, and
+    `:vimmode inspect` is now `:vim inspect`.
+- See [`CHANGELOG.md`](CHANGELOG.md) for removed commands and settings.
 
 ### v0.7.0
 
@@ -14,13 +23,13 @@ parity.
     `Alt-v`, and `Ctrl-Alt-v` are delegated to Pi for image/clipboard paste in
     normal and visual modes unless explicitly rebound.
 - Visual block mode now has an empty default keybinding. Configure
-    `piVimMode.keymap.commands.visualBlock` with a non-protected key such as
+    `piVim.keymap.commands.visualBlock` with a non-protected key such as
     `<A-b>`, or explicitly allow and bind `<C-v>` if Vim-style visual block is
     more important than Pi image paste in your workflow.
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "keymap": {
       "commands": { "visualBlock": ["<A-b>"] }
     }
@@ -32,7 +41,7 @@ To intentionally reclaim `Ctrl-v` for visual block:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "keymap": {
       "commands": { "visualBlock": ["<C-v>"] },
       "allowProtectedOverrides": ["<C-v>"]
@@ -46,13 +55,13 @@ To intentionally reclaim `Ctrl-v` for visual block:
 Install from npm:
 
 ```sh
-pi install npm:@graelo/pi-vimmode
+pi install npm:@graelo/pi-vim
 ```
 
 or Install from Git to install latest version:
 
 ```sh
-pi install git:https://github.com/graelo/pi-vimmode
+pi install git:https://github.com/graelo/pi-vim
 ```
 
 For local development from this checkout:
@@ -79,19 +88,19 @@ extension loading flow.
 
 Pi currently exposes a single custom-editor factory which makes last extension
 could overrides previous editor factories.\
-Currently, `pi-vimmode` is implemented with `CustomEditor` which cannot decorate
+Currently, `pi-vim` is implemented with `CustomEditor` which cannot decorate
 an arbitrary editor instances provided by other extensions. This means editor
 extensions that maintain per-instance state, such as history or additional
 editor behavior, may lose that state when their factory is replaced.
 
 Until pi supports composable order independant editor extension api, you should
-load pi-vimmode in front of other extensions that set editor component, like
-`@zigai/pi-prompt-history`. Load `pi-vimmode` before other extensions in
+load pi-vim in front of other extensions that set editor component, like
+`@zigai/pi-prompt-history`. Load `pi-vim` before other extensions in
 `settings.json`:
 
 ```json
 {
-  "packages": ["pi-vimmode", "another-editor-extension"]
+  "packages": ["pi-vim", "another-editor-extension"]
 }
 ```
 
@@ -127,16 +136,16 @@ Default modes:
 
 Canonical user-facing docs live under `docs/`:
 
-- [`docs/features.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/features.md):
+- [`docs/features.md`](https://github.com/graelo/pi-vim/blob/main/docs/features.md):
     supported modes, motions, edits, operators, prompt-native text objects,
     character search, prompt search, visual modes, Ex
     command-line commands, registers, marks, macros, UI/status rendering, Pi
     shortcut compatibility, limitations, recovery, and validation examples.
-- [`docs/settings.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/settings.md):
-    every supported `piVimMode` setting, defaults, accepted value shapes, merge
+- [`docs/settings.md`](https://github.com/graelo/pi-vim/blob/main/docs/settings.md):
+    every supported `piVim` setting, defaults, accepted value shapes, merge
     behavior, key sequence syntax, protected-key validation, warnings,
     troubleshooting, and practical config examples.
-- [`docs/adr/0002-user-facing-pi-vimmode-docs.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/adr/0002-user-facing-pi-vimmode-docs.md):
+- [`docs/adr/0002-user-facing-pi-vimmode-docs.md`](https://github.com/graelo/pi-vim/blob/main/docs/adr/0002-user-facing-pi-vimmode-docs.md):
     documentation source-of-truth decision and maintenance rules.
 
 README is the quickstart and index. Keep detailed behavior and settings
@@ -148,7 +157,7 @@ Minimal startup override:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "startMode": "normal"
   }
 }
@@ -158,7 +167,7 @@ Example keymap/UI override:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "leader": " ",
     "cursor": {
       "normal": "block",
@@ -185,11 +194,11 @@ EasyMotion has no default binding. Bind `command.easymotion`, type a target
 character, then press its label to move the cursor. Matching is case-insensitive
 and prompt-wide, with up to 52 labels (lowercase, then uppercase). Labels are
 render-only substitutions, so prompt text and undo/redo history stay unchanged.
-Configure label color with `piVimMode.easymotion.labelColor`:
+Configure label color with `piVim.easymotion.labelColor`:
 
 ```json
 {
-  "piVimMode": {
+  "piVim": {
     "easymotion": {
       "labelColor": "\u001b[31m"
     }
@@ -201,12 +210,12 @@ Common ANSI color codes: `\u001b[31m` (red), `\u001b[32m` (green), `\u001b[33m`
 (yellow), `\u001b[34m` (blue), `\u001b[35m` (magenta), `\u001b[36m` (cyan),
 `\u001b[37m` (white). Default is red (`\u001b[31m`).
 
-Trusted global JS keybindings live at `~/.pi/agent/pi-vimmode.config.js` and run
+Trusted global JS keybindings live at `~/.pi/agent/pi-vim.config.js` and run
 as unsandboxed local code with full Pi process privileges. See
-[trusted JavaScript config guide](https://github.com/graelo/pi-vimmode/blob/main/docs/config.md#basic-setup):
+[trusted JavaScript config guide](https://github.com/graelo/pi-vim/blob/main/docs/config.md#basic-setup):
 
 ```js
-/** @type {import("./npm/node_modules/@graelo/pi-vimmode/config").VimConfig} */
+/** @type {import("./npm/node_modules/@graelo/pi-vim/config").VimConfig} */
 export default (vim) => {
   vim.g.mapleader = " ";
   vim.keymap.set("i", "<A-w>", vim.prompt.deleteWordBackward());
@@ -215,25 +224,25 @@ export default (vim) => {
 };
 ```
 
-Run `/vimmode reload` after editing root JS config. See
-[`docs/config.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/config.md)
+Run `/vim reload` after editing root JS config. See
+[`docs/config.md`](https://github.com/graelo/pi-vim/blob/main/docs/config.md)
 for complete trusted JavaScript API, workflows, reload, and safety contract. See
-[`docs/settings.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/settings.md)
+[`docs/settings.md`](https://github.com/graelo/pi-vim/blob/main/docs/settings.md)
 for canonical JSON defaults and settings.
 
 ## Recover or disable
 
 If the extension blocks editing or configuration goes wrong:
 
-- Run `/vimmode off` to restore Pi's previous editor for the current extension
+- Run `/vim off` to restore Pi's previous editor for the current extension
     runtime.
-- Run `/vimmode on` or `/vimmode` to enable the Vim editor again.
+- Run `/vim on` or `/vim` to enable the Vim editor again.
 - Start with
-    [`docs/features.md#disable-or-recover`](https://github.com/graelo/pi-vimmode/blob/main/docs/features.md#disable-or-recover).
+    [`docs/features.md#disable-or-recover`](https://github.com/graelo/pi-vim/blob/main/docs/features.md#disable-or-recover).
 - Use `pi list` to inspect installed extensions.
 - Use `pi remove` or `pi uninstall` with the installed extension identifier to
     remove it.
-- Use `pi config` or edit Pi config files to remove `piVimMode` overrides.
+- Use `pi config` or edit Pi config files to remove `piVim` overrides.
 - Restart Pi after changing extension or config state.
 
 ## Architecture
@@ -288,7 +297,7 @@ Manual smoke checklist:
 3. Press `Esc`, use normal-mode motions and edits.
 4. Use `v`, `V`, and a configured visual-block binding such as `<A-b>`; confirm
     visual highlighting and selection operations.
-5. Configure `piVimMode.startMode`, `piVimMode.cursor`, a keymap binding, and
+5. Configure `piVim.startMode`, `piVim.cursor`, a keymap binding, and
     UI status items; confirm behavior changes.
 6. Confirm insert/normal submit and normal-mode `Esc` still delegate to Pi
     where expected.

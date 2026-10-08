@@ -288,7 +288,7 @@ test("agent end reports async install failures", async () => {
   await new Promise((resolve) => setTimeout(resolve, 0));
 
   expect(ctx.ui.notifications).toContainEqual([
-    "pi-vimmode install failed: current context failed",
+    "pi-vim install failed: current context failed",
     "error",
   ]);
 });
@@ -353,7 +353,7 @@ test("uses public editor factory API without inspecting foreign wrappers", async
   hooks.get("session_start")?.({}, ctx);
   expect(ctx.ui.component).not.toBe(foreignFactory);
 
-  await commands.get("vimmode")?.handler("off", ctx);
+  await commands.get("vim")?.handler("off", ctx);
   expect(ctx.ui.component).toBe(foreignFactory);
 });
 
@@ -370,7 +370,7 @@ test("does not overwrite a foreign factory installed after Vim", async () => {
   hooks.get("agent_end")?.({}, ctx);
 
   expect(ctx.ui.component).toBe(foreignFactory);
-  await commands.get("vimmode")?.handler("off", ctx);
+  await commands.get("vim")?.handler("off", ctx);
   expect(ctx.ui.component).toBe(foreignFactory);
 });
 
@@ -423,9 +423,7 @@ test("settings refresh reconfigures active editors and updates new editor option
   factory({}, {}, {});
 
   expect(loadCalls).toEqual([{ cwd: "/repo" }, { cwd: "/repo" }]);
-  expect(ctx.ui.notifications).toEqual([
-    ["pi-vimmode: 1 settings warning; run :vimdoctor", "warning"],
-  ]);
+  expect(ctx.ui.notifications).toEqual([["pi-vim: 1 settings warning; run :vimdoctor", "warning"]]);
   expect(createdEditors.map((editor) => editor.options.startMode)).toEqual(["normal", "normal"]);
   expect(createdEditors.map((editor) => editor.diagnostics.warnings)).toEqual([
     ["bad config"],
@@ -445,7 +443,7 @@ test("unchanged settings warnings notify once and set no footer status", () => {
   hooks.get("agent_end")?.({}, ctx);
 
   expect(ctx.ui.notifications).toEqual([
-    ["pi-vimmode: 2 settings warnings; run :vimdoctor", "warning"],
+    ["pi-vim: 2 settings warnings; run :vimdoctor", "warning"],
   ]);
   expect(statuses).toEqual([]);
 });
@@ -464,7 +462,7 @@ test("fatal first load commits its usable JSON-backed plan", () => {
   expect(createdEditors[0]?.options.startMode).toBe("normal");
   expect(createdEditors[0]?.diagnostics.warnings).toEqual(["fatal JS config"]);
   expect(ctx.ui.notifications).toContainEqual([
-    "pi-vimmode: 1 settings warning; run :vimdoctor",
+    "pi-vim: 1 settings warning; run :vimdoctor",
     "warning",
   ]);
 });
@@ -492,7 +490,7 @@ test("async loads commit success and preserve it after rejection", async () => {
     "global JS config: failed to load (async load failed)",
   ]);
   expect(ctx.ui.notifications).toContainEqual([
-    "pi-vimmode: 1 settings warning; run :vimdoctor",
+    "pi-vim: 1 settings warning; run :vimdoctor",
     "warning",
   ]);
 });
@@ -500,10 +498,10 @@ test("async loads commit success and preserve it after rejection", async () => {
 test("newer async refresh alone reconfigures active editors", async () => {
   const initial = { ...DEFAULT_VIM_OPTIONS, startMode: "normal" as const };
   const stale = resolveVimOptions({
-    piVimMode: { startMode: "normal", keymap: { commands: { openLineBelow: [",s"] } } },
+    piVim: { startMode: "normal", keymap: { commands: { openLineBelow: [",s"] } } },
   }).options;
   const newest = resolveVimOptions({
-    piVimMode: { startMode: "insert", keymap: { commands: { openLineBelow: [",n"] } } },
+    piVim: { startMode: "insert", keymap: { commands: { openLineBelow: [",n"] } } },
   }).options;
   const { hooks, deferredLoads, resolveDeferred, createdEditors } = createLifecycleHarness([
     initial,
@@ -541,7 +539,7 @@ test("newer async refresh alone reconfigures active editors", async () => {
 test("older async refresh cannot commit after a newer refresh starts", async () => {
   const initial = { ...DEFAULT_VIM_OPTIONS, startMode: "normal" as const };
   const stale = resolveVimOptions({
-    piVimMode: { startMode: "normal", keymap: { commands: { openLineBelow: [",s"] } } },
+    piVim: { startMode: "normal", keymap: { commands: { openLineBelow: [",s"] } } },
   }).options;
   const newest = { ...DEFAULT_VIM_OPTIONS, startMode: "insert" as const };
   const { hooks, deferredLoads, resolveDeferred, createdEditors } = createLifecycleHarness([
@@ -673,13 +671,13 @@ test("shutdown invalidates pending loads and delayed installs before next sessio
   expect(nextContext.ui.setCalls).toHaveLength(1);
 });
 
-test("async install cannot reactivate editor after vimmode off", async () => {
+test("async install cannot reactivate editor after vim off", async () => {
   const { hooks, commands, deferredLoads, resolveDeferred } = createLifecycleHarness();
   deferredLoads.add(0);
   const ctx = createContext("/repo");
 
   hooks.get("agent_end")?.({}, ctx);
-  await commands.get("vimmode")?.handler("off", ctx);
+  await commands.get("vim")?.handler("off", ctx);
   resolveDeferred.get(0)?.({
     plan: createVimConfigPlan(DEFAULT_VIM_OPTIONS, []),
     options: DEFAULT_VIM_OPTIONS,
@@ -737,7 +735,7 @@ test("fatal reload updates diagnostics but preserves last-known-good options", (
   expect(createdEditors[0]!.reconfigureCalls).toHaveLength(0);
   expect(createdEditors[0]!.diagnosticsCalls).toEqual([{ warnings: ["fatal JS config"] }]);
   expect(ctx.ui.notifications).toContainEqual([
-    "pi-vimmode: 1 settings warning; run :vimdoctor",
+    "pi-vim: 1 settings warning; run :vimdoctor",
     "warning",
   ]);
 });
@@ -777,10 +775,7 @@ test("delayed async reinstall reports current-context failures", async () => {
   await new Promise((resolve) => setTimeout(resolve, 0));
 
   expect(ctx.ui.component).toBeDefined();
-  expect(ctx.ui.notifications).toContainEqual([
-    "pi-vimmode install failed: stale context",
-    "error",
-  ]);
+  expect(ctx.ui.notifications).toContainEqual(["pi-vim install failed: stale context", "error"]);
 });
 
 test("delayed reinstall refreshes settings and catches stale context failures", () => {
@@ -845,7 +840,7 @@ test("session shutdown routes cursor visibility restoration by reason", () => {
   }
 });
 
-test("vimmode command reloads options without toggling", async () => {
+test("vim command reloads options without toggling", async () => {
   const { hooks, commands, createdEditors, loadCalls } = createLifecycleHarness();
   const ctx = createContext("/repo");
 
@@ -853,29 +848,29 @@ test("vimmode command reloads options without toggling", async () => {
   const factory = ctx.ui.setCalls[0]!;
   factory({}, {}, {});
 
-  await commands.get("vimmode")?.handler("reload", ctx);
+  await commands.get("vim")?.handler("reload", ctx);
   factory({}, {}, {});
 
   expect(loadCalls).toEqual([{ cwd: "/repo" }, { cwd: "/repo" }]);
   expect(ctx.ui.component).toBe(factory);
-  expect(ctx.ui.notifications.at(-1)).toEqual(["pi-vimmode reloaded", "info"]);
+  expect(ctx.ui.notifications.at(-1)).toEqual(["pi-vim reloaded", "info"]);
   expect(createdEditors.map((editor) => editor.options.startMode)).toEqual(["normal", "normal"]);
 });
 
-test("vimmode reload stays disabled after refreshing options", async () => {
+test("vim reload stays disabled after refreshing options", async () => {
   const { hooks, commands, loadCalls } = createLifecycleHarness();
   const ctx = createContext("/repo");
 
   hooks.get("session_start")?.({}, ctx);
-  await commands.get("vimmode")?.handler("off", ctx);
-  await commands.get("vimmode")?.handler("reload", ctx);
+  await commands.get("vim")?.handler("off", ctx);
+  await commands.get("vim")?.handler("reload", ctx);
 
   expect(loadCalls).toEqual([{ cwd: "/repo" }, { cwd: "/repo" }]);
   expect(ctx.ui.component).toBeUndefined();
-  expect(ctx.ui.notifications.at(-1)).toEqual(["pi-vimmode config reloaded (disabled)", "info"]);
+  expect(ctx.ui.notifications.at(-1)).toEqual(["pi-vim config reloaded (disabled)", "info"]);
 });
 
-test("stale vimmode reload cannot reinstall an older context", async () => {
+test("stale vim reload cannot reinstall an older context", async () => {
   const { hooks, commands, deferredLoads, resolveDeferred, shutdownCallbacks } =
     createLifecycleHarness();
   const older = createContext("/older");
@@ -883,7 +878,7 @@ test("stale vimmode reload cannot reinstall an older context", async () => {
 
   hooks.get("session_start")?.({}, older);
   deferredLoads.add(1);
-  const reload = commands.get("vimmode")?.handler("reload", older);
+  const reload = commands.get("vim")?.handler("reload", older);
   hooks.get("agent_end")?.({}, newer);
   resolveDeferred.get(1)?.({
     plan: createVimConfigPlan(DEFAULT_VIM_OPTIONS, []),
@@ -900,7 +895,7 @@ test("stale vimmode reload cannot reinstall an older context", async () => {
   expect(older.ui.notifications).toEqual([]);
 });
 
-test("vimmode command toggles editor off and on", async () => {
+test("vim command toggles editor off and on", async () => {
   const { hooks, commands, createdEditors } = createLifecycleHarness();
   const ctx = createContext("/repo");
 
@@ -909,18 +904,18 @@ test("vimmode command toggles editor off and on", async () => {
   factory({}, {}, {});
   hooks.get("agent_start")?.({}, ctx);
 
-  await commands.get("vimmode")?.handler("", ctx);
+  await commands.get("vim")?.handler("", ctx);
 
   expect(createdEditors[0]!.busyCalls).toEqual([true]);
   expect(createdEditors[0]!.resetCount).toBe(1);
   expect(ctx.ui.component).toBeUndefined();
-  expect(ctx.ui.notifications.at(-1)).toEqual(["pi-vimmode disabled", "info"]);
+  expect(ctx.ui.notifications.at(-1)).toEqual(["pi-vim disabled", "info"]);
 
   hooks.get("session_shutdown")?.({}, ctx);
   expect(createdEditors[0]!.resetCount).toBe(1);
 
-  await commands.get("vimmode")?.handler("", ctx);
+  await commands.get("vim")?.handler("", ctx);
 
   expect(ctx.ui.component).toBe(factory);
-  expect(ctx.ui.notifications.at(-1)).toEqual(["pi-vimmode enabled", "info"]);
+  expect(ctx.ui.notifications.at(-1)).toEqual(["pi-vim enabled", "info"]);
 });

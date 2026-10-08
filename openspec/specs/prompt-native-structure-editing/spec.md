@@ -106,15 +106,15 @@ and yank operators using the existing inner and around text-object flow.
 
 #### Scenario: Prompt-native text object keys are configurable
 
-- **WHEN** settings configure `piVimMode.keymap.textObjects.kinds` or
-    `piVimMode.keymap.textObjects.targets`
+- **WHEN** settings configure `piVim.keymap.textObjects.kinds` or
+    `piVim.keymap.textObjects.targets`
 - **THEN** operators use the configured text-object kind and target keys while
     preserving existing default behavior for unspecified keys
 
 #### Scenario: Prompt-native structure targets can be disabled
 
-- **WHEN** settings disable `piVimMode.promptStructures.enabled` or an
-    individual `piVimMode.promptStructures.targets.*` entry
+- **WHEN** settings disable `piVim.promptStructures.enabled` or an
+    individual `piVim.promptStructures.targets.*` entry
 - **THEN** the corresponding prompt-native text object acts as a safe no-op
     without changing prompt text, cursor, registers, or mode
 

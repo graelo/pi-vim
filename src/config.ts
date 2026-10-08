@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 
 import type { GrammarBinding } from "./keymap-grammar.ts";
 import type {
@@ -36,6 +36,7 @@ import type {
 
 import {
   DEFAULT_JS_CONFIG_PATH,
+  JS_CONFIG_FILE_NAME,
   isPrintableLeader,
   loadVimJsConfig,
   optionValueAtPath,
@@ -619,7 +620,7 @@ function parseInsertEscapeArray(
 ): string[] | undefined {
   if (value === undefined) return undefined;
   if (Array.isArray(value) && value.length === 0) return [];
-  const label = `${sourceLabel}: piVimMode.keymap.escape`;
+  const label = `${sourceLabel}: piVim.keymap.escape`;
   const sequences = parseStringArray(value, label, warnings, options);
   const parsed = sequences?.filter((sequence) => {
     if (!isPrintableTextSequence(sequence)) return true;
@@ -669,7 +670,7 @@ function parseInsertBinding(
   },
 ): string[] | undefined {
   const insertAction = action as keyof ResolvedVimInsertKeymap;
-  const label = `${sourceLabel}: piVimMode.keymap.insert.${action}`;
+  const label = `${sourceLabel}: piVim.keymap.insert.${action}`;
   const keys = parseStringArray(bindings, label, warnings, {
     allowProtectedKey: (key) =>
       options.allowProtectedBinding?.(insertAction, key) === true ||
@@ -689,14 +690,14 @@ function parseInsertBindings(
 ): Partial<ResolvedVimInsertKeymap> | undefined {
   if (value === undefined) return undefined;
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.keymap.insert must be an object`);
+    warnings.push(`${sourceLabel}: piVim.keymap.insert must be an object`);
     return undefined;
   }
   const parsed: Partial<ResolvedVimInsertKeymap> = {};
   const seen = new Map<string, string>();
   for (const [action, bindings] of Object.entries(value)) {
     if (!INSERT_ACTION_SET.has(action)) {
-      warnings.push(`${sourceLabel}: unsupported piVimMode.keymap.insert.${action}`);
+      warnings.push(`${sourceLabel}: unsupported piVim.keymap.insert.${action}`);
       continue;
     }
     const keys = parseInsertBinding(action, bindings, sourceLabel, warnings, options);
@@ -709,7 +710,7 @@ function parseInsertBindings(
         seen,
         key,
         action,
-        `${sourceLabel}: duplicate piVimMode.keymap.insert binding`,
+        `${sourceLabel}: duplicate piVim.keymap.insert binding`,
         warnings,
       );
     }
@@ -753,16 +754,11 @@ function parseKeyBindingKeys(
   warnings: string[],
   options: { singleKeyOnly?: boolean; allowProtectedKey?: (key: string) => boolean },
 ): string[] | undefined {
-  return parseStringArray(
-    bindings,
-    `${sourceLabel}: piVimMode.keymap.${group}.${action}`,
-    warnings,
-    {
-      ...options,
-      allowProtectedKey: (key) =>
-        isAllowedMotionShortcut(group, action, key) || options.allowProtectedKey?.(key) === true,
-    },
-  );
+  return parseStringArray(bindings, `${sourceLabel}: piVim.keymap.${group}.${action}`, warnings, {
+    ...options,
+    allowProtectedKey: (key) =>
+      isAllowedMotionShortcut(group, action, key) || options.allowProtectedKey?.(key) === true,
+  });
 }
 
 function parseKeyBindings<T extends string>(
@@ -775,14 +771,14 @@ function parseKeyBindings<T extends string>(
 ): Partial<Record<T, string[]>> | undefined {
   if (value === undefined) return undefined;
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.keymap.${group} must be an object`);
+    warnings.push(`${sourceLabel}: piVim.keymap.${group} must be an object`);
     return undefined;
   }
   const parsed: Partial<Record<T, string[]>> = {};
   const seen = new Map<string, string>();
   for (const [action, bindings] of Object.entries(value)) {
     if (!allowed.has(action)) {
-      warnings.push(`${sourceLabel}: unsupported piVimMode.keymap.${group}.${action}`);
+      warnings.push(`${sourceLabel}: unsupported piVim.keymap.${group}.${action}`);
       continue;
     }
     const keys = parseKeyBindingKeys(bindings, sourceLabel, group, action, warnings, options);
@@ -793,7 +789,7 @@ function parseKeyBindings<T extends string>(
         seen,
         key,
         action,
-        `${sourceLabel}: duplicate piVimMode.keymap.${group} binding`,
+        `${sourceLabel}: duplicate piVim.keymap.${group} binding`,
         warnings,
       );
     }
@@ -809,7 +805,7 @@ function parseTextObjects(
 ): PartialKeymapOptions["textObjects"] | undefined {
   if (value === undefined) return undefined;
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.keymap.textObjects must be an object`);
+    warnings.push(`${sourceLabel}: piVim.keymap.textObjects must be an object`);
     return undefined;
   }
   const options = { singleKeyOnly: true, allowProtectedKey };
@@ -839,19 +835,19 @@ function parseOperatorMotions(
 ): PartialKeymapOptions["operatorMotions"] | undefined {
   if (value === undefined) return undefined;
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.keymap.operatorMotions must be an object`);
+    warnings.push(`${sourceLabel}: piVim.keymap.operatorMotions must be an object`);
     return undefined;
   }
   const parsed: Partial<Record<VimMotionOperatorAction, VimMotionAction[]>> = {};
   for (const [operator, motions] of Object.entries(value)) {
     if (!MOTION_OPERATOR_ACTION_SET.has(operator)) {
-      warnings.push(`${sourceLabel}: unsupported piVimMode.keymap.operatorMotions.${operator}`);
+      warnings.push(`${sourceLabel}: unsupported piVim.keymap.operatorMotions.${operator}`);
       continue;
     }
     const actions = parseActionStringArray<VimMotionAction>(
       motions,
       OPERATOR_MOTION_ACTION_SET,
-      `${sourceLabel}: piVimMode.keymap.operatorMotions.${operator} contains unsupported operator motion`,
+      `${sourceLabel}: piVim.keymap.operatorMotions.${operator} contains unsupported operator motion`,
       warnings,
     );
     if (actions) parsed[operator as VimMotionOperatorAction] = actions;
@@ -867,7 +863,7 @@ function parseKeymap(
   const partial: PartialKeymapOptions = {};
   if (value === undefined) return { warnings };
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.keymap must be an object`);
+    warnings.push(`${sourceLabel}: piVim.keymap must be an object`);
     return { warnings };
   }
 
@@ -951,7 +947,7 @@ function parseKeymap(
   warnRemovedSettings(
     value,
     ["actions", "actionPresets"],
-    `${sourceLabel}: piVimMode.keymap`,
+    `${sourceLabel}: piVim.keymap`,
     warnings,
   );
 
@@ -965,7 +961,7 @@ function parseRemaps(
 ): ResolvedVimKeymap["remaps"] | undefined {
   if (value === undefined) return undefined;
   if (!isRecord(value) || !Array.isArray(value.accepted)) {
-    warnings.push(`${sourceLabel}: piVimMode.keymap.remaps must be an internal remap object`);
+    warnings.push(`${sourceLabel}: piVim.keymap.remaps must be an internal remap object`);
     return undefined;
   }
 
@@ -987,7 +983,7 @@ function parseAllowProtectedOverrides(
   warnings: string[],
 ): string[] | undefined {
   if (value === undefined) return undefined;
-  const label = `${sourceLabel}: piVimMode.keymap.allowProtectedOverrides`;
+  const label = `${sourceLabel}: piVim.keymap.allowProtectedOverrides`;
   return parseStringArray(value, label, warnings, {
     allowProtectedKey: () => true,
   });
@@ -1001,7 +997,7 @@ function parseModeLabelMap(
 ): Partial<Record<VimMode, string>> | undefined {
   if (value === undefined) return undefined;
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.ui.mode.${field} must be an object`);
+    warnings.push(`${sourceLabel}: piVim.ui.mode.${field} must be an object`);
     return undefined;
   }
 
@@ -1010,10 +1006,7 @@ function parseModeLabelMap(
     const label = value[mode];
     if (label === undefined) continue;
     if (typeof label === "string" && label.length > 0) labels[mode] = label;
-    else
-      warnings.push(
-        `${sourceLabel}: piVimMode.ui.mode.${field}.${mode} must be a non-empty string`,
-      );
+    else warnings.push(`${sourceLabel}: piVim.ui.mode.${field}.${mode} must be a non-empty string`);
   }
   return Object.keys(labels).length > 0 ? labels : undefined;
 }
@@ -1025,21 +1018,21 @@ function parseUiStatus(
 ): Partial<ResolvedVimUi["status"]> | undefined {
   if (value === undefined) return undefined;
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.ui.status must be an object`);
+    warnings.push(`${sourceLabel}: piVim.ui.status must be an object`);
     return undefined;
   }
   const status: Partial<ResolvedVimUi["status"]> = {};
   if (typeof value.enabled === "boolean") status.enabled = value.enabled;
   else if (value.enabled !== undefined)
-    warnings.push(`${sourceLabel}: piVimMode.ui.status.enabled must be a boolean`);
+    warnings.push(`${sourceLabel}: piVim.ui.status.enabled must be a boolean`);
   if (value.position === "left" || value.position === "right") status.position = value.position;
   else if (value.position !== undefined)
-    warnings.push(`${sourceLabel}: piVimMode.ui.status.position must be "left" or "right"`);
+    warnings.push(`${sourceLabel}: piVim.ui.status.position must be "left" or "right"`);
   if (value.items !== undefined) {
     const items = parseActionStringArray<VimStatusItem>(
       value.items,
       STATUS_ITEM_SET,
-      `${sourceLabel}: piVimMode.ui.status.items`,
+      `${sourceLabel}: piVim.ui.status.items`,
       warnings,
     );
     if (items) status.items = items;
@@ -1054,13 +1047,13 @@ function parseUiMode(
 ): PartialUiOptions["mode"] | undefined {
   if (value === undefined) return undefined;
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.ui.mode must be an object`);
+    warnings.push(`${sourceLabel}: piVim.ui.mode must be an object`);
     return undefined;
   }
   const mode: NonNullable<PartialUiOptions["mode"]> = {};
   if (typeof value.enabled === "boolean") mode.enabled = value.enabled;
   else if (value.enabled !== undefined)
-    warnings.push(`${sourceLabel}: piVimMode.ui.mode.enabled must be a boolean`);
+    warnings.push(`${sourceLabel}: piVim.ui.mode.enabled must be a boolean`);
   mode.labels = parseModeLabelMap(value.labels, sourceLabel, "labels", warnings);
   mode.narrowLabels = parseModeLabelMap(value.narrowLabels, sourceLabel, "narrowLabels", warnings);
   return mode;
@@ -1073,13 +1066,13 @@ function parseUiSelection(
 ): Partial<ResolvedVimUi["selection"]> | undefined {
   if (value === undefined) return undefined;
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.ui.selection must be an object`);
+    warnings.push(`${sourceLabel}: piVim.ui.selection must be an object`);
     return undefined;
   }
   const selection: Partial<ResolvedVimUi["selection"]> = {};
   if (typeof value.enabled === "boolean") selection.enabled = value.enabled;
   else if (value.enabled !== undefined)
-    warnings.push(`${sourceLabel}: piVimMode.ui.selection.enabled must be a boolean`);
+    warnings.push(`${sourceLabel}: piVim.ui.selection.enabled must be a boolean`);
   if (
     typeof value.previewMaxChars === "number" &&
     Number.isInteger(value.previewMaxChars) &&
@@ -1088,7 +1081,7 @@ function parseUiSelection(
     selection.previewMaxChars = value.previewMaxChars;
   else if (value.previewMaxChars !== undefined)
     warnings.push(
-      `${sourceLabel}: piVimMode.ui.selection.previewMaxChars must be a non-negative integer`,
+      `${sourceLabel}: piVim.ui.selection.previewMaxChars must be a non-negative integer`,
     );
   return selection;
 }
@@ -1100,16 +1093,16 @@ function parseUiCursorPosition(
 ): Partial<ResolvedVimUi["cursorPosition"]> | undefined {
   if (value === undefined) return undefined;
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.ui.cursorPosition must be an object`);
+    warnings.push(`${sourceLabel}: piVim.ui.cursorPosition must be an object`);
     return undefined;
   }
   const cursorPosition: Partial<ResolvedVimUi["cursorPosition"]> = {};
   if (typeof value.enabled === "boolean") cursorPosition.enabled = value.enabled;
   else if (value.enabled !== undefined)
-    warnings.push(`${sourceLabel}: piVimMode.ui.cursorPosition.enabled must be a boolean`);
+    warnings.push(`${sourceLabel}: piVim.ui.cursorPosition.enabled must be a boolean`);
   if (value.base === 0 || value.base === 1) cursorPosition.base = value.base;
   else if (value.base !== undefined)
-    warnings.push(`${sourceLabel}: piVimMode.ui.cursorPosition.base must be 0 or 1`);
+    warnings.push(`${sourceLabel}: piVim.ui.cursorPosition.base must be 0 or 1`);
   if (
     typeof value.format === "string" &&
     value.format.includes("{line}") &&
@@ -1118,7 +1111,7 @@ function parseUiCursorPosition(
     cursorPosition.format = value.format;
   else if (value.format !== undefined)
     warnings.push(
-      `${sourceLabel}: piVimMode.ui.cursorPosition.format must include {line} and {column}`,
+      `${sourceLabel}: piVim.ui.cursorPosition.format must include {line} and {column}`,
     );
   return cursorPosition;
 }
@@ -1130,7 +1123,7 @@ function parseUiWorkbench(
 ): Partial<ResolvedVimUi["workbench"]> | undefined {
   if (value === undefined) return undefined;
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.ui.workbench must be an object`);
+    warnings.push(`${sourceLabel}: piVim.ui.workbench must be an object`);
     return undefined;
   }
   const workbench: Partial<ResolvedVimUi["workbench"]> = {};
@@ -1143,7 +1136,7 @@ function parseUiWorkbench(
     workbench.reservedRows = value.reservedRows;
   else if (value.reservedRows !== undefined)
     warnings.push(
-      `${sourceLabel}: piVimMode.ui.workbench.reservedRows must be an integer between 0 and ${WORKBENCH_RESERVED_ROWS_MAX}`,
+      `${sourceLabel}: piVim.ui.workbench.reservedRows must be an integer between 0 and ${WORKBENCH_RESERVED_ROWS_MAX}`,
     );
   return workbench;
 }
@@ -1154,7 +1147,7 @@ function parseUi(
 ): { partial?: PartialUiOptions; warnings: string[] } {
   const warnings: string[] = [];
   if (value === undefined) return { warnings };
-  if (!isRecord(value)) return { warnings: [`${sourceLabel}: piVimMode.ui must be an object`] };
+  if (!isRecord(value)) return { warnings: [`${sourceLabel}: piVim.ui must be an object`] };
   const partial: PartialUiOptions = {};
   partial.status = parseUiStatus(value.status, sourceLabel, warnings);
   partial.mode = parseUiMode(value.mode, sourceLabel, warnings);
@@ -1188,20 +1181,16 @@ function parseMacros(
   const partial: PartialMacroOptions = {};
   if (value === undefined) return { warnings };
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.macros must be an object`);
+    warnings.push(`${sourceLabel}: piVim.macros must be an object`);
     return { warnings };
   }
 
   if (typeof value.enabled === "boolean") partial.enabled = value.enabled;
   else if (value.enabled !== undefined)
-    warnings.push(`${sourceLabel}: piVimMode.macros.enabled must be a boolean`);
+    warnings.push(`${sourceLabel}: piVim.macros.enabled must be a boolean`);
 
   if (value.slots !== undefined) {
-    const slots = parseLowercaseSlots(
-      value.slots,
-      `${sourceLabel}: piVimMode.macros.slots`,
-      warnings,
-    );
+    const slots = parseLowercaseSlots(value.slots, `${sourceLabel}: piVim.macros.slots`, warnings);
     if (slots) partial.slots = slots;
   }
 
@@ -1212,7 +1201,7 @@ function parseMacros(
   ) {
     partial.maxReplaySteps = value.maxReplaySteps;
   } else if (value.maxReplaySteps !== undefined) {
-    warnings.push(`${sourceLabel}: piVimMode.macros.maxReplaySteps must be a positive integer`);
+    warnings.push(`${sourceLabel}: piVim.macros.maxReplaySteps must be a positive integer`);
   }
 
   return Object.keys(partial).length > 0 ? { partial, warnings } : { warnings };
@@ -1226,7 +1215,7 @@ function parseSearch(
   const partial: PartialSearchOptions = {};
   if (value === undefined) return { warnings };
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.search must be an object`);
+    warnings.push(`${sourceLabel}: piVim.search must be an object`);
     return { warnings };
   }
 
@@ -1238,7 +1227,7 @@ function parseSearch(
   ] as const) {
     if (typeof value[field] === "boolean") partial[field] = value[field];
     else if (value[field] !== undefined)
-      warnings.push(`${sourceLabel}: piVimMode.search.${field} must be a boolean`);
+      warnings.push(`${sourceLabel}: piVim.search.${field} must be a boolean`);
   }
 
   if (
@@ -1248,7 +1237,7 @@ function parseSearch(
   ) {
     partial.maxHighlights = value.maxHighlights;
   } else if (value.maxHighlights !== undefined) {
-    warnings.push(`${sourceLabel}: piVimMode.search.maxHighlights must be a non-negative integer`);
+    warnings.push(`${sourceLabel}: piVim.search.maxHighlights must be a non-negative integer`);
   }
 
   return Object.keys(partial).length > 0 ? { partial, warnings } : { warnings };
@@ -1262,7 +1251,7 @@ function parseFeedback(
   const partial: PartialFeedbackOptions = {};
   if (value === undefined) return { warnings };
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.feedback must be an object`);
+    warnings.push(`${sourceLabel}: piVim.feedback must be an object`);
     return { warnings };
   }
 
@@ -1273,7 +1262,7 @@ function parseFeedback(
   ) {
     partial.noop = value.noop as VimFeedbackOptions["noop"];
   } else {
-    warnings.push(`${sourceLabel}: piVimMode.feedback.noop must be off or status`);
+    warnings.push(`${sourceLabel}: piVim.feedback.noop must be off or status`);
   }
 
   return Object.keys(partial).length > 0 ? { partial, warnings } : { warnings };
@@ -1290,13 +1279,13 @@ function parseExCommand(
   const warnings: string[] = [];
   if (value === undefined) return { warnings };
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.exCommand must be an object`);
+    warnings.push(`${sourceLabel}: piVim.exCommand must be an object`);
     return { warnings };
   }
   const partial: PartialExCommandOptions = {};
   if (typeof value.autocomplete === "boolean") partial.autocomplete = value.autocomplete;
   else if (value.autocomplete !== undefined)
-    warnings.push(`${sourceLabel}: piVimMode.exCommand.autocomplete must be a boolean`);
+    warnings.push(`${sourceLabel}: piVim.exCommand.autocomplete must be a boolean`);
   return Object.keys(partial).length > 0 ? { partial, warnings } : { warnings };
 }
 
@@ -1332,20 +1321,16 @@ function parseMarks(
   const partial: PartialMarkOptions = {};
   if (value === undefined) return { warnings };
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.marks must be an object`);
+    warnings.push(`${sourceLabel}: piVim.marks must be an object`);
     return { warnings };
   }
 
   if (typeof value.enabled === "boolean") partial.enabled = value.enabled;
   else if (value.enabled !== undefined)
-    warnings.push(`${sourceLabel}: piVimMode.marks.enabled must be a boolean`);
+    warnings.push(`${sourceLabel}: piVim.marks.enabled must be a boolean`);
 
   if (value.slots !== undefined) {
-    const slots = parseLowercaseSlots(
-      value.slots,
-      `${sourceLabel}: piVimMode.marks.slots`,
-      warnings,
-    );
+    const slots = parseLowercaseSlots(value.slots, `${sourceLabel}: piVim.marks.slots`, warnings);
     if (slots) partial.slots = slots;
   }
 
@@ -1360,18 +1345,18 @@ function parsePromptStructures(
   const partial: PartialPromptStructureOptions = {};
   if (value === undefined) return { warnings };
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.promptStructures must be an object`);
+    warnings.push(`${sourceLabel}: piVim.promptStructures must be an object`);
     return { warnings };
   }
 
   if (typeof value.enabled === "boolean") partial.enabled = value.enabled;
   else if (value.enabled !== undefined)
-    warnings.push(`${sourceLabel}: piVimMode.promptStructures.enabled must be a boolean`);
+    warnings.push(`${sourceLabel}: piVim.promptStructures.enabled must be a boolean`);
 
   const targets = parseBooleanMap<PromptStructureTarget>(
     value.targets,
     PROMPT_STRUCTURE_TARGET_SET,
-    `${sourceLabel}: piVimMode.promptStructures.targets`,
+    `${sourceLabel}: piVim.promptStructures.targets`,
     warnings,
   );
   if (targets) partial.targets = targets;
@@ -1386,7 +1371,7 @@ function parseCursorStyles(
 ): Partial<CursorStyles> | undefined {
   if (value === undefined) return undefined;
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode.cursor must be an object`);
+    warnings.push(`${sourceLabel}: piVim.cursor must be an object`);
     return undefined;
   }
   const cursor: Partial<CursorStyles> = {};
@@ -1395,12 +1380,12 @@ function parseCursorStyles(
     if (style === undefined) continue;
     if (typeof style === "string" && CURSOR_STYLES.has(style as CursorStyle))
       cursor[mode] = style as CursorStyle;
-    else warnings.push(`${sourceLabel}: unsupported piVimMode.cursor.${mode}`);
+    else warnings.push(`${sourceLabel}: unsupported piVim.cursor.${mode}`);
   }
   return cursor;
 }
 
-function parsePiVimMode(
+function parsePiVim(
   value: unknown,
   sourceLabel: string,
 ): { partial: PartialVimOptions; warnings: string[] } {
@@ -1409,29 +1394,28 @@ function parsePiVimMode(
 
   if (value === undefined) return { partial, warnings };
   if (!isRecord(value)) {
-    warnings.push(`${sourceLabel}: piVimMode must be an object`);
+    warnings.push(`${sourceLabel}: piVim must be an object`);
     return { partial, warnings };
   }
 
   if (value.leader === null || isPrintableLeader(value.leader)) partial.leader = value.leader;
   else if (value.leader !== undefined)
-    warnings.push(`${sourceLabel}: piVimMode.leader must be one printable character or null`);
+    warnings.push(`${sourceLabel}: piVim.leader must be one printable character or null`);
 
   if (typeof value.preset === "string" && VIM_PRESET_SET.has(value.preset as VimPreset))
     partial.preset = value.preset as VimPreset;
-  else if (value.preset !== undefined)
-    warnings.push(`${sourceLabel}: unsupported piVimMode.preset`);
+  else if (value.preset !== undefined) warnings.push(`${sourceLabel}: unsupported piVim.preset`);
 
   if (typeof value.startMode === "string" && START_MODES.has(value.startMode as StartupMode))
     partial.startMode = value.startMode as StartupMode;
   else if (value.startMode !== undefined)
-    warnings.push(`${sourceLabel}: unsupported piVimMode.startMode`);
+    warnings.push(`${sourceLabel}: unsupported piVim.startMode`);
 
   const cursor = parseCursorStyles(value.cursor, sourceLabel, warnings);
   if (cursor) partial.cursor = cursor;
 
   if (value.vimOptions !== undefined) {
-    warnings.push(`${sourceLabel}: piVimMode.vimOptions is no longer supported; use piVimMode.ui`);
+    warnings.push(`${sourceLabel}: piVim.vimOptions is no longer supported; use piVim.ui`);
   }
 
   const keymap = parseKeymap(value.keymap, sourceLabel);
@@ -1462,7 +1446,7 @@ function parsePiVimMode(
   partial.feedback = feedback.partial;
   warnings.push(...feedback.warnings);
 
-  warnRemovedSettings(value, ["promptTransforms"], `${sourceLabel}: piVimMode`, warnings);
+  warnRemovedSettings(value, ["promptTransforms"], `${sourceLabel}: piVim`, warnings);
   const promptStructures = parsePromptStructures(value.promptStructures, sourceLabel);
   partial.promptStructures = promptStructures.partial;
   warnings.push(...promptStructures.warnings);
@@ -1473,7 +1457,7 @@ function parsePiVimMode(
 function configRuleFor(path: string, value: unknown): ReturnType<VimJsConfigRules["validate"]> {
   const config: Record<string, unknown> = {};
   setOptionPath(config, path, value);
-  const parsed = parsePiVimMode(config, "global JS config");
+  const parsed = parsePiVim(config, "global JS config");
   const parsedValue = optionValueAtPath(parsed.partial, path);
   const unknownRecordMember =
     isRecord(value) &&
@@ -1482,7 +1466,7 @@ function configRuleFor(path: string, value: unknown): ReturnType<VimJsConfigRule
   if (parsed.warnings.length === 0 && parsedValue !== undefined && !unknownRecordMember) {
     return { ok: true, value: parsedValue };
   }
-  const message = parsed.warnings[0] ?? `unsupported piVimMode.${path}`;
+  const message = parsed.warnings[0] ?? `unsupported piVim.${path}`;
   return { ok: false, message: message.replace(/^global JS config: /, "") };
 }
 
@@ -1814,7 +1798,7 @@ function expandLeaderSequence(
     return { usesLeader: false };
   }
   if (!context.leader) {
-    context.warnings.push(`${label} uses <leader> but piVimMode.leader is unset`);
+    context.warnings.push(`${label} uses <leader> but piVim.leader is unset`);
     return { usesLeader: false };
   }
   const suffix = sequence.replace(/^(?:<leader>)+/i, "").replaceAll(MAPPING_TOKEN_SEPARATOR, "");
@@ -1892,7 +1876,7 @@ function expandLeaderRecordMappings(
   if (overlay.escape)
     overlay.escape = expandBindingArray(
       overlay.escape,
-      "resolved settings: piVimMode.keymap.escape",
+      "resolved settings: piVim.keymap.escape",
       context,
     ).bindings;
   let usesLeader = false;
@@ -1903,13 +1887,10 @@ function expandLeaderRecordMappings(
     [overlay.macros, "macros"],
     [overlay.marks, "marks"],
   ] as const)
-    usesLeader ||= expandRecord(record, `resolved settings: piVimMode.keymap.${label}`);
-  expandRecord(overlay.textObjects?.kinds, "resolved settings: piVimMode.keymap.textObjects.kinds");
-  expandRecord(
-    overlay.textObjects?.targets,
-    "resolved settings: piVimMode.keymap.textObjects.targets",
-  );
-  expandRecord(overlay.insert, "resolved settings: piVimMode.keymap.insert");
+    usesLeader ||= expandRecord(record, `resolved settings: piVim.keymap.${label}`);
+  expandRecord(overlay.textObjects?.kinds, "resolved settings: piVim.keymap.textObjects.kinds");
+  expandRecord(overlay.textObjects?.targets, "resolved settings: piVim.keymap.textObjects.targets");
+  expandRecord(overlay.insert, "resolved settings: piVim.keymap.insert");
   return usesLeader;
 }
 
@@ -1922,7 +1903,7 @@ function expandLeaderUnmaps(
     overlay.unmaps = overlay.unmaps.flatMap((unmap) => {
       const result = expandLeaderSequence(
         unmap.key,
-        "resolved settings: piVimMode.keymap.unmaps",
+        "resolved settings: piVim.keymap.unmaps",
         context,
       );
       usesLeader ||= result.usesLeader;
@@ -1940,7 +1921,7 @@ function expandLeaderScopedMappings(
     overlay.scoped = overlay.scoped.flatMap((binding) => {
       const result = expandLeaderSequence(
         binding.key,
-        `resolved settings: piVimMode.keymap.${binding.actionId}`,
+        `resolved settings: piVim.keymap.${binding.actionId}`,
         context,
       );
       usesLeader ||= result.usesLeader;
@@ -1951,7 +1932,7 @@ function expandLeaderScopedMappings(
       accepted: overlay.remaps.accepted.flatMap((remap) => {
         const result = expandLeaderSequence(
           remap.key,
-          "resolved settings: piVimMode.keymap.remaps",
+          "resolved settings: piVim.keymap.remaps",
           context,
         );
         usesLeader ||= result.usesLeader;
@@ -2096,7 +2077,7 @@ function rejectShowKeybindingsConflicts(keymap: ResolvedVimKeymap): string[] {
     const reason = grammarConflictForActionKey(key, grammarBindings);
     if (reason) {
       warnings.push(
-        `resolved settings: rejected piVimMode.keymap.commands.showKeybindings.${key}: ${reason}`,
+        `resolved settings: rejected piVim.keymap.commands.showKeybindings.${key}: ${reason}`,
       );
     } else {
       accepted.push(key);
@@ -2113,7 +2094,7 @@ function duplicateBindingWarnings(bindings: readonly GrammarBinding[]): string[]
     const previous = seen.get(binding.sequence);
     if (previous && previous !== binding.label)
       warnings.push(
-        `resolved settings: duplicate piVimMode.keymap binding ${binding.sequence} for ${previous} and ${binding.label}`,
+        `resolved settings: duplicate piVim.keymap binding ${binding.sequence} for ${previous} and ${binding.label}`,
       );
     else seen.set(binding.sequence, binding.label);
   }
@@ -2133,7 +2114,7 @@ function textObjectConflictWarnings(
       const binding = primaryBindings.find((candidate) => candidate.sequence === sequence);
       if (binding)
         warnings.push(
-          `resolved settings: duplicate piVimMode.keymap binding ${sequence} for ${binding.label} and textObjects.${kind}.${name}`,
+          `resolved settings: duplicate piVim.keymap binding ${sequence} for ${binding.label} and textObjects.${kind}.${name}`,
         );
     }
   return warnings;
@@ -2151,7 +2132,7 @@ function shadowedBindingWarnings(bindings: readonly GrammarBinding[]): string[] 
       )
         continue;
       warnings.push(
-        `resolved settings: piVimMode.keymap binding ${first.sequence} for ${first.label} is shadowed by longer binding ${second.sequence} for ${second.label}`,
+        `resolved settings: piVim.keymap binding ${first.sequence} for ${first.label} is shadowed by longer binding ${second.sequence} for ${second.label}`,
       );
     }
   return warnings;
@@ -2448,7 +2429,7 @@ function appendJsMapLayer(
   if (operations.length === 0) return;
   const source = partialFromJsOperations(operations);
   const rawKeymap = source.keymap as PartialKeymapOptions | undefined;
-  const parsed = parsePiVimMode(source, "global JS config");
+  const parsed = parsePiVim(source, "global JS config");
   if (!parsed.partial.keymap) return;
   warnings.push(...parsed.warnings);
   const layer = additiveKeymapLayer(keymapLayers, parsed.partial.keymap);
@@ -2481,7 +2462,7 @@ function applyJsLeaf(
 ): void {
   const value: Record<string, unknown> = {};
   setOptionPath(value, operation.path, operation.value);
-  const parsed = parsePiVimMode(value, "global JS config");
+  const parsed = parsePiVim(value, "global JS config");
   mergePartialOptions(options, parsed.partial);
   replaceJsRecord(options, operation.path, parsed.partial);
   if (parsed.partial.keymap && operation.path === "keymap.operatorMotions")
@@ -2775,7 +2756,7 @@ type VimJsConfigResult = {
 function applyParsedSettings(
   options: ResolvedVimEditorOptions,
   keymapLayers: PartialKeymapOptions[],
-  parsed: ReturnType<typeof parsePiVimMode>,
+  parsed: ReturnType<typeof parsePiVim>,
 ): void {
   if (parsed.partial.preset) {
     const preset = presetOptions(parsed.partial.preset);
@@ -2795,7 +2776,7 @@ function applyJsConfiguration(
   const compiled = jsConfig?.operations ? undefined : compileJsConfig(jsConfig);
   if (jsConfig?.operations)
     applyJsOptionOperations(options, keymapLayers, jsConfig.operations, warnings);
-  const parsed = parsePiVimMode(compiled?.source, "global JS config");
+  const parsed = parsePiVim(compiled?.source, "global JS config");
   const appendKeymap =
     !jsConfig?.operations && (jsConfig?.kind === "success" || jsConfig?.appendKeymap);
   const partial =
@@ -2812,6 +2793,21 @@ function applyJsConfiguration(
   warnings.push(...(jsConfig?.warnings ?? []), ...parsed.warnings);
 }
 
+/** The settings key was `piVimMode` before the 1.0.0 rename to pi-vim. */
+function warnRenamedSettingsKey(settings: unknown, label: string, warnings: string[]): void {
+  if (isRecord(settings) && settings.piVimMode !== undefined)
+    warnings.push(`${label}: piVimMode was renamed to piVim in 1.0.0 and is ignored`);
+}
+
+/** The JS config file was `pi-vimmode.config.js` before the 1.0.0 rename to pi-vim. */
+function renamedJsConfigWarnings(jsConfigPath: string): string[] {
+  if (basename(jsConfigPath) !== JS_CONFIG_FILE_NAME) return [];
+  const legacyPath = join(dirname(jsConfigPath), "pi-vimmode.config.js");
+  return existsSync(legacyPath)
+    ? [`${legacyPath} was renamed to ${JS_CONFIG_FILE_NAME} in 1.0.0 and is ignored`]
+    : [];
+}
+
 export function resolveVimOptions(
   globalSettings: unknown,
   projectSettings?: unknown,
@@ -2820,19 +2816,21 @@ export function resolveVimOptions(
   const options = cloneDefaultOptions();
   const warnings: string[] = [];
   const keymapLayers: PartialKeymapOptions[] = [];
-  const parsedGlobal = parsePiVimMode(
-    isRecord(globalSettings) ? globalSettings.piVimMode : undefined,
+  const parsedGlobal = parsePiVim(
+    isRecord(globalSettings) ? globalSettings.piVim : undefined,
     "global settings",
   );
   applyParsedSettings(options, keymapLayers, parsedGlobal);
   warnings.push(...parsedGlobal.warnings);
+  warnRenamedSettingsKey(globalSettings, "global settings", warnings);
   applyJsConfiguration(options, keymapLayers, jsConfig, warnings);
-  const parsedProject = parsePiVimMode(
-    isRecord(projectSettings) ? projectSettings.piVimMode : undefined,
+  const parsedProject = parsePiVim(
+    isRecord(projectSettings) ? projectSettings.piVim : undefined,
     "project settings",
   );
   applyProjectLayer(options, keymapLayers, parsedProject.partial);
   warnings.push(...parsedProject.warnings);
+  warnRenamedSettingsKey(projectSettings, "project settings", warnings);
   const plan = compileResolvedKeymap(options, keymapLayers, warnings);
   return {
     plan,
@@ -2883,7 +2881,12 @@ export async function loadVimOptions(paths: VimConfigPaths = {}): Promise<VimCon
   );
   const resolved = resolveVimOptions(globalRead.settings, projectRead.settings, jsRead);
 
-  const warnings = [...globalRead.warnings, ...projectRead.warnings, ...resolved.warnings];
+  const warnings = [
+    ...globalRead.warnings,
+    ...projectRead.warnings,
+    ...renamedJsConfigWarnings(jsConfigPath),
+    ...resolved.warnings,
+  ];
   const plan = createVimConfigPlan(resolved.options, warnings);
   return {
     plan,

@@ -1,7 +1,7 @@
 export type DiagnosticActionCategory = "diagnostic" | "runtimeHelp";
 
 export type DiagnosticActionEntry = {
-  id: `vimmode.${string}`;
+  id: `pi-vim.${string}`;
   category: DiagnosticActionCategory;
   command: string;
   topics: readonly string[];
@@ -31,7 +31,7 @@ function entry(
 
 export const DIAGNOSTIC_ACTIONS = [
   entry(
-    "vimmode.doctor",
+    "pi-vim.doctor",
     "diagnostic",
     ":vimdoctor",
     ["vimdoctor", "doctor", "customization", "warnings", "health"],
@@ -39,7 +39,7 @@ export const DIAGNOSTIC_ACTIONS = [
     [":vimdoctor"],
   ),
   entry(
-    "vimmode.keymap",
+    "pi-vim.keymap",
     "diagnostic",
     ":keymap",
     ["keymap", "bindings", "keys"],
@@ -47,7 +47,7 @@ export const DIAGNOSTIC_ACTIONS = [
     [":keymap redo"],
   ),
   entry(
-    "vimmode.keybindings",
+    "pi-vim.keybindings",
     "diagnostic",
     ":keybindings",
     ["keybindings", "bindings", "keys", "effective keybindings"],
@@ -55,7 +55,7 @@ export const DIAGNOSTIC_ACTIONS = [
     [":keybindings", ":keybindings redo"],
   ),
   entry(
-    "vimmode.mapcheck",
+    "pi-vim.mapcheck",
     "diagnostic",
     ":mapcheck",
     ["mapcheck", "protected", "shortcut", "key ownership"],
@@ -63,7 +63,7 @@ export const DIAGNOSTIC_ACTIONS = [
     [":mapcheck ctrl+p"],
   ),
   entry(
-    "vimmode.help",
+    "pi-vim.help",
     "runtimeHelp",
     ":help",
     ["help", "topic", "diagnostics", "runtime help"],
@@ -71,7 +71,7 @@ export const DIAGNOSTIC_ACTIONS = [
     [":help diagnostics", ":help keymap"],
   ),
   entry(
-    "vimmode.messages",
+    "pi-vim.messages",
     "runtimeHelp",
     ":messages",
     ["messages", "message history", "runtime messages"],
@@ -79,12 +79,12 @@ export const DIAGNOSTIC_ACTIONS = [
     [":messages"],
   ),
   entry(
-    "vimmode.inspect",
+    "pi-vim.inspect",
     "diagnostic",
-    ":vimmode inspect",
-    ["vimmode inspect", "inspect", "state", "runtime state"],
+    ":vim inspect",
+    ["vim inspect", "inspect", "state", "runtime state"],
     "metadata-only diagnostic action for bounded prompt-local editor state inspection",
-    [":vimmode inspect"],
+    [":vim inspect"],
   ),
 ] as const satisfies readonly DiagnosticActionEntry[];
 

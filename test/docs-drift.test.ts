@@ -20,7 +20,7 @@ const featuresDoc = readDoc("docs/features.md");
 const settingsDoc = readDoc("docs/settings.md");
 const allUserDocs = `${configDoc}\n${featuresDoc}\n${settingsDoc}`;
 const globalConfigExamples = [
-  "examples/pi-vimmode.config.js",
+  "examples/pi-vim.config.js",
   "examples/keymaps.config.js",
   "examples/async.config.js",
   "examples/imported-preset.config.js",
@@ -49,7 +49,7 @@ describe("config guide documentation", () => {
 
   test("global config examples resolve types from Pi's installed package", () => {
     const annotation =
-      '/** @type {import("./npm/node_modules/@graelo/pi-vimmode/config").VimConfig} */';
+      '/** @type {import("./npm/node_modules/@graelo/pi-vim/config").VimConfig} */';
     for (const example of globalConfigExamples) expect(example).toContain(annotation);
   });
 
@@ -175,17 +175,17 @@ describe("documentation behavior", () => {
 describe("documentation data contracts", () => {
   test("settings docs stay aligned with source-backed defaults", () => {
     const defaults: Record<string, string> = {
-      "piVimMode.startMode": `"${DEFAULT_VIM_OPTIONS.startMode}"`,
-      "piVimMode.cursor.insert": `"${DEFAULT_VIM_OPTIONS.cursor.insert}"`,
-      "piVimMode.cursor.normal": `"${DEFAULT_VIM_OPTIONS.cursor.normal}"`,
-      "piVimMode.keymap.escape": JSON.stringify(DEFAULT_VIM_OPTIONS.keymap!.escape),
-      "piVimMode.search.highlight": String(DEFAULT_VIM_OPTIONS.search!.highlight),
-      "piVimMode.search.maxHighlights": String(DEFAULT_VIM_OPTIONS.search!.maxHighlights),
-      "piVimMode.feedback.noop": `"${DEFAULT_VIM_OPTIONS.feedback!.noop}"`,
-      "piVimMode.ui.workbench.reservedRows": String(DEFAULT_VIM_OPTIONS.ui!.workbench.reservedRows),
-      "piVimMode.macros.enabled": String(DEFAULT_VIM_OPTIONS.macros!.enabled),
-      "piVimMode.marks.enabled": String(DEFAULT_VIM_OPTIONS.marks!.enabled),
-      "piVimMode.promptStructures.enabled": String(DEFAULT_VIM_OPTIONS.promptStructures!.enabled),
+      "piVim.startMode": `"${DEFAULT_VIM_OPTIONS.startMode}"`,
+      "piVim.cursor.insert": `"${DEFAULT_VIM_OPTIONS.cursor.insert}"`,
+      "piVim.cursor.normal": `"${DEFAULT_VIM_OPTIONS.cursor.normal}"`,
+      "piVim.keymap.escape": JSON.stringify(DEFAULT_VIM_OPTIONS.keymap!.escape),
+      "piVim.search.highlight": String(DEFAULT_VIM_OPTIONS.search!.highlight),
+      "piVim.search.maxHighlights": String(DEFAULT_VIM_OPTIONS.search!.maxHighlights),
+      "piVim.feedback.noop": `"${DEFAULT_VIM_OPTIONS.feedback!.noop}"`,
+      "piVim.ui.workbench.reservedRows": String(DEFAULT_VIM_OPTIONS.ui!.workbench.reservedRows),
+      "piVim.macros.enabled": String(DEFAULT_VIM_OPTIONS.macros!.enabled),
+      "piVim.marks.enabled": String(DEFAULT_VIM_OPTIONS.marks!.enabled),
+      "piVim.promptStructures.enabled": String(DEFAULT_VIM_OPTIONS.promptStructures!.enabled),
     };
 
     for (const [path, defaultValue] of Object.entries(defaults)) {
@@ -205,7 +205,7 @@ describe("documentation data contracts", () => {
     }
     expect(featuresDoc).toContain(":&");
     expect(featuresDoc).toContain(":delete a");
-    expect(featuresDoc).toContain("piVimMode.ui.workbench.reservedRows");
+    expect(featuresDoc).toContain("piVim.ui.workbench.reservedRows");
   });
 });
 
@@ -214,9 +214,9 @@ describe("keybinding popup documentation", () => {
     expect(featuresDoc).toContain(`<!-- ${POPUP_COMMAND_DOCS_METADATA[0]!.docsAnchor} -->`);
     expect(featuresDoc).toContain(":keybindings");
     expect(featuresDoc).toContain(":keybindings <query>");
-    expect(settingsDoc).toContain("piVimMode.keymap.commands.showKeybindings");
-    expect(settingsDoc).toContain("piVimMode.keymap.escape");
-    expect(featuresDoc).toContain("piVimMode.keymap.escape");
+    expect(settingsDoc).toContain("piVim.keymap.commands.showKeybindings");
+    expect(settingsDoc).toContain("piVim.keymap.escape");
+    expect(featuresDoc).toContain("piVim.keymap.escape");
     expect(featuresDoc).toContain("Esc");
     expect(featuresDoc).toContain("Ctrl-C");
     expect(featuresDoc).toContain("Ctrl-G");

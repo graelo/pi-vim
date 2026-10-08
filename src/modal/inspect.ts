@@ -34,7 +34,7 @@ export function runtimeMessagesMessage(messages: readonly { text: string }[] | u
   return `messages: ${messages.length} retained; latest: ${redact(latest.text)}`;
 }
 
-export function vimmodeInspectMessage(input: InspectInput): string {
+export function vimInspectMessage(input: InspectInput): string {
   const { state, snapshot, options, diagnostics, render } = input;
   const parts = [
     `mode=${state.mode}`,

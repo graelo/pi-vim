@@ -71,7 +71,7 @@ protected, conflicting, or unsupported.
     protected shortcut
 - **THEN** the editor shows that the shortcut is protected, names the Pi
     behavior it preserves when known, and does not treat it as a configurable
-    pi-vimmode binding
+    pi-vim binding
 
 #### Scenario: Conflicting configured sequence is explained
 
@@ -98,7 +98,7 @@ preserving quiet default modal editing.
     shortcut in normal mode
 - **THEN** the editor delegates or handles the shortcut according to existing
     ownership rules and shows a transient explanation when the shortcut is not
-    owned by pi-vimmode
+    owned by pi-vim
 
 #### Scenario: Enabled feedback avoids message floods
 
@@ -115,7 +115,7 @@ implementation defaults.
 
 #### Scenario: Inspect reflects resolved feature availability
 
-- **WHEN** `:vimmode inspect` runs with a preset or resolved options that
+- **WHEN** `:vim inspect` runs with a preset or resolved options that
     disable macros, marks, search highlights, or status items
 - **THEN** the diagnostic reflects the effective enabled/disabled state
     instead of advertising unavailable actions as active behavior
@@ -130,7 +130,7 @@ implementation defaults.
 #### Scenario: Diagnostics include existing warnings when relevant
 
 - **WHEN** retained settings diagnostics contain invalid fields, protected key
-    warnings, or keymap conflicts and the user runs `:vimmode inspect`
+    warnings, or keymap conflicts and the user runs `:vim inspect`
 - **THEN** the inspect output includes a bounded warning summary without
     replacing `:vimdoctor` as the detailed customization health command
 
@@ -141,7 +141,7 @@ existing customization diagnostics.
 
 #### Scenario: Inspect does not mutate effective keymaps or options
 
-- **WHEN** the user executes `:vimmode inspect`
+- **WHEN** the user executes `:vim inspect`
 - **THEN** resolved options, effective keymaps, feature enablement, protected
     shortcut handling, and retained diagnostics remain unchanged
 
@@ -155,7 +155,7 @@ existing customization diagnostics.
 
 - **WHEN** prompt text, registers, search history, Ex history, macro slots,
     marks, or diagnostics are large
-- **THEN** `:vimmode inspect` and `:messages` truncate or summarize output so
+- **THEN** `:vim inspect` and `:messages` truncate or summarize output so
     the diagnostic feedback remains bounded and width-safe
 
 ### Requirement: Diagnostic command registry remains finite
@@ -168,13 +168,13 @@ execution.
 
 - **WHEN** the user searches or inspects supported diagnostic commands through
     runtime help or keymap diagnostics
-- **THEN** `vimdoctor`, `keymap`, `mapcheck`, `vimmode inspect`, and
+- **THEN** `vimdoctor`, `keymap`, `mapcheck`, `vim inspect`, and
     `messages` are presented as finite supported diagnostics when available
 
 #### Scenario: Unsupported diagnostic names remain unsupported
 
 - **WHEN** the user executes unsupported diagnostic-like commands such as
-    `:map`, `:actions`, `:actionspalette`, `:vimmode dump`, or
+    `:map`, `:actions`, `:actionspalette`, `:vim dump`, or
     `:messages clear`
 - **THEN** the editor reports a bounded unsupported-command error and leaves
     prompt editing state unchanged
@@ -193,16 +193,16 @@ without changing execution or editing side effects.
 
 #### Scenario: Metadata entry points to existing Ex command
 
-- **WHEN** a metadata entry names `vimmode.doctor`, `vimmode.keymap`,
-    `vimmode.keybindings`, `vimmode.mapcheck`, `vimmode.help`,
-    `vimmode.messages`, or `vimmode.inspect`
+- **WHEN** a metadata entry names `pi-vim.doctor`, `pi-vim.keymap`,
+    `pi-vim.keybindings`, `pi-vim.mapcheck`, `pi-vim.help`,
+    `pi-vim.messages`, or `pi-vim.inspect`
 - **THEN** the described command is one of the explicit supported
     diagnostic/runtime-help Ex commands and no additional dispatch path is
     implied
 
 #### Scenario: Metadata lookup is read-only
 
-- **WHEN** the editor executes `:keymap vimmode.help` or another metadata
+- **WHEN** the editor executes `:keymap pi-vim.help` or another metadata
     lookup from normal or visual Ex mode
 - **THEN** prompt text, cursor position, mode restoration, visual selection,
     search highlights, registers, marks, macro slots, and dot-repeat state
@@ -271,7 +271,7 @@ inspect settings files or source code.
 #### Scenario: Catalog reflects configured overrides
 
 - **WHEN** resolved settings change a semantic binding such as
-    `piVimMode.keymap.commands.redo`
+    `piVim.keymap.commands.redo`
 - **THEN** the keybindings catalog reports the effective configured binding
     rather than only built-in defaults or raw settings text
 
@@ -300,7 +300,7 @@ inspect settings files or source code.
 - **WHEN** the keybindings catalog or detail output mentions Pi-owned
     shortcuts such as `ctrl+p`, `tab`, or `enter`
 - **THEN** it preserves the protected shortcut vocabulary and does not present
-    protected Pi shortcuts as available pi-vimmode bindings
+    protected Pi shortcuts as available pi-vim bindings
 
 ### Requirement: Keybinding detail search is finite and source-backed
 
@@ -336,7 +336,7 @@ metadata boundaries as existing customization diagnostics.
 #### Scenario: Metadata-only diagnostic actions remain non-bindable
 
 - **WHEN** the popup explains diagnostic or runtime-help action metadata such
-    as `vimmode.doctor` or `vimmode.help`
+    as `pi-vim.doctor` or `pi-vim.help`
 - **THEN** it identifies those IDs as metadata-only or non-bindable rather
     than presenting them as configurable keybinding targets
 
@@ -345,7 +345,7 @@ metadata boundaries as existing customization diagnostics.
 - **WHEN** the popup mentions protected Pi shortcuts or directs users to
     `:mapcheck <key>`
 - **THEN** it preserves the protected shortcut catalog boundary and does not
-    present protected Pi shortcuts as available pi-vimmode bindings
+    present protected Pi shortcuts as available pi-vim bindings
 
 ### Requirement: Diagnostic help actions have metadata-only entries searchable through keymap
 
@@ -354,15 +354,34 @@ actions without making those actions keybindable or plugin-dispatchable.
 
 #### Scenario: Keymap search finds diagnostic metadata
 
-- **WHEN** the editor executes `:keymap vimmode.doctor` or another supported
+- **WHEN** the editor executes `:keymap pi-vim.doctor` or another supported
     diagnostic/help action ID
-- **THEN** it shows the matching metadata entry with its canonical `vimmode.*`
+- **THEN** it shows the matching metadata entry with its canonical `pi-vim.*`
     ID, command name, diagnostic/runtime-help classification, and metadata-only
     or non-bindable status
 
 #### Scenario: Unsupported diagnostic action remains unsupported
 
-- **WHEN** the editor executes `:keymap vimmode.dump` or another unsupported
+- **WHEN** the editor executes `:keymap pi-vim.dump` or another unsupported
     diagnostic-like action query
 - **THEN** it shows a bounded no-match message rather than inventing a
     command, action, plugin API, or keybinding target
+
+### Requirement: Pre-rename configuration is ignored with warnings
+
+The settings loader SHALL ignore the pre-1.0.0 `piVimMode` settings key and
+the pre-1.0.0 `pi-vimmode.config.js` file, and SHALL add a retained warning for
+each one it finds so `:vimdoctor` shows the rename.
+
+#### Scenario: Old settings key warns
+
+- **WHEN** global or project settings contain a `piVimMode` object
+- **THEN** its values are not applied and the warnings include
+    `<source> settings: piVimMode was renamed to piVim in 1.0.0 and is ignored`
+
+#### Scenario: Old JS config file warns
+
+- **WHEN** `pi-vimmode.config.js` exists next to the expected
+    `pi-vim.config.js`
+- **THEN** it is not loaded and the warnings include
+    `<path> was renamed to pi-vim.config.js in 1.0.0 and is ignored`

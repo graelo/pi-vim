@@ -10,7 +10,7 @@ and the drift guard that ties each entry to its docs anchor, spec, and tests.
 ### Requirement: Runtime help is finite and source-backed
 
 The Vim editor SHALL provide finite runtime help that describes supported
-pi-vimmode behavior and explicit limitations without implying full Vim or Neovim
+pi-vim behavior and explicit limitations without implying full Vim or Neovim
 parity.
 
 #### Scenario: General help lists entry points
@@ -25,7 +25,7 @@ parity.
 - **WHEN** the editor executes `:help search`, `:help ex`, or another
     supported topic
 - **THEN** the editor shows a compact transient message based on source-backed
-    help metadata that includes supported pi-vimmode behavior and at least one
+    help metadata that includes supported pi-vim behavior and at least one
     relevant limitation when the topic has known limits
 
 #### Scenario: Unknown help topic is rejected without parity fallback
@@ -91,7 +91,7 @@ Runtime help SHALL be read-only with respect to prompt editing state.
 
 The project SHALL include development-time validation that fails when
 user-facing docs, source-backed runtime help metadata, durable specs, or test
-anchors contradict each other for supported pi-vimmode behavior.
+anchors contradict each other for supported pi-vim behavior.
 
 #### Scenario: Supported command missing from docs fails validation
 
@@ -134,7 +134,7 @@ tests, and finite parser support before the change is considered complete.
 #### Scenario: Command-backed metadata must match finite Ex support
 
 - **WHEN** a diagnostic/help metadata entry names an Ex command such as
-    `vimdoctor`, `actions`, `messages`, or `vimmode inspect`
+    `vimdoctor`, `actions`, `messages`, or `vim inspect`
 - **THEN** automated validation verifies that the command is supported by the
     finite parser or the entry declares an explicit non-command exception
 
@@ -197,7 +197,7 @@ the generic popup.
 
 - **WHEN** source-backed popup metadata lists a read-only Ex command such as
     `:help`, `:keybindings`, `:keymap`, `:mapcheck`, `:messages`,
-    `:vimmode inspect`, or `:vimdoctor` and `docs/features.md` lacks the
+    `:vim inspect`, or `:vimdoctor` and `docs/features.md` lacks the
     corresponding popup documentation anchor
 - **THEN** the docs drift guard fails with an actionable message identifying
     the missing command or docs anchor
@@ -254,7 +254,7 @@ and tests.
 
 #### Scenario: Keybinding catalog references registry-backed actions
 
-- **WHEN** keybindings popup output references `vimmode.*` diagnostic/help
+- **WHEN** keybindings popup output references `pi-vim.*` diagnostic/help
     metadata IDs
 - **THEN** automated validation verifies that those IDs remain backed by the
     appropriate source registry and docs anchors

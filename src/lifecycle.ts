@@ -85,7 +85,7 @@ function createConfigState(
     const warningCount = currentConfiguration.diagnostics.warnings.length;
     if (diagnosticsChanged && warningCount > 0)
       ctx.ui.notify(
-        `pi-vimmode: ${warningCount} settings warning${warningCount === 1 ? "" : "s"}; run :vimdoctor`,
+        `pi-vim: ${warningCount} settings warning${warningCount === 1 ? "" : "s"}; run :vimdoctor`,
         "warning",
       );
   };
@@ -229,7 +229,7 @@ function observeInstall(install: void | Promise<void>, ctx: ExtensionContext): v
   void install.catch((error: unknown) => {
     try {
       const message = error instanceof Error ? error.message : String(error);
-      ctx.ui.notify(`pi-vimmode install failed: ${message}`, "error");
+      ctx.ui.notify(`pi-vim install failed: ${message}`, "error");
     } catch {
       // Context went stale while reporting the original failure.
     }
@@ -260,13 +260,13 @@ function disableEditor(state: EditorState, ctx: ExtensionContext): void {
 }
 
 function notifyVimStatus(state: EditorState, ctx: ExtensionContext): void {
-  ctx.ui.notify(`pi-vimmode ${state.enabled ? "enabled" : "disabled"}`, "info");
+  ctx.ui.notify(`pi-vim ${state.enabled ? "enabled" : "disabled"}`, "info");
 }
 
 async function reloadVim(state: EditorState, ctx: ExtensionContext): Promise<void> {
   if (!(await state.config.refresh(ctx))) return;
   if (state.enabled) finishInstall(state, ctx);
-  ctx.ui.notify(`pi-vimmode ${state.enabled ? "reloaded" : "config reloaded (disabled)"}`, "info");
+  ctx.ui.notify(`pi-vim ${state.enabled ? "reloaded" : "config reloaded (disabled)"}`, "info");
 }
 
 async function handleVimCommand(
@@ -277,7 +277,7 @@ async function handleVimCommand(
   if (action === "status") return notifyVimStatus(state, ctx);
   if (action === "reload") return reloadVim(state, ctx);
   if (!new Set(["toggle", "on", "off"]).has(action)) {
-    ctx.ui.notify("Usage: /vimmode [on|off|toggle|status|reload]", "warning");
+    ctx.ui.notify("Usage: /vim [on|off|toggle|status|reload]", "warning");
     return;
   }
   const enable = action === "on" || (action === "toggle" && !state.enabled);
@@ -291,8 +291,8 @@ async function handleVimCommand(
 }
 
 function registerVimCommand(pi: ExtensionAPI, state: EditorState): void {
-  pi.registerCommand("vimmode", {
-    description: "Toggle pi-vimmode editor on/off",
+  pi.registerCommand("vim", {
+    description: "Toggle pi-vim editor on/off",
     handler: (args, ctx) => handleVimCommand(args.trim().toLowerCase() || "toggle", state, ctx),
   });
 }

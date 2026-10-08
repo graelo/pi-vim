@@ -2,17 +2,17 @@ schema: spec-driven
 
 # Project context shown to AI when creating OpenSpec artifacts.
 context: |
-  Project: pi-vimmode, a Pi coding-agent extension that replaces Pi's main prompt editor with a CustomEditor-based Vim-style modal prompt editor.
+  Project: pi-vim, a Pi coding-agent extension that replaces Pi's main prompt editor with a CustomEditor-based Vim-style modal prompt editor.
   Product boundary: practical agent prompt editing, not full Vim/Neovim parity.
 
   Tech stack:
-  - TypeScript ESM, Node >= 24, Pi extension package (@graelo/pi-vimmode) shipping src/ directly; no build step.
+  - TypeScript ESM, Node >= 24, Pi extension package (@graelo/pi-vim) shipping src/ directly; no build step.
   - Runtime peers: @earendil-works/pi-coding-agent and @earendil-works/pi-tui.
   - Tooling: npm, tsc --noEmit, vitest, tsx (scripts and benchmark), biome, rumdl.
 
   Architecture seams:
   - src/lifecycle.ts: extension activation, settings refresh, status, shutdown cursor reset.
-  - src/config.ts and src/types.ts: piVimMode defaults, accepted values, validation, warnings, public option types.
+  - src/config.ts and src/types.ts: piVim defaults, accepted values, validation, warnings, public option types.
   - src/commands.ts: finite semantic key parser, counts, operators, motions, text objects, macro parser.
   - src/buffer.ts: pure prompt-buffer navigation/edit/search/visual/mark/register/substitution/line-transform operations.
   - src/ex.ts: finite Ex command parser; no broad Vimscript parser.
@@ -73,7 +73,7 @@ rules:
   specs:
     - "Use SHALL requirements with observable scenarios."
     - "Scenarios should cover success, safe no-op/error behavior, invalid input, config disabled/renamed cases, and preserved existing behavior."
-    - "Prefer capabilities aligned with current specs: vim-mode-editor, vim-editor-adapter-architecture, prompt-buffer-operations, vim-ex-command-line, vim-search, vim-marks, vim-named-registers, vim-keymap-configuration, vim-ui-configuration, prompt-native-structure-editing, pi-vimmode-documentation."
+    - "Prefer capabilities aligned with current specs: vim-mode-editor, vim-editor-adapter-architecture, prompt-buffer-operations, vim-ex-command-line, vim-search, vim-marks, vim-named-registers, vim-keymap-configuration, vim-ui-configuration, prompt-native-structure-editing, pi-vim-documentation."
     - "Do not specify implementation detail unless it is an architectural requirement already durable in specs/ADRs."
     - "Include validation/documentation scenarios when behavior is user-facing or settings-visible."
 

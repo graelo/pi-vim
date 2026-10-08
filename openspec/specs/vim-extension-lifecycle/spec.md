@@ -200,7 +200,7 @@ cursor styles.
 
 #### Scenario: Runtime disable restores tracked cursor state
 
-- **WHEN** the user disables pi-vimmode with `/vimmode off`
+- **WHEN** the user disables pi-vim with `/vim off`
 - **THEN** the lifecycle resets tracked editor terminal cursor shapes,
     restores captured hardware cursor visibility policies, and clears tracked
     editors according to existing runtime cleanup behavior
@@ -221,7 +221,7 @@ coordination while preserving existing lifecycle installation behavior.
 
 - **WHEN** `npm test` is executed
 - **THEN** lifecycle tests cover `agent_start`, `agent_end`, editor creation
-    before and during busy state, shutdown cleanup, and `/vimmode off` cleanup
+    before and during busy state, shutdown cleanup, and `/vim off` cleanup
 
 #### Scenario: Existing install behavior remains stable
 
@@ -246,7 +246,7 @@ count that points to `:vimdoctor`.
 
 #### Scenario: Lifecycle sets no footer status
 
-- **WHEN** installation, `/vimmode off`, or `/vimmode on` runs
+- **WHEN** installation, `/vim off`, or `/vim on` runs
 - **THEN** the lifecycle MUST NOT call `setStatus`, so the extension adds no
     line to the Pi footer
 
@@ -254,7 +254,7 @@ count that points to `:vimdoctor`.
 
 - **WHEN** the Vim settings loader returns warnings that differ from the
     retained diagnostics
-- **THEN** the lifecycle notifies `pi-vimmode: N settings warnings; run
+- **THEN** the lifecycle notifies `pi-vim: N settings warnings; run
     :vimdoctor` at warning level
 
 #### Scenario: Unchanged settings warnings stay quiet

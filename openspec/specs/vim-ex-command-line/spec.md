@@ -760,15 +760,15 @@ visible Ex offset and semicolon range behavior.
 
 ### Requirement: Ex command-line supports finite inspectability diagnostics
 
-The Vim editor SHALL parse and execute `:vimmode inspect` and `:messages` as
+The Vim editor SHALL parse and execute `:vim inspect` and `:messages` as
 finite read-only Ex diagnostic commands without adding arbitrary Vimscript or
 command dispatch, and SHALL display successful inspectability output in a
 bounded read-only popup.
 
-#### Scenario: Vimmode inspect command executes
+#### Scenario: Vim inspect command executes
 
 - **WHEN** Ex command-line mode is active and the user executes
-    `:vimmode inspect`
+    `:vim inspect`
 - **THEN** the editor exits Ex command-line mode, opens a bounded read-only
     popup containing the prompt-local inspect diagnostic, and leaves prompt text
     unchanged
@@ -782,14 +782,14 @@ bounded read-only popup.
 
 #### Scenario: Inspect command supports exact finite syntax
 
-- **WHEN** the Ex parser receives `vimmode inspect`
+- **WHEN** the Ex parser receives `vim inspect`
 - **THEN** it returns a finite parse result for the inspectability diagnostic
     command
 
 #### Scenario: Unsupported inspect syntax is rejected
 
 - **WHEN** the Ex parser receives unsupported inspectability syntax such as
-    `vimmode`, `vimmode status`, `vimmode inspect raw`, `messages clear`, or
+    `vim`, `vim status`, `vim inspect raw`, `messages clear`, or
     `mes`
 - **THEN** it returns a readable Ex error and prompt text remains unchanged
 
@@ -800,21 +800,21 @@ restoration rules for normal and visual source modes.
 
 #### Scenario: Normal source mode returns to normal
 
-- **WHEN** `:vimmode inspect` or `:messages` is executed from Ex command-line
+- **WHEN** `:vim inspect` or `:messages` is executed from Ex command-line
     mode opened in normal mode
 - **THEN** Ex command-line mode closes, the editor remains in normal mode, and
     the original prompt text and cursor are preserved
 
 #### Scenario: Visual source mode restores captured selection
 
-- **WHEN** `:vimmode inspect` or `:messages` is executed from Ex command-line
+- **WHEN** `:vim inspect` or `:messages` is executed from Ex command-line
     mode opened in visual, visual-line, or visual-block mode
 - **THEN** Ex command-line mode closes, the original visual mode and captured
     selection are restored, and prompt text remains unchanged
 
 #### Scenario: Inspectability diagnostics do not enter Ex history as edits
 
-- **WHEN** `:vimmode inspect` or `:messages` executes successfully
+- **WHEN** `:vim inspect` or `:messages` executes successfully
 - **THEN** the command may be recorded according to existing successful Ex
     history rules, but it does not update registers, search state, visible
     search highlights, marks, macros, cursor target, or repeat-change state
@@ -910,7 +910,7 @@ instead of the inline workbench/message row.
 - **WHEN** Ex command-line mode was opened from normal mode and the user
     executes a valid read-only command such as `:help`, `:keybindings redo`,
     `:keymap redo`, `:mapcheck ctrl+p`, `:vimdoctor`,
-    `:messages`, or `:vimmode inspect`
+    `:messages`, or `:vim inspect`
 - **THEN** Ex command-line mode closes, the editor remains in normal mode,
     prompt text and cursor remain unchanged, and a centered bounded read-only
     popup shows the command output
@@ -935,7 +935,7 @@ instead of the inline workbench/message row.
 #### Scenario: Unsupported command stays inline error
 
 - **WHEN** the user executes an unsupported Ex command or unsupported
-    abbreviation such as `:h`, `:mes`, `:map`, or `:vimmode status`
+    abbreviation such as `:h`, `:mes`, `:map`, or `:vim status`
 - **THEN** the editor reports the existing bounded Ex error through compact
     command-line feedback, does not open a read-only popup, and leaves prompt
     text unchanged
@@ -957,7 +957,7 @@ as finite read-only Ex commands that display bounded popup output.
 
 - **WHEN** Ex command-line mode is active and the user executes `:keybindings`
 - **THEN** the editor exits Ex command-line mode and opens a bounded read-only
-    popup listing effective pi-vimmode keybindings grouped by finite supported
+    popup listing effective pi-vim keybindings grouped by finite supported
     categories
 
 #### Scenario: Keybindings query opens detail popup

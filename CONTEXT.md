@@ -1,6 +1,6 @@
-# pi-vimmode Context
+# pi-vim Context
 
-pi-vimmode brings Vim-style modal editing to Pi prompt input. This glossary
+pi-vim brings Vim-style modal editing to Pi prompt input. This glossary
 names the prompt-editing concepts that must stay precise across docs, specs, and
 tests.
 
@@ -63,12 +63,12 @@ validation warning
 terminal's hardware cursor is shown. It is independent from terminal cursor
 shape. _Avoid_: Cursor style, cursor shape
 
-**Runtime cursor cleanup**: pi-vimmode teardown while Pi remains active. It
+**Runtime cursor cleanup**: pi-vim teardown while Pi remains active. It
 restores Pi's captured hardware cursor visibility policy. _Avoid_: Shutdown
 cleanup, exit cleanup
 
-**Terminal-exit cursor cleanup**: pi-vimmode teardown while Pi is exiting. It
-leaves final hardware cursor visibility to Pi while resetting pi-vimmode's
+**Terminal-exit cursor cleanup**: pi-vim teardown while Pi is exiting. It
+leaves final hardware cursor visibility to Pi while resetting pi-vim's
 cursor shape. _Avoid_: Runtime cleanup, session shutdown cleanup
 
 ## Example dialogue

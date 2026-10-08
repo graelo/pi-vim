@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest a Vim feature or motion for pi-vimmode
+about: Suggest a Vim feature or motion for pi-vim
 title: "[FEAT] "
 labels: enhancement
 assignees: ""

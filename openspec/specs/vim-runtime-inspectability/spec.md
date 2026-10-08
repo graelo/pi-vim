@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define the prompt-local `:vimmode inspect` summary and bounded `:messages`
+Define the prompt-local `:vim inspect` summary and bounded `:messages`
 history, shown in read-only popups that never dump raw prompt content or alter
 editing state.
 
@@ -10,19 +10,19 @@ editing state.
 
 ### Requirement: Prompt-local inspect command summarizes current editor state
 
-The Vim editor SHALL expose a read-only `:vimmode inspect` diagnostic that
+The Vim editor SHALL expose a read-only `:vim inspect` diagnostic that
 summarizes the active prompt editor state without dumping raw prompt contents.
 
 #### Scenario: Inspect reports modal and cursor summary
 
-- **WHEN** the editor executes `:vimmode inspect` from normal mode
+- **WHEN** the editor executes `:vim inspect` from normal mode
 - **THEN** it shows a bounded diagnostic message including current mode,
     cursor line/column, pending modal state summary, search/Ex/workbench
     summary, and render-layer summary
 
 #### Scenario: Inspect reports visual selection summary
 
-- **WHEN** the editor executes `:vimmode inspect` after opening Ex
+- **WHEN** the editor executes `:vim inspect` after opening Ex
     command-line mode from visual, visual-line, or visual-block mode
 - **THEN** it reports the visual mode kind and selection summary without
     replacing the captured visual selection with raw selected prompt text
@@ -31,13 +31,13 @@ summarizes the active prompt editor state without dumping raw prompt contents.
 
 - **WHEN** registers, named registers, marks, macro slots, search history, or
     Ex history exist
-- **THEN** `:vimmode inspect` reports slots, counts, types, positions, and
+- **THEN** `:vim inspect` reports slots, counts, types, positions, and
     bounded previews only, without showing full register contents, full macro
     token streams, or full prompt text
 
 #### Scenario: Inspect rejects unsupported subcommands
 
-- **WHEN** the user executes `:vimmode dump`, `:vimmode inspect raw`, or
+- **WHEN** the user executes `:vim dump`, `:vim inspect raw`, or
     another unsupported inspect subcommand
 - **THEN** the editor reports a bounded Ex error and prompt text remains
     unchanged
@@ -88,7 +88,7 @@ intentional message-history recording semantics.
 
 #### Scenario: Inspect preserves normal editing state
 
-- **WHEN** the user executes `:vimmode inspect` from normal mode
+- **WHEN** the user executes `:vim inspect` from normal mode
 - **THEN** prompt text, cursor position, mode, registers, named registers,
     marks, macro slots, last search, visible search highlights, Ex history, and
     repeat-change state remain unchanged except for popup display and diagnostic
@@ -105,7 +105,7 @@ intentional message-history recording semantics.
 #### Scenario: Visual inspect restores source visual state
 
 - **WHEN** Ex command-line mode was opened from a visual selection and the
-    user executes `:vimmode inspect`
+    user executes `:vim inspect`
 - **THEN** Ex command-line mode closes without editing prompt text, the
     original visual mode, visual anchor, and visual cursor are restored
     according to existing visual Ex diagnostic behavior, and the read-only popup
@@ -128,7 +128,7 @@ scope, redaction limits, and non-goals.
 #### Scenario: Feature guide documents inspect commands
 
 - **WHEN** the user opens `docs/features.md`
-- **THEN** it documents `:vimmode inspect`, `:messages`, the summarized state
+- **THEN** it documents `:vim inspect`, `:messages`, the summarized state
     categories, message retention limits, and the fact that raw prompt dumps and
     full Vim diagnostics are unsupported
 
@@ -149,7 +149,7 @@ into a help, diagnostic, or popup log.
 
 - **WHEN** the editor executes a read-only popup-backed command such as
     `:keybindings`, `:help search`, `:keymap redo`,
-    `:mapcheck ctrl+p`, `:vimdoctor`, or `:vimmode inspect` and then executes
+    `:mapcheck ctrl+p`, `:vimdoctor`, or `:vim inspect` and then executes
     `:messages`
 - **THEN** `:messages` does not include the popup content as a retained
     runtime message solely because the popup content was shown
@@ -184,7 +184,7 @@ without dumping raw prompt contents or large internal editor state.
 - **WHEN** the current prompt contains arbitrary user text and the editor
     executes a read-only popup-backed command such as `:keybindings`, `:help`,
     `:keymap`, `:mapcheck`, `:messages`, `:vimdoctor`, or
-    `:vimmode inspect`
+    `:vim inspect`
 - **THEN** the popup output does not include raw prompt text, register
     contents, macro token streams, mark tables, search history contents, or
     visual selection text unless an existing bounded summary explicitly redacts
@@ -199,13 +199,13 @@ without dumping raw prompt contents or large internal editor state.
 
 ### Requirement: Inspectability output uses read-only popup
 
-The Vim editor SHALL display successful `:vimmode inspect` and `:messages`
+The Vim editor SHALL display successful `:vim inspect` and `:messages`
 output in the generic bounded read-only popup while keeping inspectability
 output finite, redacted, and prompt-local.
 
 #### Scenario: Inspect output opens popup
 
-- **WHEN** the user executes `:vimmode inspect`
+- **WHEN** the user executes `:vim inspect`
 - **THEN** the editor opens a bounded read-only popup containing the inspect
     summary and does not render the full inspect output only as an inline
     workbench row
@@ -234,7 +234,7 @@ shared seam.
 
 #### Scenario: Inspect output remains popup-backed after seam extraction
 
-- **WHEN** the user executes `:vimmode inspect` after the shared popup seam is
+- **WHEN** the user executes `:vim inspect` after the shared popup seam is
     introduced
 - **THEN** the editor opens a bounded read-only popup containing the same
     finite, redacted inspect summary semantics as before the extraction
@@ -250,7 +250,7 @@ shared seam.
 #### Scenario: Inspectability content remains source-backed
 
 - **WHEN** inspectability popup content is generated for `:messages` or
-    `:vimmode inspect`
+    `:vim inspect`
 - **THEN** the content comes from the existing bounded
     inspectability/message-history summaries and not from duplicated popup-only
     diagnostic strings

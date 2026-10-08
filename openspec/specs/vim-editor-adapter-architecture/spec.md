@@ -432,14 +432,14 @@ default options or caller-provided partial configuration.
 
 #### Scenario: Default option resolution returns isolated mutable fields
 
-- **WHEN** editor options are resolved with no `piVimMode` settings
+- **WHEN** editor options are resolved with no `piVim` settings
 - **THEN** mutating resolved keymap sequences, UI status items, or UI labels
     does not mutate `DEFAULT_VIM_OPTIONS`
 
 #### Scenario: Configured option resolution returns isolated mutable fields
 
-- **WHEN** editor options are resolved from valid partial `piVimMode.keymap`
-    or `piVimMode.ui` settings
+- **WHEN** editor options are resolved from valid partial `piVim.keymap`
+    or `piVim.ui` settings
 - **THEN** mutating resolved nested arrays or objects does not mutate the
     caller-provided settings object and does not change sibling resolved
     defaults

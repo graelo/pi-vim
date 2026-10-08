@@ -44,10 +44,10 @@ const ENTRIES = [
   {
     id: "runtime-help",
     category: "diagnostics",
-    topics: ["help", "messages", "runtime", "inspect", "vimmode"],
+    topics: ["help", "messages", "runtime", "inspect", "vim"],
     summary:
-      ":help and :keybindings show compact source-backed pi-vimmode help; :vimmode inspect summarizes current prompt-local state; :messages shows recent runtime messages",
-    examples: [":help search", ":keybindings", ":vimmode inspect", ":messages"],
+      ":help and :keybindings show compact source-backed pi-vim help; :vim inspect summarizes current prompt-local state; :messages shows recent runtime messages",
+    examples: [":help search", ":keybindings", ":vim inspect", ":messages"],
     limits: ["finite topics only", "no pager", "no Vim help tags"],
     docsAnchor: "runtime-help:runtime-help",
     specAnchor: "openspec/specs/vim-ex-command-line/spec.md",
@@ -148,13 +148,13 @@ const ENTRIES = [
   {
     id: "settings",
     category: "settings",
-    topics: ["settings", "config", "piVimMode", "options"],
+    topics: ["settings", "config", "piVim", "options"],
     summary:
-      "piVimMode JSON settings control finite editor options; trusted global JavaScript setup and API: https://github.com/graelo/pi-vimmode/blob/main/docs/config.md#basic-setup",
-    examples: ["piVimMode.preset", "piVimMode.keymap", "/vimmode reload"],
+      "piVim JSON settings control finite editor options; trusted global JavaScript setup and API: https://github.com/graelo/pi-vim/blob/main/docs/config.md#basic-setup",
+    examples: ["piVim.preset", "piVim.keymap", "/vim reload"],
     limits: ["field-by-field validation", "trusted JavaScript is global and unsandboxed"],
     docsAnchor: "runtime-help:settings",
-    specAnchor: "openspec/specs/pi-vimmode-documentation/spec.md",
+    specAnchor: "openspec/specs/pi-vim-documentation/spec.md",
     testAnchors: ["test/config.test.ts"],
   },
 ] as const satisfies readonly RuntimeHelpRegistryEntry[];
@@ -168,7 +168,7 @@ export function runtimeHelpEntries(
 export function runtimeHelpMessage(topic: string | undefined, context: RuntimeHelpContext): string {
   const query = topic?.trim();
   if (!query) {
-    return "help: :help <topic>, :keybindings [query], :vimmode inspect, :messages, :keymap, :mapcheck, :vimdoctor";
+    return "help: :help <topic>, :keybindings [query], :vim inspect, :messages, :keymap, :mapcheck, :vimdoctor";
   }
   const wantsDiagnosticActions = ["diagnostics", "diagnostic"].includes(query.toLowerCase());
   const entry = findEntry(query);

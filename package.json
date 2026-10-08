@@ -1,5 +1,5 @@
 {
-  "name": "@graelo/pi-vimmode",
+  "name": "@graelo/pi-vim",
   "version": "1.0.0",
   "description": "Vim mode for the pi coding agent prompt editor",
   "type": "module",
@@ -51,11 +51,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/graelo/pi-vimmode.git"
+    "url": "git+https://github.com/graelo/pi-vim.git"
   },
-  "homepage": "https://github.com/graelo/pi-vimmode#readme",
+  "homepage": "https://github.com/graelo/pi-vim#readme",
   "bugs": {
-    "url": "https://github.com/graelo/pi-vimmode/issues"
+    "url": "https://github.com/graelo/pi-vim/issues"
   },
   "keywords": [
     "pi-package",

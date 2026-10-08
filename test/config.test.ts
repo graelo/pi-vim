@@ -8,7 +8,7 @@ import type { VimEditorOptions } from "../src/types.ts";
 import { DEFAULT_VIM_OPTIONS, loadVimOptions, resolveVimOptions } from "../src/config.ts";
 
 function tempSettings() {
-  const dir = mkdtempSync(join(tmpdir(), "pi-vimmode-config-"));
+  const dir = mkdtempSync(join(tmpdir(), "pi-vim-config-"));
   const globalPath = join(dir, "global.json");
   const projectDir = join(dir, "project", ".pi");
   mkdirSync(projectDir, { recursive: true });
@@ -70,7 +70,7 @@ test("uses defaults when settings are absent", () => {
 
 test("compiles resolved options and scoped lookups into one immutable plan", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: { escape: ["<C-j>"], motions: { wordForward: ["zw"] } },
       promptTransforms: { commands: { quote: ["qte"] } },
     },
@@ -94,7 +94,7 @@ test("compiles resolved options and scoped lookups into one immutable plan", () 
 
 test("named terminal keys compile atomically without character prefixes", () => {
   const result = resolveVimOptions({
-    piVimMode: { keymap: { commands: { undo: ["<Home>", "<F1>"] } } },
+    piVim: { keymap: { commands: { undo: ["<Home>", "<F1>"] } } },
   });
 
   expect(result.plan.scopes.normal.exact.home?.id).toBe("command.undo");
@@ -105,7 +105,7 @@ test("named terminal keys compile atomically without character prefixes", () => 
 
 test("immutable plan does not share configured nested fields", () => {
   const settings = {
-    piVimMode: {
+    piVim: {
       keymap: { motions: { wordForward: ["q"] }, commands: { openLineBelow: ["n"] } },
       promptTransforms: { commands: { quote: ["qte"] } },
       ui: {
@@ -116,24 +116,22 @@ test("immutable plan does not share configured nested fields", () => {
   };
   const options = resolveVimOptions(settings).options;
 
-  expect(settings.piVimMode.keymap.motions.wordForward).toEqual(["q"]);
-  expect(settings.piVimMode.keymap.commands.openLineBelow).toEqual(["n"]);
-  expect(settings.piVimMode.promptTransforms.commands.quote).toEqual(["qte"]);
-  expect(settings.piVimMode.ui.status.items).toEqual(["mode", "selection"]);
-  expect(settings.piVimMode.ui.mode.labels.normal).toBe("COMMAND");
-  expect(options.keymap?.motions.wordForward).not.toBe(
-    settings.piVimMode.keymap.motions.wordForward,
-  );
-  expect(options.ui?.status.items).not.toBe(settings.piVimMode.ui.status.items);
-  expect(Object.isFrozen(settings.piVimMode.keymap.motions.wordForward)).toBe(false);
-  expect(Object.isFrozen(settings.piVimMode.ui.status.items)).toBe(false);
+  expect(settings.piVim.keymap.motions.wordForward).toEqual(["q"]);
+  expect(settings.piVim.keymap.commands.openLineBelow).toEqual(["n"]);
+  expect(settings.piVim.promptTransforms.commands.quote).toEqual(["qte"]);
+  expect(settings.piVim.ui.status.items).toEqual(["mode", "selection"]);
+  expect(settings.piVim.ui.mode.labels.normal).toBe("COMMAND");
+  expect(options.keymap?.motions.wordForward).not.toBe(settings.piVim.keymap.motions.wordForward);
+  expect(options.ui?.status.items).not.toBe(settings.piVim.ui.status.items);
+  expect(Object.isFrozen(settings.piVim.keymap.motions.wordForward)).toBe(false);
+  expect(Object.isFrozen(settings.piVim.ui.status.items)).toBe(false);
   expect(options.keymap?.motions.left).toEqual(["h", "left"]);
   expect(DEFAULT_VIM_OPTIONS.keymap?.motions.left).toEqual(["h", "left"]);
 });
 
 test("parses valid global settings", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       startMode: "normal",
       cursor: {
         insert: "underline",
@@ -157,8 +155,8 @@ test("parses valid global settings", () => {
 
 test("project settings override global settings field by field", () => {
   const result = resolveVimOptions(
-    { piVimMode: { startMode: "normal", cursor: { insert: "underline", visual: "underline" } } },
-    { piVimMode: { cursor: { insert: "bar", visualLine: "bar" } } },
+    { piVim: { startMode: "normal", cursor: { insert: "underline", visual: "underline" } } },
+    { piVim: { cursor: { insert: "bar", visualLine: "bar" } } },
   );
   expect(result.options.startMode).toBe("normal");
   expect(result.options.cursor).toEqual({
@@ -172,8 +170,8 @@ test("project settings override global settings field by field", () => {
 
 test("project keymap overrides restore defaults removed by global conflicts", () => {
   const result = resolveVimOptions(
-    { piVimMode: { keymap: { motions: { wordForward: ["q"] } } } },
-    { piVimMode: { keymap: { motions: { wordForward: ["e"] } } } },
+    { piVim: { keymap: { motions: { wordForward: ["q"] } } } },
+    { piVim: { keymap: { motions: { wordForward: ["e"] } } } },
   );
 
   expect(result.warnings).toEqual([]);
@@ -185,33 +183,30 @@ test("leader defaults unset and resolves printable, invalid, and null layers", (
   expect(resolveVimOptions(undefined).options.leader).toBeUndefined();
 
   const invalidProject = resolveVimOptions(
-    { piVimMode: { leader: "," } },
-    { piVimMode: { leader: "too-long", startMode: "normal" } },
+    { piVim: { leader: "," } },
+    { piVim: { leader: "too-long", startMode: "normal" } },
   );
   expect(invalidProject.options.leader).toBe(",");
   expect(invalidProject.options.startMode).toBe("normal");
   expect(invalidProject.warnings).toEqual([
-    "project settings: piVimMode.leader must be one printable character or null",
+    "project settings: piVim.leader must be one printable character or null",
   ]);
 
-  const cleared = resolveVimOptions(
-    { piVimMode: { leader: "," } },
-    { piVimMode: { leader: null } },
-  );
+  const cleared = resolveVimOptions({ piVim: { leader: "," } }, { piVim: { leader: null } });
   expect(cleared.options.leader).toBeUndefined();
 });
 
 test("expands retained leader mappings with final project leader", () => {
   const result = resolveVimOptions(
     {
-      piVimMode: {
+      piVim: {
         leader: ",",
         keymap: {
           commands: { undo: ["<Leader>u"] },
         },
       },
     },
-    { piVimMode: { leader: " " } },
+    { piVim: { leader: " " } },
   );
 
   expect(result.warnings).toEqual([]);
@@ -222,7 +217,7 @@ test("expands retained leader mappings with final project leader", () => {
 
 test("leader mapping warnings drop only affected keys", () => {
   const configured = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       leader: ",",
       keymap: { commands: { undo: ["<leader>", "g<leader>x", "<leader>u"] } },
     },
@@ -236,32 +231,32 @@ test("leader mapping warnings drop only affected keys", () => {
   );
 
   const missing = resolveVimOptions({
-    piVimMode: { keymap: { motions: { wordForward: ["<leader>w"] } } },
+    piVim: { keymap: { motions: { wordForward: ["<leader>w"] } } },
   });
   expect(missing.options.keymap?.motions.wordForward).toEqual(["w"]);
   expect(missing.options.keymap?.leader).toBeUndefined();
   expect(missing.warnings).toEqual([
-    expect.stringContaining("uses <leader> but piVimMode.leader is unset"),
+    expect.stringContaining("uses <leader> but piVim.leader is unset"),
   ]);
 });
 
 test("invalid higher-layer leader mappings preserve lower valid bindings", () => {
   const classic = resolveVimOptions(
-    { piVimMode: { keymap: { commands: { undo: ["U"] } } } },
-    { piVimMode: { keymap: { commands: { undo: ["<leader>u"] } } } },
+    { piVim: { keymap: { commands: { undo: ["U"] } } } },
+    { piVim: { keymap: { commands: { undo: ["<leader>u"] } } } },
   );
   expect(classic.options.keymap?.commands.undo).toEqual(["U"]);
 
   const mixed = resolveVimOptions(
-    { piVimMode: { keymap: { commands: { undo: ["U"] } } } },
-    { piVimMode: { keymap: { commands: { undo: ["<leader>u", "Z"] } } } },
+    { piVim: { keymap: { commands: { undo: ["U"] } } } },
+    { piVim: { keymap: { commands: { undo: ["<leader>u", "Z"] } } } },
   );
   expect(mixed.options.keymap?.commands.undo).toEqual(["Z"]);
 });
 
 test("protected leader suffixes are rejected without dropping valid siblings", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       leader: ",",
       keymap: {
         commands: { undo: ["<leader>ctrl+p", "<leader><C-p>", "<leader>q"] },
@@ -276,7 +271,7 @@ test("protected leader suffixes are rejected without dropping valid siblings", (
 
 test("rejected insert and text-object leader keys do not reserve normal grammar", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       leader: ",",
       keymap: {
         escape: ["<leader>q"],
@@ -302,7 +297,7 @@ test("rejected insert and text-object leader keys do not reserve normal grammar"
 
 test("parses configured status position and mode labels", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       ui: {
         status: { position: "right" },
         mode: {
@@ -322,9 +317,9 @@ test("parses configured status position and mode labels", () => {
 
 test("retains inherited status position when a later value is invalid", () => {
   const result = resolveVimOptions(
-    { piVimMode: { ui: { status: { position: "right" } } } },
+    { piVim: { ui: { status: { position: "right" } } } },
     {
-      piVimMode: {
+      piVim: {
         ui: {
           status: { position: "center" },
           mode: { enabled: false, labels: { normal: "COMMAND" } },
@@ -337,15 +332,15 @@ test("retains inherited status position when a later value is invalid", () => {
   expect(result.options.ui?.mode.enabled).toBe(false);
   expect(result.options.ui?.mode.labels.normal).toBe("COMMAND");
   expect(result.warnings).toEqual([
-    'project settings: piVimMode.ui.status.position must be "left" or "right"',
+    'project settings: piVim.ui.status.position must be "left" or "right"',
   ]);
 });
 
 test("merges status position across global, JS, and project fields", () => {
   const result = resolveVimOptions(
-    { piVimMode: { ui: { status: { position: "right" } } } },
+    { piVim: { ui: { status: { position: "right" } } } },
     {
-      piVimMode: {
+      piVim: {
         ui: { status: { position: "right" }, mode: { narrowLabels: { normal: "P" } } },
       },
     },
@@ -364,7 +359,7 @@ test("merges status position across global, JS, and project fields", () => {
 
 test("parses workbench reserved rows field-by-field", () => {
   const valid = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       ui: { workbench: { reservedRows: 2 }, status: { enabled: false } },
     },
   });
@@ -373,7 +368,7 @@ test("parses workbench reserved rows field-by-field", () => {
   expect(valid.options.ui?.status.enabled).toBe(false);
 
   const invalid = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       ui: { workbench: { reservedRows: 99 }, mode: { labels: { normal: "COMMAND" } } },
     },
   });
@@ -381,14 +376,14 @@ test("parses workbench reserved rows field-by-field", () => {
   expect(invalid.options.ui?.mode.labels.normal).toBe("COMMAND");
   expect(
     invalid.warnings.some((warning) =>
-      warning.includes("piVimMode.ui.workbench.reservedRows must be an integer between 0 and 5"),
+      warning.includes("piVim.ui.workbench.reservedRows must be an integer between 0 and 5"),
     ),
   ).toBe(true);
 });
 
 test("rejects legacy vimOptions aliases in favor of UI config", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       vimOptions: { showmode: false, showcmd: false, ruler: true },
       ui: { mode: { enabled: true }, cursorPosition: { enabled: true } },
     },
@@ -404,7 +399,7 @@ test("rejects legacy vimOptions aliases in favor of UI config", () => {
 
 test("parses configured keymap and rejects protected keys", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         escape: ["<C-j>", "<D-j>"],
         operators: { delete: ["q"], lowercase: ["zu"], uppercase: ["ctrl+c"], change: ["c"] },
@@ -450,7 +445,7 @@ test("parses configured keymap and rejects protected keys", () => {
 
 test("insert escape aliases validate independently from normal keymap", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         escape: ["<C-j>", "<D-j>", "j", "<C-c>", 42],
         motions: { down: ["J"], up: ["K"] },
@@ -475,7 +470,7 @@ test("insert escape aliases validate independently from normal keymap", () => {
 
 test("raw text insert escape aliases are rejected", () => {
   const result = resolveVimOptions({
-    piVimMode: { keymap: { escape: ["jk", "jj", "space"] } },
+    piVim: { keymap: { escape: ["jk", "jj", "space"] } },
   });
 
   expect(result.options.keymap?.escape).toEqual([]);
@@ -490,7 +485,7 @@ test("raw text insert escape aliases are rejected", () => {
 
 test("invalid insert escape config falls back without dropping valid siblings", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         escape: "<D-j>",
         commands: { openLineBelow: ["n"] },
@@ -507,8 +502,8 @@ test("invalid insert escape config falls back without dropping valid siblings", 
 
 test("project insert escape aliases can clear global aliases", () => {
   const result = resolveVimOptions(
-    { piVimMode: { keymap: { escape: ["<D-j>"] } } },
-    { piVimMode: { keymap: { escape: [] } } },
+    { piVim: { keymap: { escape: ["<D-j>"] } } },
+    { piVim: { keymap: { escape: [] } } },
   );
 
   expect(result.options.keymap?.escape).toEqual([]);
@@ -531,7 +526,7 @@ test("default insert keymap is empty", () => {
 
 test("accepts configured insert open line below", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: { insert: { openLineBelow: ["ctrl+j"] } },
     },
   });
@@ -542,7 +537,7 @@ test("accepts configured insert open line below", () => {
 
 test("accepts configured insert open line above", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: { insert: { openLineAbove: ["ctrl+k"] } },
     },
   });
@@ -553,7 +548,7 @@ test("accepts configured insert open line above", () => {
 
 test("rejects raw printable text in insert bindings", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: { insert: { openLineBelow: ["j", "space"] } },
     },
   });
@@ -572,7 +567,7 @@ test("rejects raw printable text in insert bindings", () => {
 
 test("rejects protected key in insert binding without allow-list", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: { insert: { openLineBelow: ["enter"] } },
     },
   });
@@ -586,7 +581,7 @@ test("rejects protected key in insert binding without allow-list", () => {
 
 test("accepts allow-listed protected key in insert binding", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         insert: { openLineBelow: ["enter"] },
         allowProtectedOverrides: ["enter"],
@@ -599,7 +594,7 @@ test("accepts allow-listed protected key in insert binding", () => {
 
 test("warns when insert actions share a binding", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         insert: { openLineBelow: ["ctrl+o"], openLineAbove: ["<C-O>"] },
       },
@@ -610,7 +605,7 @@ test("warns when insert actions share a binding", () => {
   expect(result.warnings).toEqual(
     expect.arrayContaining([
       expect.stringContaining(
-        "duplicate piVimMode.keymap.insert binding ctrl+o for openLineBelow and openLineAbove",
+        "duplicate piVim.keymap.insert binding ctrl+o for openLineBelow and openLineAbove",
       ),
     ]),
   );
@@ -618,7 +613,7 @@ test("warns when insert actions share a binding", () => {
 
 test("invalid insert binding fields preserve valid siblings", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         insert: {
           openLineBelow: ["ctrl+j"],
@@ -641,14 +636,14 @@ test("invalid insert binding fields preserve valid siblings", () => {
   expect(result.options.keymap?.commands.openLineBelow).toEqual(["o"]);
   expect(result.warnings).toEqual(
     expect.arrayContaining([
-      expect.stringContaining("unsupported piVimMode.keymap.insert.unknownAction"),
+      expect.stringContaining("unsupported piVim.keymap.insert.unknownAction"),
     ]),
   );
 });
 
 test("non-object insert is rejected", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: { insert: "invalid" } as Record<string, unknown>,
     },
   });
@@ -669,7 +664,7 @@ test("non-object insert is rejected", () => {
 
 test("insert bindings compile as immutable arrays without sharing defaults", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: { insert: { openLineBelow: ["ctrl+j"] } },
     },
   });
@@ -679,7 +674,7 @@ test("insert bindings compile as immutable arrays without sharing defaults", () 
 
 test("accepts configured insert edit and movement bindings", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         insert: {
           deleteWordBackward: ["ctrl+w"],
@@ -708,7 +703,7 @@ test("accepts configured insert edit and movement bindings", () => {
 
 test("word search command bindings remap, reject protected keys, and preserve siblings", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         commands: {
           searchWordForward: ["<C-s>", "8"],
@@ -727,7 +722,7 @@ test("word search command bindings remap, reject protected keys, and preserve si
 
 test("scroll control keys are only allowed for scroll motions", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         motions: { halfPageDown: ["<C-d>"], halfPageUp: ["<C-u>"], left: ["<C-d>"] },
         commands: { openLineBelow: ["<C-u>"] },
@@ -749,7 +744,7 @@ test("scroll control keys are only allowed for scroll motions", () => {
 
 test("explicit keymap bindings override lower-priority default top-level bindings", () => {
   const result = resolveVimOptions({
-    piVimMode: { keymap: { motions: { wordForward: ["q"] } } },
+    piVim: { keymap: { motions: { wordForward: ["q"] } } },
   });
 
   expect(result.options.keymap?.motions.wordForward).toEqual(["q"]);
@@ -759,7 +754,7 @@ test("explicit keymap bindings override lower-priority default top-level binding
 
 test("explicit keymap bindings override lower-priority default prefix bindings", () => {
   const result = resolveVimOptions({
-    piVimMode: { keymap: { motions: { left: ["g"] } } },
+    piVim: { keymap: { motions: { left: ["g"] } } },
   });
 
   expect(result.options.keymap?.motions.left).toEqual(["g"]);
@@ -771,7 +766,7 @@ test("explicit keymap bindings override lower-priority default prefix bindings",
 
 test("parses shift operator keymap and rejects motion matrices for line-only operators", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         operators: { indent: ["]"], dedent: ["["], delete: ["d"], toggleCase: ["z~"] },
         operatorMotions: {
@@ -794,12 +789,12 @@ test("parses shift operator keymap and rejects motion matrices for line-only ope
   expect("dedent" in (result.options.keymap?.operatorMotions ?? {})).toBe(false);
   expect(
     result.warnings.some((warning) =>
-      warning.includes("unsupported piVimMode.keymap.operatorMotions.indent"),
+      warning.includes("unsupported piVim.keymap.operatorMotions.indent"),
     ),
   ).toBe(true);
   expect(
     result.warnings.some((warning) =>
-      warning.includes("unsupported piVimMode.keymap.operatorMotions.dedent"),
+      warning.includes("unsupported piVim.keymap.operatorMotions.dedent"),
     ),
   ).toBe(true);
 });
@@ -808,14 +803,14 @@ test("keybindings popup command defaults unbound and validates configured bindin
   expect(DEFAULT_VIM_OPTIONS.keymap?.commands.showKeybindings).toEqual([]);
 
   const valid = resolveVimOptions({
-    piVimMode: { keymap: { commands: { showKeybindings: ["gk"], redo: ["U"] } } },
+    piVim: { keymap: { commands: { showKeybindings: ["gk"], redo: ["U"] } } },
   });
   expect(valid.options.keymap?.commands.showKeybindings).toEqual(["gk"]);
   expect(valid.options.keymap?.commands.redo).toEqual(["U"]);
   expect(valid.warnings).toEqual([]);
 
   const protectedKey = resolveVimOptions({
-    piVimMode: { keymap: { commands: { showKeybindings: ["ctrl+p"], redo: ["U"] } } },
+    piVim: { keymap: { commands: { showKeybindings: ["ctrl+p"], redo: ["U"] } } },
   });
   expect(protectedKey.options.keymap?.commands.showKeybindings).toEqual([]);
   expect(protectedKey.options.keymap?.commands.redo).toEqual(["U"]);
@@ -824,7 +819,7 @@ test("keybindings popup command defaults unbound and validates configured bindin
   );
 
   const exactConflict = resolveVimOptions({
-    piVimMode: { keymap: { commands: { showKeybindings: ["u"], redo: ["U"] } } },
+    piVim: { keymap: { commands: { showKeybindings: ["u"], redo: ["U"] } } },
   });
   expect(exactConflict.options.keymap?.commands.showKeybindings).toEqual([]);
   expect(exactConflict.options.keymap?.commands.redo).toEqual(["U"]);
@@ -833,7 +828,7 @@ test("keybindings popup command defaults unbound and validates configured bindin
   );
 
   const prefixConflict = resolveVimOptions({
-    piVimMode: { keymap: { commands: { showKeybindings: ["g"], redo: ["U"] } } },
+    piVim: { keymap: { commands: { showKeybindings: ["g"], redo: ["U"] } } },
   });
   expect(prefixConflict.options.keymap?.commands.showKeybindings).toEqual([]);
   expect(prefixConflict.options.keymap?.commands.redo).toEqual(["U"]);
@@ -894,7 +889,7 @@ test("default keymap includes roadmap actions and configurable word-end", () => 
   );
 
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         motions: {
           wordEnd: ["E"],
@@ -932,7 +927,7 @@ test("default keymap includes roadmap actions and configurable word-end", () => 
 
 test("parses macro behavior options", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       macros: { enabled: false, slots: ["x", "y", "bad"], maxReplaySteps: 12 },
     },
   });
@@ -947,7 +942,7 @@ test("parses macro behavior options", () => {
 
 test("parses search highlight options", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       search: {
         highlight: false,
         highlightCurrent: false,
@@ -970,7 +965,7 @@ test("parses search highlight options", () => {
 
 test("invalid search highlight options fall back per field", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       search: {
         highlight: "yes",
         highlightCurrent: true,
@@ -994,7 +989,7 @@ test("invalid search highlight options fall back per field", () => {
 
 test("parses mark behavior options", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       marks: { enabled: false, slots: ["x", "y", "bad"] },
     },
   });
@@ -1008,7 +1003,7 @@ test("parses mark behavior options", () => {
 
 test("warns about settings removed in 1.0.0 without dropping valid siblings", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       startMode: "normal",
       promptTransforms: { enabled: false },
       keymap: {
@@ -1020,9 +1015,9 @@ test("warns about settings removed in 1.0.0 without dropping valid siblings", ()
   });
 
   expect(result.warnings).toEqual([
-    "global settings: piVimMode.keymap.actions was removed in 1.0.0 and is ignored",
-    "global settings: piVimMode.keymap.actionPresets was removed in 1.0.0 and is ignored",
-    "global settings: piVimMode.promptTransforms was removed in 1.0.0 and is ignored",
+    "global settings: piVim.keymap.actions was removed in 1.0.0 and is ignored",
+    "global settings: piVim.keymap.actionPresets was removed in 1.0.0 and is ignored",
+    "global settings: piVim.promptTransforms was removed in 1.0.0 and is ignored",
   ]);
   expect(result.options.startMode).toBe("normal");
   expect(result.options.keymap?.commands.redo).toEqual(["U"]);
@@ -1030,7 +1025,7 @@ test("warns about settings removed in 1.0.0 without dropping valid siblings", ()
 
 test("parses prompt structure options", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         textObjects: {
           kinds: { inner: ["Z"], around: ["Q"] },
@@ -1050,7 +1045,7 @@ test("parses prompt structure options", () => {
 
 test("accepts every supported normal motion as an operator motion", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         operatorMotions: {
           delete: [
@@ -1093,7 +1088,7 @@ test("accepts every supported normal motion as an operator motion", () => {
 
 test("warns for cross-group keymap conflicts", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         operators: { delete: ["x"] },
         motions: { left: ["x"] },
@@ -1105,14 +1100,14 @@ test("warns for cross-group keymap conflicts", () => {
   });
 
   expect(
-    result.warnings.some((warning) => warning.includes("duplicate piVimMode.keymap binding x")),
+    result.warnings.some((warning) => warning.includes("duplicate piVim.keymap binding x")),
   ).toBe(true);
   expect(result.warnings.some((warning) => warning.includes("textObjects.targets.word"))).toBe(
     true,
   );
 
   const hijack = resolveVimOptions({
-    piVimMode: { keymap: { textObjects: { kinds: { inner: ["w"] } } } },
+    piVim: { keymap: { textObjects: { kinds: { inner: ["w"] } } } },
   });
   expect(
     hijack.warnings.some((warning) =>
@@ -1123,7 +1118,7 @@ test("warns for cross-group keymap conflicts", () => {
 
 test("rejects multi-key text object bindings", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         textObjects: { kinds: { inner: ["ii", "I"] }, targets: { codeFence: ["ff"] } },
       },
@@ -1140,7 +1135,7 @@ test("rejects multi-key text object bindings", () => {
 
 test("warns when exact keymap bindings are shadowed by longer prefixes", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         motions: { left: ["g"], bufferStart: ["gg"] },
       },
@@ -1157,12 +1152,12 @@ test("warns when exact keymap bindings are shadowed by longer prefixes", () => {
 });
 
 test("resolves presets before explicit settings", () => {
-  const heavy = resolveVimOptions({ piVimMode: { preset: "vim-heavy" } });
+  const heavy = resolveVimOptions({ piVim: { preset: "vim-heavy" } });
   expect(heavy.warnings).toEqual([]);
   expect(heavy.options.keymap?.commands.visualBlock).toEqual([]);
 
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       preset: "vim-heavy",
       startMode: "insert",
       keymap: {
@@ -1183,8 +1178,8 @@ test("resolves presets before explicit settings", () => {
 
 test("project preset overrides global preset field by field", () => {
   const result = resolveVimOptions(
-    { piVimMode: { preset: "vim-heavy", cursor: { insert: "underline" } } },
-    { piVimMode: { preset: "minimal", feedback: { noop: "status" } } },
+    { piVim: { preset: "vim-heavy", cursor: { insert: "underline" } } },
+    { piVim: { preset: "minimal", feedback: { noop: "status" } } },
   );
 
   expect(result.options.preset).toBe("minimal");
@@ -1196,7 +1191,7 @@ test("project preset overrides global preset field by field", () => {
 
 test("invalid preset and feedback fall back per field", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       preset: "maximal",
       feedback: { noop: "loud" },
       startMode: "normal",
@@ -1206,7 +1201,7 @@ test("invalid preset and feedback fall back per field", () => {
   expect(result.options.preset).toBeUndefined();
   expect(result.options.feedback?.noop).toBe("off");
   expect(result.options.startMode).toBe("normal");
-  expect(result.warnings.some((warning) => warning.includes("unsupported piVimMode.preset"))).toBe(
+  expect(result.warnings.some((warning) => warning.includes("unsupported piVim.preset"))).toBe(
     true,
   );
   expect(result.warnings.some((warning) => warning.includes("feedback.noop"))).toBe(true);
@@ -1214,7 +1209,7 @@ test("invalid preset and feedback fall back per field", () => {
 
 test("protected shortcut warnings include ownership reason", () => {
   const result = resolveVimOptions({
-    piVimMode: { keymap: { commands: { openLineBelow: ["ctrl+p"] } } },
+    piVim: { keymap: { commands: { openLineBelow: ["ctrl+p"] } } },
   });
 
   expect(result.options.keymap?.commands.openLineBelow).toEqual(["o"]);
@@ -1227,7 +1222,7 @@ test("protected shortcut warnings include ownership reason", () => {
 
 test("invalid startup and cursor values fall back per field", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       startMode: "visual",
       cursor: { insert: "beam", normal: "underline" },
     },
@@ -1242,7 +1237,7 @@ test("malformed settings files fall back safely", async () => {
   const paths = tempSettings();
   try {
     writeFileSync(paths.globalPath, "{ nope");
-    writeFileSync(paths.projectPath, JSON.stringify({ piVimMode: { startMode: "normal" } }));
+    writeFileSync(paths.projectPath, JSON.stringify({ piVim: { startMode: "normal" } }));
     const result = await loadVimOptions({
       globalSettingsPath: paths.globalPath,
       projectSettingsPath: paths.projectPath,
@@ -1256,7 +1251,7 @@ test("malformed settings files fall back safely", async () => {
 
 test("protected keys remain rejected when allowProtectedOverrides is absent", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         commands: { showKeybindings: ["ctrl+p"], visualBlock: ["ctrl+v", "alt+v", "ctrl+alt+v"] },
         allowProtectedOverrides: undefined,
@@ -1278,7 +1273,7 @@ test("protected keys remain rejected when allowProtectedOverrides is absent", ()
 
 test("allow-listed protected classic bindings are accepted and normalized", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         commands: { showKeybindings: ["ctrl+p"], visualBlock: ["ctrl+v", "alt+v", "ctrl+alt+v"] },
         allowProtectedOverrides: ["ctrl+p", "ctrl+v", "alt+v", "ctrl+alt+v"],
@@ -1293,9 +1288,9 @@ test("allow-listed protected classic bindings are accepted and normalized", () =
 
 test("global allow-list entries do not authorize project-layer protected bindings without a project allow-list", () => {
   const result = resolveVimOptions(
-    { piVimMode: { keymap: { allowProtectedOverrides: ["ctrl+p"] } } },
+    { piVim: { keymap: { allowProtectedOverrides: ["ctrl+p"] } } },
     {
-      piVimMode: {
+      piVim: {
         keymap: {
           commands: { showKeybindings: ["ctrl+p"] },
         },
@@ -1311,7 +1306,7 @@ test("global allow-list entries do not authorize project-layer protected binding
 
 test("invalid allow-list entries warn while valid protected entries and sibling keymap fields remain usable", () => {
   const result = resolveVimOptions({
-    piVimMode: {
+    piVim: {
       keymap: {
         commands: { showKeybindings: ["ctrl+p"] },
         allowProtectedOverrides: ["ctrl+p", "", "<invalid>", "ctrl+t"],

@@ -16,13 +16,13 @@ export type PopupCommandDocsMetadata = {
 };
 
 export const DIAGNOSTIC_ACTION_DOCS_METADATA = [
-  "vimmode.doctor",
-  "vimmode.keymap",
-  "vimmode.keybindings",
-  "vimmode.mapcheck",
-  "vimmode.help",
-  "vimmode.messages",
-  "vimmode.inspect",
+  "pi-vim.doctor",
+  "pi-vim.keymap",
+  "pi-vim.keybindings",
+  "pi-vim.mapcheck",
+  "pi-vim.help",
+  "pi-vim.messages",
+  "pi-vim.inspect",
 ].map((id) => ({
   id,
   docsAnchor: `diagnostic-actions:${id}`,
@@ -72,8 +72,8 @@ export const POPUP_COMMAND_DOCS_METADATA = [
     docsAnchor: "runtime-help:keybinding-discovery-popup",
   },
   {
-    command: ":vimmode inspect",
-    parserExample: "vimmode inspect",
+    command: ":vim inspect",
+    parserExample: "vim inspect",
     docsAnchor: "runtime-help:keybinding-discovery-popup",
   },
   {

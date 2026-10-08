@@ -75,7 +75,7 @@ describe("runtime help registry", () => {
       diagnostics: { warnings: [] },
     });
 
-    expect(popup.title).toBe(":vimmode inspect");
+    expect(popup.title).toBe(":vim inspect");
     expect(popup.source).toBe("inspect");
     expect(popup.lines.join("\n")).toContain("mode=normal");
     expect(popup.lines.join("\n")).not.toContain("secret raw prompt");

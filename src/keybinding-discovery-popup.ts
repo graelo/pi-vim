@@ -10,7 +10,7 @@ import {
   keymapMessage,
   mapcheckMessage,
 } from "./customization.ts";
-import { runtimeMessagesMessage, vimmodeInspectMessage } from "./modal/inspect.ts";
+import { runtimeMessagesMessage, vimInspectMessage } from "./modal/inspect.ts";
 import { popupFromMessage } from "./read-only-popup.ts";
 import { runtimeHelpMessage } from "./runtime-help.ts";
 
@@ -108,8 +108,8 @@ export function diagnosticPopup(
 
 export function inspectPopup(input: InspectPopupInput): ReadOnlyPopup {
   return popupFromMessage({
-    title: ":vimmode inspect",
+    title: ":vim inspect",
     source: "inspect",
-    message: vimmodeInspectMessage(input),
+    message: vimInspectMessage(input),
   });
 }

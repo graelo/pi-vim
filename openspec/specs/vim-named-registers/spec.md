@@ -535,7 +535,7 @@ operand syntax.
 
 #### Scenario: Inspect output summarizes clipboard mirrors without contents
 
-- **WHEN** the user runs `:vimmode inspect` after writing a clipboard register
+- **WHEN** the user runs `:vim inspect` after writing a clipboard register
     mirror
 - **THEN** the bounded register summary includes the presence and type or
     length of clipboard register mirrors without dumping full clipboard or

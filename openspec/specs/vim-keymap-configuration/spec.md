@@ -10,7 +10,7 @@ mappings, and protection of Pi-owned shortcuts.
 
 ### Requirement: Semantic keymap configuration resolves supported Vim actions
 
-The Vim editor SHALL read `piVimMode.keymap` as a semantic mapping for supported
+The Vim editor SHALL read `piVim.keymap` as a semantic mapping for supported
 operators, motions, and commands while preserving the existing default keymap
 when no keymap config is provided. Directional motion defaults SHALL include
 physical arrow-key aliases for the same semantic left/down/up/right actions as
@@ -18,54 +18,54 @@ physical arrow-key aliases for the same semantic left/down/up/right actions as
 
 #### Scenario: Default keymap preserved
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting
+- **WHEN** Pi starts with no `piVim.keymap` setting
 - **THEN** the resolved keymap binds the currently documented normal, visual,
     operator, motion, paste, open-line, join, and undo commands to their
     existing default keys
 
 #### Scenario: Default directional arrow aliases available
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting
+- **WHEN** Pi starts with no `piVim.keymap` setting
 - **THEN** the resolved motion keymap binds `left`, `down`, `up`, and `right`
     as aliases for the existing left/down/up/right motion actions
 
 #### Scenario: Operator binding configured
 
-- **WHEN** `piVimMode.keymap.operators.delete` is set to a valid key sequence
+- **WHEN** `piVim.keymap.operators.delete` is set to a valid key sequence
     and the editor is in normal mode
 - **THEN** that key sequence starts the delete operator instead of requiring
     the default `d` key
 
 #### Scenario: Motion binding configured
 
-- **WHEN** `piVimMode.keymap.motions.wordForward` is set to a valid key
+- **WHEN** `piVim.keymap.motions.wordForward` is set to a valid key
     sequence and the editor is in normal or visual mode
 - **THEN** that key sequence performs the configured word-forward motion where
     word-forward is supported
 
 #### Scenario: Command binding configured
 
-- **WHEN** `piVimMode.keymap.commands.openLineBelow` is set to a valid key
+- **WHEN** `piVim.keymap.commands.openLineBelow` is set to a valid key
     sequence and the editor is in normal mode
 - **THEN** that key sequence inserts a blank line below the current line and
     enters insert mode
 
 #### Scenario: Invalid keymap field falls back
 
-- **WHEN** a `piVimMode.keymap` field has an unsupported type, protected key,
+- **WHEN** a `piVim.keymap` field has an unsupported type, protected key,
     or invalid action name
 - **THEN** the invalid field is ignored, a warning is recorded, and sibling
     keymap fields remain usable
 
 ### Requirement: Operator-motion matrix is configurable
 
-The Vim editor SHALL use `piVimMode.keymap.operatorMotions` to determine which
+The Vim editor SHALL use `piVim.keymap.operatorMotions` to determine which
 configured motions are valid after each configured motion-capable operator.
 
 #### Scenario: Configured operator-motion combination executes
 
 - **WHEN** `delete` is bound to a configured operator key and `wordForward` is
-    included in `piVimMode.keymap.operatorMotions.delete`
+    included in `piVim.keymap.operatorMotions.delete`
 - **THEN** pressing the delete operator followed by the configured
     `wordForward` motion deletes that text range and stores it in the unnamed
     character register
@@ -73,21 +73,21 @@ configured motions are valid after each configured motion-capable operator.
 #### Scenario: Configured case operator-motion combination executes
 
 - **WHEN** `lowercase` is bound to a configured operator key and `wordForward`
-    is included in `piVimMode.keymap.operatorMotions.lowercase`
+    is included in `piVim.keymap.operatorMotions.lowercase`
 - **THEN** pressing the lowercase operator followed by the configured
     `wordForward` motion lowercases that text range without writing registers
 
 #### Scenario: Configured operator-motion combination is disabled
 
 - **WHEN** a motion action is omitted from
-    `piVimMode.keymap.operatorMotions.uppercase`
+    `piVim.keymap.operatorMotions.uppercase`
 - **THEN** pressing the configured uppercase operator followed by that motion
     clears the pending operator, leaves prompt text unchanged, and does not
     insert the motion key as text
 
 #### Scenario: Default operator-motion matrix preserved
 
-- **WHEN** no `piVimMode.keymap.operatorMotions` setting is configured
+- **WHEN** no `piVim.keymap.operatorMotions` setting is configured
 - **THEN** `delete`, `change`, `yank`, `lowercase`, `uppercase`, and
     `toggleCase` support the default finite motion actions documented for each
     operator family
@@ -125,7 +125,7 @@ The Vim keymap configuration MUST NOT steal Pi app-owned shortcuts by default.
 
 #### Scenario: Protected key binding ignored
 
-- **WHEN** `piVimMode.keymap` attempts to bind a protected key such as submit,
+- **WHEN** `piVim.keymap` attempts to bind a protected key such as submit,
     interrupt, external editor, model selection, thinking controls, image paste,
     or autocomplete control
 - **THEN** the binding is ignored or rejected with a warning and the key
@@ -133,17 +133,17 @@ The Vim keymap configuration MUST NOT steal Pi app-owned shortcuts by default.
 
 #### Scenario: Image paste shortcuts are protected by default
 
-- **WHEN** `piVimMode.keymap.commands.visualBlock` attempts to bind `Ctrl-v`,
+- **WHEN** `piVim.keymap.commands.visualBlock` attempts to bind `Ctrl-v`,
     `Alt-v`, or `Ctrl-Alt-v` without listing that shortcut in the same settings
-    layer's `piVimMode.keymap.allowProtectedOverrides`
+    layer's `piVim.keymap.allowProtectedOverrides`
 - **THEN** the binding is rejected with a warning and the shortcut continues
     to delegate to Pi image or clipboard paste behavior
 
 #### Scenario: Image paste shortcuts can be explicitly owned for visual block
 
-- **WHEN** `piVimMode.keymap.commands.visualBlock` binds `Ctrl-v`, `Alt-v`, or
+- **WHEN** `piVim.keymap.commands.visualBlock` binds `Ctrl-v`, `Alt-v`, or
     `Ctrl-Alt-v` and the same settings layer lists that shortcut in
-    `piVimMode.keymap.allowProtectedOverrides`
+    `piVim.keymap.allowProtectedOverrides`
 - **THEN** normal and visual mode use that shortcut for visual block entry or
     switching through the semantic visualBlock command
 
@@ -174,7 +174,7 @@ configuration.
 #### Scenario: Settings reference documents keymap config
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** it documents `piVimMode.keymap`, supported semantic actions,
+- **THEN** it documents `piVim.keymap`, supported semantic actions,
     default mappings, protected shortcut behavior, and non-goals such as
     recursive mappings and full Vimscript support
 
@@ -186,13 +186,13 @@ sequence or command prefix without recursive mappings or timeout behavior.
 
 #### Scenario: Default roadmap keymap is available
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting
+- **WHEN** Pi starts with no `piVim.keymap` setting
 - **THEN** the resolved keymap binds the newly supported roadmap actions to
     their documented default Vim keys
 
 #### Scenario: Word-end motion can be configured
 
-- **WHEN** `piVimMode.keymap.motions` configures the semantic word-end motion
+- **WHEN** `piVim.keymap.motions` configures the semantic word-end motion
     to a valid key sequence
 - **THEN** that key sequence performs word-end movement in normal and visual
     contexts where word-end movement is supported
@@ -200,13 +200,13 @@ sequence or command prefix without recursive mappings or timeout behavior.
 #### Scenario: Word-end operator motion can be configured
 
 - **WHEN** the semantic word-end motion is included in
-    `piVimMode.keymap.operatorMotions.delete`
+    `piVim.keymap.operatorMotions.delete`
 - **THEN** the resolved delete operator followed by the configured word-end
     motion deletes the addressed range
 
 #### Scenario: Roadmap commands can be configured where finite
 
-- **WHEN** `piVimMode.keymap.commands` configures a newly supported finite
+- **WHEN** `piVim.keymap.commands` configures a newly supported finite
     command or command prefix to a valid key sequence
 - **THEN** that key sequence invokes the corresponding command in supported
     normal-mode contexts
@@ -244,12 +244,12 @@ motions.
 - **WHEN** the editor is in insert mode and the user presses `Ctrl+A`,
     `Ctrl+X`, `Ctrl+D`, `Ctrl+U`, or another Pi control shortcut
 - **THEN** input delegates to Pi default editor behavior unless that
-    insert-mode shortcut is explicitly supported by pi-vimmode
+    insert-mode shortcut is explicitly supported by pi-vim
 
 #### Scenario: Other protected shortcuts remain protected
 
-- **WHEN** `piVimMode.keymap` attempts to bind a protected Pi shortcut that
-    pi-vimmode does not explicitly own
+- **WHEN** `piVim.keymap` attempts to bind a protected Pi shortcut that
+    pi-vim does not explicitly own
 - **THEN** the binding is ignored or rejected with a warning and that shortcut
     continues to delegate to Pi behavior
 
@@ -286,20 +286,20 @@ normal/visual command while preserving the default `:` binding.
 
 #### Scenario: Default Ex command-line key is available
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting and the editor is in
+- **WHEN** Pi starts with no `piVim.keymap` setting and the editor is in
     normal mode
 - **THEN** pressing `:` enters Ex command-line mode
 
 #### Scenario: Configured Ex command-line key is used
 
-- **WHEN** `piVimMode.keymap.commands.startExCommand` is set to a valid key
+- **WHEN** `piVim.keymap.commands.startExCommand` is set to a valid key
     sequence and the editor is in normal mode
 - **THEN** that key sequence enters Ex command-line mode instead of requiring
     the default `:` key
 
 #### Scenario: Ex command-line key works from visual modes
 
-- **WHEN** `piVimMode.keymap.commands.startExCommand` is set to a valid key
+- **WHEN** `piVim.keymap.commands.startExCommand` is set to a valid key
     sequence and the editor is in a visual mode with an active selection
 - **THEN** that key sequence enters Ex command-line mode with the visual range
     marker prefilled
@@ -309,11 +309,11 @@ normal/visual command while preserving the default `:` binding.
 - **WHEN** the editor is in insert mode and the user presses `:` or a
     configured Ex command-line key
 - **THEN** input delegates to Pi default editor behavior unless that
-    insert-mode input is otherwise supported by pi-vimmode
+    insert-mode input is otherwise supported by pi-vim
 
 #### Scenario: Protected key binding is rejected for Ex command-line entry
 
-- **WHEN** `piVimMode.keymap.commands.startExCommand` attempts to bind a
+- **WHEN** `piVim.keymap.commands.startExCommand` attempts to bind a
     protected Pi-owned shortcut
 - **THEN** the binding is ignored or rejected with a warning and the protected
     shortcut continues to delegate to Pi behavior
@@ -332,27 +332,27 @@ keymap model while preserving the default Vim keys.
 
 #### Scenario: Default shift operator keymap is available
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting
+- **WHEN** Pi starts with no `piVim.keymap` setting
 - **THEN** the resolved keymap binds `indent` to `>` and `dedent` to `<`
 
 #### Scenario: Configured indent operator works in normal mode
 
-- **WHEN** `piVimMode.keymap.operators.indent` is set to a valid key sequence
+- **WHEN** `piVim.keymap.operators.indent` is set to a valid key sequence
     and the editor is in normal mode
 - **THEN** pressing that key sequence twice indents the current prompt line
     instead of requiring the default `>>` keys
 
 #### Scenario: Configured dedent operator works in visual mode
 
-- **WHEN** `piVimMode.keymap.operators.dedent` is set to a valid key sequence
+- **WHEN** `piVim.keymap.operators.dedent` is set to a valid key sequence
     and the editor is in a visual mode with an active selection
 - **THEN** pressing that key sequence dedents all prompt lines touched by the
     selection instead of requiring the default `<` key
 
 #### Scenario: Invalid shift operator binding falls back safely
 
-- **WHEN** `piVimMode.keymap.operators.indent` or
-    `piVimMode.keymap.operators.dedent` contains an unsupported type, protected
+- **WHEN** `piVim.keymap.operators.indent` or
+    `piVim.keymap.operators.dedent` contains an unsupported type, protected
     key, or conflicting key sequence
 - **THEN** the invalid field is ignored, a warning is recorded, and sibling
     keymap fields remain usable
@@ -365,8 +365,8 @@ specified.
 
 #### Scenario: Shift operator motion configuration is rejected
 
-- **WHEN** `piVimMode.keymap.operatorMotions.indent` or
-    `piVimMode.keymap.operatorMotions.dedent` is configured
+- **WHEN** `piVim.keymap.operatorMotions.indent` or
+    `piVim.keymap.operatorMotions.dedent` is configured
 - **THEN** the unsupported operator-motion field is ignored with a warning and
     configured delete, change, yank, and case operator-motion fields remain
     usable
@@ -381,31 +381,31 @@ specified.
 #### Scenario: Settings reference documents line-only shift operators
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** it documents `piVimMode.keymap.operators.indent`,
-    `piVimMode.keymap.operators.dedent`, their defaults, and the fact that
+- **THEN** it documents `piVim.keymap.operators.indent`,
+    `piVim.keymap.operators.dedent`, their defaults, and the fact that
     `operatorMotions` excludes line-only shift operators
 
 ### Requirement: Redo command participates in semantic keymap configuration
 
 The Vim editor SHALL expose redo as a finite semantic command in
-`piVimMode.keymap.commands` while preserving the default Vim redo binding.
+`piVim.keymap.commands` while preserving the default Vim redo binding.
 
 #### Scenario: Default redo keymap is available
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting and the editor is in
+- **WHEN** Pi starts with no `piVim.keymap` setting and the editor is in
     normal mode with redo state available
 - **THEN** pressing `Ctrl+R` invokes redo
 
 #### Scenario: Configured redo command is used
 
-- **WHEN** `piVimMode.keymap.commands.redo` is set to a valid key sequence and
+- **WHEN** `piVim.keymap.commands.redo` is set to a valid key sequence and
     the editor is in normal mode with redo state available
 - **THEN** pressing that configured key sequence invokes redo instead of
     requiring the default `Ctrl+R` key
 
 #### Scenario: Invalid redo binding falls back safely
 
-- **WHEN** `piVimMode.keymap.commands.redo` contains an unsupported type,
+- **WHEN** `piVim.keymap.commands.redo` contains an unsupported type,
     protected key, or conflicting key sequence
 - **THEN** the invalid field is ignored, a warning is recorded, and sibling
     keymap fields remain usable
@@ -433,12 +433,12 @@ allowing the extension to explicitly own `Ctrl+R` for normal-mode redo.
 
 - **WHEN** the editor is in insert mode and the user presses `Ctrl+R`
 - **THEN** input delegates to Pi default editor behavior unless insert-mode
-    `Ctrl+R` is explicitly supported by pi-vimmode in a future change
+    `Ctrl+R` is explicitly supported by pi-vim in a future change
 
 #### Scenario: Other protected shortcuts remain protected
 
-- **WHEN** `piVimMode.keymap` attempts to bind a protected Pi shortcut that
-    pi-vimmode does not explicitly own
+- **WHEN** `piVim.keymap` attempts to bind a protected Pi shortcut that
+    pi-vim does not explicitly own
 - **THEN** the binding is ignored or rejected with a warning and that shortcut
     continues to delegate to Pi behavior
 
@@ -462,7 +462,7 @@ behavior and shortcut ownership.
 #### Scenario: Settings reference documents redo command
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** it documents `piVimMode.keymap.commands.redo`, the default `ctrl+r`
+- **THEN** it documents `piVim.keymap.commands.redo`, the default `ctrl+r`
     binding, and normal-mode shortcut ownership
 
 ### Requirement: Backward search entry participates in semantic keymap configuration
@@ -472,27 +472,27 @@ finite semantic command while preserving the default `?` binding.
 
 #### Scenario: Default backward search keymap is available
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting and the editor is in
+- **WHEN** Pi starts with no `piVim.keymap` setting and the editor is in
     normal mode
 - **THEN** pressing `?` enters backward prompt search workbench mode
 
 #### Scenario: Configured backward search key is used
 
-- **WHEN** `piVimMode.keymap.commands.startSearchBackward` is set to a valid
+- **WHEN** `piVim.keymap.commands.startSearchBackward` is set to a valid
     key sequence and the editor is in normal mode
 - **THEN** that key sequence enters backward prompt search workbench mode
     instead of requiring the default `?` key
 
 #### Scenario: Configured backward search works from visual modes
 
-- **WHEN** `piVimMode.keymap.commands.startSearchBackward` is set to a valid
+- **WHEN** `piVim.keymap.commands.startSearchBackward` is set to a valid
     key sequence and the editor is in a visual mode with an active selection
 - **THEN** that key sequence enters backward prompt search workbench mode and
     a completed matching search extends the active visual selection
 
 #### Scenario: Configured backward search works after operators
 
-- **WHEN** `piVimMode.keymap.commands.startSearchBackward` is set to a valid
+- **WHEN** `piVim.keymap.commands.startSearchBackward` is set to a valid
     key sequence and the editor has a pending delete, change, or yank operator
 - **THEN** that key sequence starts backward search as an operator motion target
 
@@ -501,11 +501,11 @@ finite semantic command while preserving the default `?` binding.
 - **WHEN** the editor is in insert mode and the user presses `?` or a
     configured backward search key
 - **THEN** input delegates to Pi default editor behavior unless that
-    insert-mode input is otherwise supported by pi-vimmode
+    insert-mode input is otherwise supported by pi-vim
 
 #### Scenario: Invalid backward search binding falls back safely
 
-- **WHEN** `piVimMode.keymap.commands.startSearchBackward` contains an
+- **WHEN** `piVim.keymap.commands.startSearchBackward` contains an
     unsupported type, protected key, or conflicting key sequence
 - **THEN** the invalid field is ignored, a warning is recorded, and sibling
     keymap fields remain usable
@@ -532,8 +532,8 @@ behavior, or Pi-owned shortcut capture for workbench history navigation.
 
 #### Scenario: Protected shortcuts remain protected outside explicit ownership
 
-- **WHEN** `piVimMode.keymap` attempts to bind a protected Pi shortcut that
-    pi-vimmode does not explicitly own for normal-mode Vim behavior
+- **WHEN** `piVim.keymap` attempts to bind a protected Pi shortcut that
+    pi-vim does not explicitly own for normal-mode Vim behavior
 - **THEN** the binding is ignored or rejected with a warning and that shortcut
     continues to delegate to Pi behavior
 
@@ -564,7 +564,7 @@ backward search behavior and finite workbench controls.
 #### Scenario: Settings reference documents backward search command
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** it documents `piVimMode.keymap.commands.startSearchBackward`, the
+- **THEN** it documents `piVim.keymap.commands.startSearchBackward`, the
     default `?` binding, insert-mode delegation, and finite non-recursive
     workbench history behavior
 
@@ -576,14 +576,14 @@ settings, project settings, and valid overrides are applied.
 
 #### Scenario: Default binding is reported
 
-- **WHEN** Pi starts with no `piVimMode.keymap` customization and the editor
+- **WHEN** Pi starts with no `piVim.keymap` customization and the editor
     executes `:keymap redo`
 - **THEN** the editor reports the default redo binding from the resolved
     normal-mode keymap
 
 #### Scenario: Configured binding is reported
 
-- **WHEN** `piVimMode.keymap.commands.redo` is set to a valid non-conflicting
+- **WHEN** `piVim.keymap.commands.redo` is set to a valid non-conflicting
     key sequence and the editor executes `:keymap redo`
 - **THEN** the editor reports the configured binding instead of only the
     built-in default
@@ -604,7 +604,7 @@ documentation.
 
 #### Scenario: Protected key warning includes a reason
 
-- **WHEN** `piVimMode.keymap` attempts to bind a Pi-owned protected shortcut
+- **WHEN** `piVim.keymap` attempts to bind a Pi-owned protected shortcut
     such as `ctrl+p`
 - **THEN** the binding is ignored or rejected with a warning that identifies
     the key as protected and preserves valid sibling keymap fields
@@ -613,11 +613,11 @@ documentation.
 
 - **WHEN** the editor executes `:mapcheck ctrl+p`
 - **THEN** the editor reports that `ctrl+p` is protected for Pi behavior and
-    is not available as a pi-vimmode keymap binding
+    is not available as a pi-vim keymap binding
 
 #### Scenario: Explicitly owned control shortcut remains configurable
 
-- **WHEN** a shortcut is explicitly owned by pi-vimmode in normal mode, such
+- **WHEN** a shortcut is explicitly owned by pi-vim in normal mode, such
     as normal-mode redo on `ctrl+r`
 - **THEN** keymap validation does not reject that shortcut solely because it
     is a control-key sequence
@@ -625,7 +625,7 @@ documentation.
 #### Scenario: Insert mode Pi shortcut behavior is preserved
 
 - **WHEN** the editor is in insert mode and the user presses a Pi-owned
-    shortcut that pi-vimmode does not explicitly support in insert mode
+    shortcut that pi-vim does not explicitly support in insert mode
 - **THEN** the shortcut delegates to Pi behavior according to existing
     protected shortcut rules
 
@@ -636,7 +636,7 @@ baselines that compose with explicit field-level settings.
 
 #### Scenario: Valid preset applies baseline options
 
-- **WHEN** `piVimMode.preset` is set to `minimal`, `prompt-safe`, or `vim-heavy`
+- **WHEN** `piVim.preset` is set to `minimal`, `prompt-safe`, or `vim-heavy`
 - **THEN** settings resolution applies the selected preset baseline before
     explicit fields from the same settings object
 
@@ -656,7 +656,7 @@ baselines that compose with explicit field-level settings.
 
 #### Scenario: Invalid preset falls back safely
 
-- **WHEN** `piVimMode.preset` contains an unsupported value
+- **WHEN** `piVim.preset` contains an unsupported value
 - **THEN** settings resolution records a warning, ignores the invalid preset,
     preserves valid sibling fields, and constructs a live editor with valid
     resolved options
@@ -665,7 +665,7 @@ baselines that compose with explicit field-level settings.
 
 - **WHEN** any built-in preset is resolved
 - **THEN** the resulting keymap does not bind Pi-owned protected shortcuts
-    unless pi-vimmode explicitly owns that shortcut for the relevant mode
+    unless pi-vim explicitly owns that shortcut for the relevant mode
 
 ### Requirement: Keybindings popup command participates in semantic keymap configuration
 
@@ -675,13 +675,13 @@ and insert-mode delegation rules.
 
 #### Scenario: Keybindings popup command has no default binding
 
-- **WHEN** Pi starts with no `piVimMode.keymap.commands.showKeybindings` setting
+- **WHEN** Pi starts with no `piVim.keymap.commands.showKeybindings` setting
 - **THEN** no normal-mode key sequence opens the keybindings popup by default
     and existing default bindings remain unchanged
 
 #### Scenario: Configured keybindings popup command opens popup
 
-- **WHEN** `piVimMode.keymap.commands.showKeybindings` is set to a valid
+- **WHEN** `piVim.keymap.commands.showKeybindings` is set to a valid
     non-conflicting key sequence and the editor is in normal mode
 - **THEN** pressing that key sequence opens the same bounded read-only popup
     as `:keybindings`
@@ -699,18 +699,18 @@ and insert-mode delegation rules.
 - **WHEN** the editor is in insert mode and the user presses a key sequence
     configured for `showKeybindings`
 - **THEN** input delegates to Pi default editor behavior unless that
-    insert-mode input is otherwise supported by pi-vimmode
+    insert-mode input is otherwise supported by pi-vim
 
 #### Scenario: Protected key binding is rejected
 
-- **WHEN** `piVimMode.keymap.commands.showKeybindings` attempts to bind a
+- **WHEN** `piVim.keymap.commands.showKeybindings` attempts to bind a
     protected Pi-owned shortcut such as `ctrl+p`, `enter`, or `tab`
 - **THEN** the binding is ignored or rejected with a warning and the protected
     shortcut continues to delegate to Pi behavior
 
 #### Scenario: Conflicting keybinding is rejected
 
-- **WHEN** `piVimMode.keymap.commands.showKeybindings` attempts to use a key
+- **WHEN** `piVim.keymap.commands.showKeybindings` attempts to use a key
     sequence that exactly conflicts with or prefix-shadows an existing resolved
     grammar binding
 - **THEN** the invalid binding is ignored or rejected with a warning and the
@@ -731,7 +731,7 @@ adding arbitrary Vim grammar.
 
 #### Scenario: Configured find-forward command works after operator
 
-- **WHEN** `piVimMode.keymap.commands.findCharForward` is configured to a
+- **WHEN** `piVim.keymap.commands.findCharForward` is configured to a
     valid key sequence and the editor is in normal mode with a pending delete
     operator
 - **THEN** pressing that configured key sequence followed by a printable
@@ -739,8 +739,8 @@ adding arbitrary Vim grammar.
 
 #### Scenario: Configured till-forward command works after configured operator
 
-- **WHEN** `piVimMode.keymap.operators.change` and
-    `piVimMode.keymap.commands.tillCharForward` are configured to valid key
+- **WHEN** `piVim.keymap.operators.change` and
+    `piVim.keymap.commands.tillCharForward` are configured to valid key
     sequences
 - **THEN** pressing the configured change operator, configured till-forward
     command, and printable target character removes text up to but not including
@@ -755,8 +755,8 @@ adding arbitrary Vim grammar.
 
 #### Scenario: Configured repeated character search command works after operator
 
-- **WHEN** `piVimMode.keymap.commands.repeatCharSearch` or
-    `piVimMode.keymap.commands.repeatCharSearchReverse` is configured to a valid
+- **WHEN** `piVim.keymap.commands.repeatCharSearch` or
+    `piVim.keymap.commands.repeatCharSearchReverse` is configured to a valid
     key sequence and a previous character search exists
 - **THEN** pressing a motion-capable operator followed by that configured
     repeat command applies the operator to the repeated character-search target
@@ -775,7 +775,7 @@ adding arbitrary Vim grammar.
     for `findCharForward`, `findCharBackward`, `tillCharForward`, or
     `tillCharBackward`
 - **THEN** those keys continue to delegate to Pi default editing behavior
-    unless otherwise supported by pi-vimmode insert-mode input
+    unless otherwise supported by pi-vim insert-mode input
 
 ### Requirement: WORD and previous-end motions participate in semantic keymap configuration
 
@@ -785,21 +785,21 @@ configuration.
 
 #### Scenario: Default keymap binds WORD and previous-end motions
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting
+- **WHEN** Pi starts with no `piVim.keymap` setting
 - **THEN** the resolved keymap binds `wordForwardBig` to `W`,
     `wordBackwardBig` to `B`, `wordEndBig` to `E`, `wordPreviousEnd` to `ge`,
     and `wordPreviousEndBig` to `gE`
 
 #### Scenario: Configured WORD motion is used
 
-- **WHEN** `piVimMode.keymap.motions.wordForwardBig` is set to a valid finite
+- **WHEN** `piVim.keymap.motions.wordForwardBig` is set to a valid finite
     key sequence and the editor is in normal or visual mode
 - **THEN** that key sequence performs whitespace-delimited WORD-forward
     movement instead of requiring the default `W` key
 
 #### Scenario: Configured previous-end motion is used
 
-- **WHEN** `piVimMode.keymap.motions.wordPreviousEnd` is set to a valid finite
+- **WHEN** `piVim.keymap.motions.wordPreviousEnd` is set to a valid finite
     key sequence and the editor is in normal mode
 - **THEN** that key sequence performs previous word-end movement using the
     same target semantics as the default `ge` binding
@@ -808,14 +808,14 @@ configuration.
 
 - **WHEN** `wordForwardBig`, `wordEndBig`, `wordPreviousEnd`, or
     `wordPreviousEndBig` is included in
-    `piVimMode.keymap.operatorMotions.delete`, `change`, or `yank`
+    `piVim.keymap.operatorMotions.delete`, `change`, or `yank`
 - **THEN** the resolved operator followed by the configured motion applies
     that operator to the addressed finite range
 
 #### Scenario: Omitted new motion remains disabled for that operator
 
 - **WHEN** a motion-capable operator has an explicit
-    `piVimMode.keymap.operatorMotions` list that omits a WORD or previous-end
+    `piVim.keymap.operatorMotions` list that omits a WORD or previous-end
     motion action
 - **THEN** pressing that operator followed by the omitted motion clears the
     pending operator, leaves prompt text unchanged, and does not insert the
@@ -833,25 +833,25 @@ configuration.
 The Vim keymap configuration SHALL keep built-in semantic action names, default
 key sequences, validation allow-lists, command resolver mappings, and
 diagnostics-facing labels consistent from one typed built-in metadata source
-while preserving existing `piVimMode.keymap` behavior.
+while preserving existing `piVim.keymap` behavior.
 
 #### Scenario: Default keymap remains equivalent
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting
+- **WHEN** Pi starts with no `piVim.keymap` setting
 - **THEN** the resolved keymap exposes the same default operator, motion,
     command, macro, mark, text-object, operator-motion, and action bindings as
     before this change
 
 #### Scenario: Config validation uses the same semantic actions
 
-- **WHEN** `piVimMode.keymap` configures any supported semantic operator,
+- **WHEN** `piVim.keymap` configures any supported semantic operator,
     motion, command, macro, mark, text-object, or operator-motion action
 - **THEN** settings resolution accepts that action according to the existing
     field-specific validation rules and preserves valid sibling fields
 
 #### Scenario: Unsupported action still falls back safely
 
-- **WHEN** `piVimMode.keymap` contains an unsupported action name, unsupported
+- **WHEN** `piVim.keymap` contains an unsupported action name, unsupported
     key shape, protected shortcut, duplicate binding, or conflicting binding
 - **THEN** settings resolution ignores or rejects only the invalid field,
     records a warning, preserves valid sibling fields, and keeps session startup
@@ -907,7 +907,7 @@ parser contract for resolved keymaps.
 
 #### Scenario: Configured keymap resolution remains equivalent
 
-- **WHEN** `piVimMode.keymap` configures supported operators, motions,
+- **WHEN** `piVim.keymap` configures supported operators, motions,
     commands, text-object keys, or operator-motion matrices
 - **THEN** command resolution uses the active resolved keymap and preserves
     explicit override precedence, finite multi-key prefixes, and invalid-key
@@ -986,27 +986,27 @@ semantic keymap model while preserving finite deterministic key resolution.
 
 #### Scenario: Default scroll keymap is available
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting and the editor is in
+- **WHEN** Pi starts with no `piVim.keymap` setting and the editor is in
     normal or visual mode
 - **THEN** the resolved keymap binds `halfPageDown` to `<C-d>` and
     `halfPageUp` to `<C-u>`
 
 #### Scenario: Configured scroll motion key is used
 
-- **WHEN** `piVimMode.keymap.motions.halfPageDown` or
-    `piVimMode.keymap.motions.halfPageUp` is set to a valid key sequence
+- **WHEN** `piVim.keymap.motions.halfPageDown` or
+    `piVim.keymap.motions.halfPageUp` is set to a valid key sequence
 - **THEN** that key sequence performs the matching scroll motion in normal and
     visual contexts where motions are supported
 
 #### Scenario: Scroll motions are not default operator motions
 
-- **WHEN** no `piVimMode.keymap.operatorMotions` setting is configured
+- **WHEN** no `piVim.keymap.operatorMotions` setting is configured
 - **THEN** `delete`, `change`, and `yank` do not treat `<C-d>` or `<C-u>` as
     supported operator-motion targets
 
 #### Scenario: Scroll operator-motion config is safe
 
-- **WHEN** `piVimMode.keymap.operatorMotions` attempts to include
+- **WHEN** `piVim.keymap.operatorMotions` attempts to include
     `halfPageDown` or `halfPageUp` for `delete`, `change`, or `yank`
 - **THEN** the unsupported operator-motion entry is ignored or rejected with a
     warning and does not corrupt prompt text or registers
@@ -1025,15 +1025,15 @@ behavior.
 
 #### Scenario: Default paragraph motion keymap is available
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting and the editor is in
+- **WHEN** Pi starts with no `piVim.keymap` setting and the editor is in
     normal or visual mode
 - **THEN** the resolved keymap binds `paragraphBackward` to `{` and
     `paragraphForward` to `}`
 
 #### Scenario: Configured paragraph motion key is used
 
-- **WHEN** `piVimMode.keymap.motions.paragraphForward` or
-    `piVimMode.keymap.motions.paragraphBackward` is set to a valid finite key
+- **WHEN** `piVim.keymap.motions.paragraphForward` or
+    `piVim.keymap.motions.paragraphBackward` is set to a valid finite key
     sequence
 - **THEN** that key sequence performs the matching paragraph motion in normal
     and visual contexts where motions are supported
@@ -1041,14 +1041,14 @@ behavior.
 #### Scenario: Configured operator-motion matrix accepts paragraph motions
 
 - **WHEN** `paragraphForward` or `paragraphBackward` is included in
-    `piVimMode.keymap.operatorMotions.delete`, `change`, or `yank`
+    `piVim.keymap.operatorMotions.delete`, `change`, or `yank`
 - **THEN** the resolved operator followed by the configured paragraph motion
     applies that operator to the addressed finite paragraph range
 
 #### Scenario: Omitted paragraph operator motion is disabled safely
 
 - **WHEN** a motion-capable operator has an explicit
-    `piVimMode.keymap.operatorMotions` list that omits `paragraphForward` or
+    `piVim.keymap.operatorMotions` list that omits `paragraphForward` or
     `paragraphBackward`
 - **THEN** pressing that operator followed by the omitted paragraph motion
     clears the pending operator, leaves prompt text unchanged, and does not
@@ -1068,7 +1068,7 @@ target while preserving existing inner and around text-object kind behavior.
 
 #### Scenario: Default paragraph text object target is available
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting and the editor is in
+- **WHEN** Pi starts with no `piVim.keymap` setting and the editor is in
     normal mode with a pending delete, change, or yank operator followed by `i`
     or `a`
 - **THEN** the resolved keymap binds `textObjects.targets.paragraph` to `p` so
@@ -1076,7 +1076,7 @@ target while preserving existing inner and around text-object kind behavior.
 
 #### Scenario: Configured paragraph text object target is used
 
-- **WHEN** `piVimMode.keymap.textObjects.targets.paragraph` is set to a valid
+- **WHEN** `piVim.keymap.textObjects.targets.paragraph` is set to a valid
     finite key sequence
 - **THEN** pending operator text-object resolution uses that key sequence as
     the paragraph target while preserving configured `inner` and `around` kind
@@ -1084,7 +1084,7 @@ target while preserving existing inner and around text-object kind behavior.
 
 #### Scenario: Invalid paragraph text object binding falls back safely
 
-- **WHEN** `piVimMode.keymap.textObjects.targets.paragraph` contains an
+- **WHEN** `piVim.keymap.textObjects.targets.paragraph` contains an
     unsupported type, protected key, or conflicting key sequence
 - **THEN** the invalid field is ignored or rejected with a warning and sibling
     keymap fields remain usable
@@ -1111,28 +1111,28 @@ bindings.
 
 #### Scenario: Default star keymap is available
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting and the editor is in
+- **WHEN** Pi starts with no `piVim.keymap` setting and the editor is in
     normal mode with the cursor on a keyword word
 - **THEN** pressing `*` searches forward for that word using prompt-local word
     search behavior
 
 #### Scenario: Default hash keymap is available
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting and the editor is in
+- **WHEN** Pi starts with no `piVim.keymap` setting and the editor is in
     normal mode with the cursor on a keyword word
 - **THEN** pressing `#` searches backward for that word using prompt-local
     word search behavior
 
 #### Scenario: Configured forward word search key is used
 
-- **WHEN** `piVimMode.keymap.commands.searchWordForward` is set to a valid key
+- **WHEN** `piVim.keymap.commands.searchWordForward` is set to a valid key
     sequence and the editor is in normal mode with the cursor on a keyword word
 - **THEN** that key sequence searches forward for that word instead of
     requiring the default `*` key
 
 #### Scenario: Configured backward word search key is used
 
-- **WHEN** `piVimMode.keymap.commands.searchWordBackward` is set to a valid
+- **WHEN** `piVim.keymap.commands.searchWordBackward` is set to a valid
     key sequence and the editor is in normal mode with the cursor on a keyword
     word
 - **THEN** that key sequence searches backward for that word instead of
@@ -1143,12 +1143,12 @@ bindings.
 - **WHEN** the editor is in insert mode and the user presses `*`, `#`, or a
     configured word search key
 - **THEN** input delegates to Pi default editor behavior unless that
-    insert-mode input is otherwise supported by pi-vimmode
+    insert-mode input is otherwise supported by pi-vim
 
 #### Scenario: Invalid word search binding falls back safely
 
-- **WHEN** `piVimMode.keymap.commands.searchWordForward` or
-    `piVimMode.keymap.commands.searchWordBackward` contains an unsupported type,
+- **WHEN** `piVim.keymap.commands.searchWordForward` or
+    `piVim.keymap.commands.searchWordBackward` contains an unsupported type,
     protected key, or conflicting key sequence
 - **THEN** the invalid field is ignored, a warning is recorded, and sibling
     keymap fields remain usable
@@ -1176,32 +1176,32 @@ word-under-cursor search behavior.
 #### Scenario: Settings reference documents word search commands
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** it documents `piVimMode.keymap.commands.searchWordForward`, default
-    `*`, `piVimMode.keymap.commands.searchWordBackward`, default `#`,
+- **THEN** it documents `piVim.keymap.commands.searchWordForward`, default
+    `*`, `piVim.keymap.commands.searchWordBackward`, default `#`,
     normal-mode ownership, and insert-mode delegation
 
 ### Requirement: Case operators participate in semantic keymap configuration
 
 The Vim editor SHALL expose finite case operators through
-`piVimMode.keymap.operators` while preserving deterministic prefix resolution
+`piVim.keymap.operators` while preserving deterministic prefix resolution
 for existing `g` bindings.
 
 #### Scenario: Default case operator keymap is available
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting
+- **WHEN** Pi starts with no `piVim.keymap` setting
 - **THEN** the resolved keymap binds `lowercase` to `gu`, `uppercase` to `gU`,
     and `toggleCase` to `g~`
 
 #### Scenario: Configured lowercase operator works
 
-- **WHEN** `piVimMode.keymap.operators.lowercase` is set to a valid finite key
+- **WHEN** `piVim.keymap.operators.lowercase` is set to a valid finite key
     sequence and the editor is in normal mode
 - **THEN** pressing that configured operator followed by a supported
     configured motion lowercases the addressed prompt range
 
 #### Scenario: Configured case operator text object works
 
-- **WHEN** `piVimMode.keymap.operators.uppercase` is configured and the editor
+- **WHEN** `piVim.keymap.operators.uppercase` is configured and the editor
     receives that operator followed by a configured text-object kind and target
 - **THEN** the addressed text object is uppercased without changing registers
     or mode
@@ -1215,7 +1215,7 @@ for existing `g` bindings.
 
 #### Scenario: Invalid case operator binding falls back safely
 
-- **WHEN** `piVimMode.keymap.operators.lowercase`, `uppercase`, or
+- **WHEN** `piVim.keymap.operators.lowercase`, `uppercase`, or
     `toggleCase` contains an unsupported type, protected key, or conflicting key
     sequence
 - **THEN** the invalid field is ignored, a warning is recorded, and sibling
@@ -1230,20 +1230,20 @@ for existing `g` bindings.
 
 ### Requirement: Escape aliases are configurable
 
-The Vim keymap configuration SHALL accept an opt-in `piVimMode.keymap.escape`
+The Vim keymap configuration SHALL accept an opt-in `piVim.keymap.escape`
 array of finite key sequences that act as aliases for insert-mode and
 visual-mode escape behavior without changing normal-mode, operator-pending, or
 Pi-owned shortcut bindings.
 
 #### Scenario: Default insert escape aliases are absent
 
-- **WHEN** Pi starts with no `piVimMode.keymap.escape` setting
+- **WHEN** Pi starts with no `piVim.keymap.escape` setting
 - **THEN** the resolved keymap has no custom escape aliases and ordinary
     insert-mode text delegation remains unchanged
 
 #### Scenario: Modified-key escape alias is accepted
 
-- **WHEN** `piVimMode.keymap.escape` contains a valid modified-key alias such
+- **WHEN** `piVim.keymap.escape` contains a valid modified-key alias such
     as `<C-j>` or `<D-j>`
 - **THEN** the resolved keymap records that sequence as an escape alias
     without removing normal-mode `j`, normal-mode `k`, or any other existing
@@ -1251,21 +1251,21 @@ Pi-owned shortcut bindings.
 
 #### Scenario: Protected shortcut alias is rejected
 
-- **WHEN** `piVimMode.keymap.escape` contains a protected Pi shortcut such as
+- **WHEN** `piVim.keymap.escape` contains a protected Pi shortcut such as
     `enter`, `tab`, `ctrl+c`, or `escape`
 - **THEN** that alias is ignored, a warning is recorded, and the protected
-    shortcut keeps its existing Pi or pi-vimmode behavior
+    shortcut keeps its existing Pi or pi-vim behavior
 
 #### Scenario: Raw printable text aliases are rejected
 
-- **WHEN** `piVimMode.keymap.escape` contains printable text such as `j`,
+- **WHEN** `piVim.keymap.escape` contains printable text such as `j`,
     `jk`, or `jj`
 - **THEN** that alias is ignored with a warning so users can still type that
     text normally in insert mode
 
 #### Scenario: Invalid alias fields fall back safely
 
-- **WHEN** `piVimMode.keymap.escape` is not an array or contains unsupported
+- **WHEN** `piVim.keymap.escape` is not an array or contains unsupported
     key values
 - **THEN** invalid entries are ignored with warnings and valid sibling keymap
     settings remain usable
@@ -1285,7 +1285,7 @@ diagnostics aligned with the effective configuration.
 #### Scenario: Settings reference documents escape aliases
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** it documents `piVimMode.keymap.escape`, examples such as `<C-j>`
+- **THEN** it documents `piVim.keymap.escape`, examples such as `<C-j>`
     and `<D-j>`, protected-key rejection, raw printable text rejection,
     autocomplete behavior, and Ctrl-J terminal ambiguity
 
@@ -1313,21 +1313,21 @@ diagnostics aligned with the effective configuration.
 ### Requirement: Allow-listed protected shortcuts dispatch in configured Vim contexts
 
 The Vim editor SHALL route accepted allow-listed protected key bindings through
-the finite pi-vimmode keymap in states where the configured binding is
+the finite pi-vim keymap in states where the configured binding is
 meaningful, while preserving Pi delegation for unmapped protected keys.
 
 #### Scenario: Normal-mode protected command dispatches
 
 - **WHEN** `ctrl+p` is allow-listed and configured for a supported normal-mode
     command such as `showKeybindings`
-- **THEN** pressing `ctrl+p` in normal mode invokes that pi-vimmode command
+- **THEN** pressing `ctrl+p` in normal mode invokes that pi-vim command
     instead of delegating to Pi
 
 #### Scenario: Visual-mode protected command dispatches where supported
 
 - **WHEN** `ctrl+p` is allow-listed and configured for a command supported
     from visual mode
-- **THEN** pressing `ctrl+p` in visual mode invokes the configured pi-vimmode
+- **THEN** pressing `ctrl+p` in visual mode invokes the configured pi-vim
     behavior instead of delegating to Pi
 
 #### Scenario: Unmapped protected shortcut still delegates
@@ -1347,7 +1347,7 @@ meaningful, while preserving Pi delegation for unmapped protected keys.
 #### Scenario: Protected escape alias can be explicit
 
 - **WHEN** one settings layer allow-lists `enter` and configures
-    `piVimMode.keymap.escape` with `enter`
+    `piVim.keymap.escape` with `enter`
 - **THEN** pressing `enter` in insert mode exits to normal mode instead of
     submitting through Pi
 
@@ -1372,14 +1372,14 @@ override settings, defaults, precedence, and runtime limits.
 #### Scenario: Settings reference documents protected overrides
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** it documents `piVimMode.keymap.allowProtectedOverrides`, default
+- **THEN** it documents `piVim.keymap.allowProtectedOverrides`, default
     empty behavior, same-layer allow-list scope, protected shortcut examples,
     and the fact that Pi/terminal input may not deliver every chord distinctly
 
 #### Scenario: Feature guide documents shortcut ownership limits
 
 - **WHEN** the user opens `docs/features.md`
-- **THEN** it explains that pi-vimmode can override protected shortcuts only
+- **THEN** it explains that pi-vim can override protected shortcuts only
     through explicit keymap configuration and only for keys Pi delivers to the
     editor
 
@@ -1391,13 +1391,13 @@ broad insert-mode mapping surface.
 
 #### Scenario: Default insert newline keymap is empty
 
-- **WHEN** Pi starts with no `piVimMode.keymap.insert` setting
+- **WHEN** Pi starts with no `piVim.keymap.insert` setting
 - **THEN** the resolved keymap has no insert-mode newline bindings and
     existing insert-mode Pi delegation is preserved
 
 #### Scenario: Insert line below binding is accepted
 
-- **WHEN** `piVimMode.keymap.insert.openLineBelow` contains a valid modified
+- **WHEN** `piVim.keymap.insert.openLineBelow` contains a valid modified
     key such as `ctrl+j`
 - **THEN** the resolved keymap records `ctrl+j` as an insert-mode
     open-line-below binding without changing normal-mode `openLineBelow`
@@ -1405,7 +1405,7 @@ broad insert-mode mapping surface.
 
 #### Scenario: Insert line above binding is accepted
 
-- **WHEN** `piVimMode.keymap.insert.openLineAbove` contains a valid modified
+- **WHEN** `piVim.keymap.insert.openLineAbove` contains a valid modified
     key such as `ctrl+k`
 - **THEN** the resolved keymap records `ctrl+k` as an insert-mode
     open-line-above binding without changing normal-mode `openLineAbove`
@@ -1413,30 +1413,30 @@ broad insert-mode mapping surface.
 
 #### Scenario: Raw printable insert binding is rejected
 
-- **WHEN** `piVimMode.keymap.insert.openLineBelow` contains raw printable text
+- **WHEN** `piVim.keymap.insert.openLineBelow` contains raw printable text
     such as `j`, `oo`, or `open`
 - **THEN** that binding is ignored with a warning and valid sibling keymap
     fields remain usable
 
 #### Scenario: Protected insert binding requires same-layer allow-list
 
-- **WHEN** `piVimMode.keymap.insert.openLineBelow` contains a protected Pi
+- **WHEN** `piVim.keymap.insert.openLineBelow` contains a protected Pi
     shortcut such as `enter` and the same settings layer does not include it in
-    `piVimMode.keymap.allowProtectedOverrides`
+    `piVim.keymap.allowProtectedOverrides`
 - **THEN** the binding is rejected with a protected-key warning and the
     shortcut continues to delegate to Pi behavior
 
 #### Scenario: Allow-listed protected insert binding is accepted
 
 - **WHEN** one settings layer configures
-    `piVimMode.keymap.allowProtectedOverrides` with `enter` and
-    `piVimMode.keymap.insert.openLineBelow` with `enter`
+    `piVim.keymap.allowProtectedOverrides` with `enter` and
+    `piVim.keymap.insert.openLineBelow` with `enter`
 - **THEN** the resolved keymap accepts `enter` as an insert-mode
     open-line-below binding unless another validation rule rejects it
 
 #### Scenario: Invalid insert binding fields preserve valid siblings
 
-- **WHEN** `piVimMode.keymap.insert` contains unsupported field types, unknown
+- **WHEN** `piVim.keymap.insert` contains unsupported field types, unknown
     insert actions, or invalid key entries alongside valid insert newline
     bindings
 - **THEN** invalid entries produce warnings, valid insert newline bindings
@@ -1459,7 +1459,7 @@ insert-mode line-opening, edit, and navigation keybindings.
 #### Scenario: Settings reference documents insert bindings
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** it documents `piVimMode.keymap.insert.openLineBelow`,
+- **THEN** it documents `piVim.keymap.insert.openLineBelow`,
     `openLineAbove`, `deleteWordBackward`, `deleteWordForward`,
     `deleteLineBackward`, `deleteLineForward`, `moveWordBackward`,
     `moveWordForward`, `moveLineStart`, and `moveLineEnd`, including empty
@@ -1471,7 +1471,7 @@ insert-mode line-opening, edit, and navigation keybindings.
 - **WHEN** the user opens `docs/features.md`
 - **THEN** it documents that insert mode delegates to Pi by default and only
     configured insert line-opening, edit, or movement bindings are handled by
-    pi-vimmode while autocomplete is inactive
+    pi-vim while autocomplete is inactive
 
 ### Requirement: Visual reselection participates in semantic keymap configuration
 
@@ -1480,13 +1480,13 @@ semantic command action with a default `gv` binding.
 
 #### Scenario: Default visual reselection keymap is available
 
-- **WHEN** Pi starts with no `piVimMode.keymap` setting and the editor is in
+- **WHEN** Pi starts with no `piVim.keymap` setting and the editor is in
     normal mode with a valid stored last visual selection
 - **THEN** pressing `gv` reselects the stored visual selection
 
 #### Scenario: Configured visual reselection key executes
 
-- **WHEN** `piVimMode.keymap.commands.reselectVisual` is set to a valid finite
+- **WHEN** `piVim.keymap.commands.reselectVisual` is set to a valid finite
     key sequence and the editor is in normal mode with a valid stored last
     visual selection
 - **THEN** pressing that configured key sequence reselects the stored visual
@@ -1494,7 +1494,7 @@ semantic command action with a default `gv` binding.
 
 #### Scenario: Invalid visual reselection keymap falls back safely
 
-- **WHEN** `piVimMode.keymap.commands.reselectVisual` is configured with an
+- **WHEN** `piVim.keymap.commands.reselectVisual` is configured with an
     unsupported value or protected key sequence
 - **THEN** that invalid binding is ignored, a warning is recorded, and valid
     sibling keymap fields remain usable
@@ -1550,7 +1550,7 @@ prefix-shadow conflicts.
 ### Requirement: Leader setting resolves across JSON and trusted JavaScript layers
 
 The Vim editor SHALL support an optional leader mapping prefix through
-`piVimMode.leader` in global and project JSON settings and `vim.g.mapleader` in
+`piVim.leader` in global and project JSON settings and `vim.g.mapleader` in
 trusted global JavaScript config. A leader value MUST be exactly one printable
 character or `null`, MUST default to unset, and MUST resolve using global JSON,
 trusted global JavaScript, then project JSON precedence.
@@ -1563,7 +1563,7 @@ trusted global JavaScript, then project JSON precedence.
 
 #### Scenario: JSON leader configures a printable prefix
 
-- **WHEN** global or project `piVimMode.leader` is set to one printable
+- **WHEN** global or project `piVim.leader` is set to one printable
     character such as space, comma, or backslash
 - **THEN** the resolved options retain that character as the effective leader
 
@@ -1576,7 +1576,7 @@ trusted global JavaScript, then project JSON precedence.
 
 #### Scenario: Later layer clears inherited leader
 
-- **WHEN** a later JSON layer sets `piVimMode.leader` to `null` or trusted JS
+- **WHEN** a later JSON layer sets `piVim.leader` to `null` or trusted JS
     assigns `null` to `vim.g.mapleader`
 - **THEN** that layer clears the inherited leader unless a still-later valid
     layer configures one
@@ -1660,7 +1660,7 @@ validation, valid lower-layer fallback, and explicit empty-array clears.
 #### Scenario: Replay RHS does not expand leader
 
 - **WHEN** a JS string replay RHS contains `<leader>` notation
-- **THEN** pi-vimmode does not substitute the configured leader into that
+- **THEN** pi-vim does not substitute the configured leader into that
     replay input
 
 #### Scenario: Existing category rules remain authoritative
@@ -1753,7 +1753,7 @@ configuration.
 #### Scenario: Settings reference documents both config surfaces
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** it documents `piVimMode.leader`, `vim.g.mapleader`, JSON and JS
+- **THEN** it documents `piVim.leader`, `vim.g.mapleader`, JSON and JS
     examples, precedence, `null` clearing, validation warnings, prefix
     reservation, and non-goals
 
@@ -1773,7 +1773,7 @@ metadata-only diagnostic/help action IDs.
 #### Scenario: Metadata IDs are not bindable
 
 - **WHEN** settings or trusted JavaScript config try to bind a metadata ID such
-    as `vimmode.keybindings`, `vimmode.keymap`, or `vimmode.help`
+    as `pi-vim.keybindings`, `pi-vim.keymap`, or `pi-vim.help`
 - **THEN** no user keybinding dispatch is created for the metadata ID
 
 #### Scenario: Keybindings command keeps its own scope
@@ -1786,33 +1786,33 @@ metadata-only diagnostic/help action IDs.
 
 The Vim keymap configuration SHALL reject protected Pi shortcuts unless the same
 keymap settings layer explicitly allow-lists the normalized protected key
-through `piVimMode.keymap.allowProtectedOverrides`.
+through `piVim.keymap.allowProtectedOverrides`.
 
 #### Scenario: Protected key remains rejected by default
 
-- **WHEN** `piVimMode.keymap.commands.showKeybindings` is configured with
-    `ctrl+p` and `piVimMode.keymap.allowProtectedOverrides` is absent
+- **WHEN** `piVim.keymap.commands.showKeybindings` is configured with
+    `ctrl+p` and `piVim.keymap.allowProtectedOverrides` is absent
 - **THEN** the `ctrl+p` binding is rejected with a protected-key warning and
     the shortcut continues to delegate to Pi behavior
 
 #### Scenario: Allow-listed classic keymap binding is accepted
 
 - **WHEN** one settings layer configures
-    `piVimMode.keymap.allowProtectedOverrides` with `ctrl+p` and
-    `piVimMode.keymap.commands.showKeybindings` with `ctrl+p`
+    `piVim.keymap.allowProtectedOverrides` with `ctrl+p` and
+    `piVim.keymap.commands.showKeybindings` with `ctrl+p`
 - **THEN** the resolved keymap accepts `ctrl+p` for `showKeybindings` instead
     of rejecting it solely because it is protected
 
 #### Scenario: Allow-list is scoped to its settings layer
 
 - **WHEN** global settings allow-list `ctrl+p` but project settings bind
-    `ctrl+p` without project `piVimMode.keymap.allowProtectedOverrides`
+    `ctrl+p` without project `piVim.keymap.allowProtectedOverrides`
 - **THEN** the project binding is rejected as protected and valid sibling
     project keymap fields remain usable
 
 #### Scenario: Invalid allow-list entries preserve valid siblings
 
-- **WHEN** `piVimMode.keymap.allowProtectedOverrides` contains unsupported key
+- **WHEN** `piVim.keymap.allowProtectedOverrides` contains unsupported key
     entries and a valid protected key entry
 - **THEN** unsupported entries produce warnings, the valid protected key entry
     remains usable for bindings in the same settings layer, and valid sibling
@@ -1826,14 +1826,14 @@ by default.
 
 #### Scenario: Default insert edit keymap is empty
 
-- **WHEN** Pi starts with no `piVimMode.keymap.insert` setting
+- **WHEN** Pi starts with no `piVim.keymap.insert` setting
 - **THEN** the resolved keymap has no insert-mode edit, navigation, or
     line-opening bindings and ordinary insert-mode input continues to delegate
     to Pi
 
 #### Scenario: Insert edit bindings are accepted
 
-- **WHEN** `piVimMode.keymap.insert.deleteWordBackward`, `deleteWordForward`,
+- **WHEN** `piVim.keymap.insert.deleteWordBackward`, `deleteWordForward`,
     `deleteLineBackward`, or `deleteLineForward` contains a valid modified key
     such as `ctrl+w`, `alt+d`, `ctrl+u`, or `ctrl+k`
 - **THEN** the resolved keymap records that key for the configured insert edit
@@ -1841,7 +1841,7 @@ by default.
 
 #### Scenario: Insert movement bindings are accepted
 
-- **WHEN** `piVimMode.keymap.insert.moveWordBackward`, `moveWordForward`,
+- **WHEN** `piVim.keymap.insert.moveWordBackward`, `moveWordForward`,
     `moveLineStart`, or `moveLineEnd` contains a valid modified key such as
     `alt+b`, `alt+f`, `ctrl+a`, or `ctrl+e`
 - **THEN** the resolved keymap records that key for the configured insert
@@ -1850,22 +1850,22 @@ by default.
 
 #### Scenario: Raw printable insert bindings are rejected
 
-- **WHEN** `piVimMode.keymap.insert.deleteWordBackward` or another insert
+- **WHEN** `piVim.keymap.insert.deleteWordBackward` or another insert
     action contains raw printable text such as `j`, `jk`, `jj`, or `oo`
 - **THEN** that binding is ignored with a warning and valid sibling insert and
     normal/visual keymap fields remain usable
 
 #### Scenario: Protected insert binding requires same-layer allow-list
 
-- **WHEN** `piVimMode.keymap.insert.deleteLineForward` contains a protected Pi
+- **WHEN** `piVim.keymap.insert.deleteLineForward` contains a protected Pi
     shortcut such as `enter` and the same settings layer does not include it in
-    `piVimMode.keymap.allowProtectedOverrides`
+    `piVim.keymap.allowProtectedOverrides`
 - **THEN** the binding is rejected with a protected-key warning and that
     shortcut continues to delegate to Pi behavior
 
 #### Scenario: Duplicate insert binding is diagnosed
 
-- **WHEN** two different `piVimMode.keymap.insert` actions claim the same
+- **WHEN** two different `piVim.keymap.insert` actions claim the same
     normalized key sequence
 - **THEN** the resolved keymap remains deterministic, a warning names both
     insert actions, and session startup continues
@@ -1874,20 +1874,20 @@ by default.
 
 - **WHEN** an accepted insert edit or movement binding is pressed in insert
     mode while autocomplete is inactive
-- **THEN** pi-vimmode performs the configured prompt-local insert action
+- **THEN** pi-vim performs the configured prompt-local insert action
     instead of delegating that key to Pi
 
 #### Scenario: Autocomplete keeps ownership
 
 - **WHEN** autocomplete is active and the user presses a key sequence
-    configured under `piVimMode.keymap.insert`
+    configured under `piVim.keymap.insert`
 - **THEN** input delegates to Pi autocomplete behavior rather than executing
     the insert action
 
 ### Requirement: Trusted global JS keymap builder adds descriptor bindings
 
 The Vim editor SHALL load a trusted global JS config file from
-`~/.pi/agent/pi-vimmode.config.js` after global JSON settings and before project
+`~/.pi/agent/pi-vim.config.js` after global JSON settings and before project
 JSON settings.
 
 #### Scenario: JS builder uses action descriptors instead of internal action strings
@@ -1923,26 +1923,26 @@ JSON settings.
 #### Scenario: JS config is trusted global code only
 
 - **WHEN** Pi loads settings for a project
-- **THEN** pi-vimmode does not load project-local executable JS config
+- **THEN** pi-vim does not load project-local executable JS config
 - **AND** unsupported JS default exports fail with warnings instead of
     crashing startup
 
 ### Requirement: Settings removed in 1.0.0 warn and are ignored
 
-The configuration SHALL warn about `piVimMode.keymap.actions`,
-`piVimMode.keymap.actionPresets`, and `piVimMode.promptTransforms`, which were
+The configuration SHALL warn about `piVim.keymap.actions`,
+`piVim.keymap.actionPresets`, and `piVim.promptTransforms`, which were
 removed in 1.0.0, and SHALL ignore them without discarding valid sibling
 settings.
 
 #### Scenario: Removed settings produce warnings
 
-- **WHEN** settings contain `piVimMode.keymap.actions`,
-    `piVimMode.keymap.actionPresets`, or `piVimMode.promptTransforms`
+- **WHEN** settings contain `piVim.keymap.actions`,
+    `piVim.keymap.actionPresets`, or `piVim.promptTransforms`
 - **THEN** each removed setting produces one warning naming the setting and
     stating that it was removed in 1.0.0 and is ignored
 
 #### Scenario: Valid siblings survive removed settings
 
 - **WHEN** settings combine a removed setting with valid settings such as
-    `piVimMode.startMode` or `piVimMode.keymap.commands`
+    `piVim.startMode` or `piVim.keymap.commands`
 - **THEN** the valid settings resolve as if the removed setting were absent

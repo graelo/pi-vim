@@ -3,14 +3,14 @@
 ## Purpose
 
 Define the trusted global JavaScript configuration surface: its declaration-only
-public types, the published `@graelo/pi-vimmode/config` subpath, and checked
+public types, the published `@graelo/pi-vim/config` subpath, and checked
 examples.
 
 ## Requirements
 
 ### Requirement: Public trusted-config types are declaration only
 
-The package SHALL export a declaration-only `@graelo/pi-vimmode/config` subpath
+The package SHALL export a declaration-only `@graelo/pi-vim/config` subpath
 containing `VimConfig` and `VimConfigApi` without runtime config helper surface.
 
 #### Scenario: Root config uses public VimConfig type
@@ -32,7 +32,7 @@ containing `VimConfig` and `VimConfigApi` without runtime config helper surface.
 #### Scenario: Config subpath has no runtime module
 
 - **WHEN** a consumer inspects or executes the published package
-- **THEN** `@graelo/pi-vimmode/config` exposes declarations only
+- **THEN** `@graelo/pi-vim/config` exposes declarations only
 - **AND** package contains no runtime config stub, `defineConfig`, descriptor
     constructor, or registry API
 
@@ -60,18 +60,18 @@ seams without rewriting it.
 
 The published package SHALL include `src/vim-config.d.ts` and a matching
 type-only `./config` export-map entry, and SHALL resolve
-`@graelo/pi-vimmode/config` under supported TypeScript module-resolution modes.
+`@graelo/pi-vim/config` under supported TypeScript module-resolution modes.
 
 #### Scenario: Bundler consumer resolves declaration
 
 - **WHEN** a consumer imports `VimConfig` and `VimConfigApi` from
-    `@graelo/pi-vimmode/config` using TypeScript Bundler resolution
+    `@graelo/pi-vim/config` using TypeScript Bundler resolution
 - **THEN** the consumer typechecks successfully
 
 #### Scenario: NodeNext consumer resolves declaration
 
 - **WHEN** a consumer imports `VimConfig` and `VimConfigApi` from
-    `@graelo/pi-vimmode/config` using TypeScript NodeNext resolution
+    `@graelo/pi-vim/config` using TypeScript NodeNext resolution
 - **THEN** the consumer typechecks successfully
 - **AND** no runtime JavaScript module is required for config subpath
 

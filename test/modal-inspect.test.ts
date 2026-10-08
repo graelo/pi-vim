@@ -7,7 +7,7 @@ import {
   appendMessageHistory,
   MESSAGE_HISTORY_LIMIT,
   runtimeMessagesMessage,
-  vimmodeInspectMessage,
+  vimInspectMessage,
 } from "../src/modal/inspect.ts";
 
 const cursor = { line: 1, col: 2 };
@@ -30,7 +30,7 @@ describe("modal inspect diagnostics", () => {
       messageHistory: [{ kind: "error", text: "Pattern not found: secret" }],
     };
 
-    const message = vimmodeInspectMessage({
+    const message = vimInspectMessage({
       state,
       snapshot,
       options: DEFAULT_VIM_OPTIONS,
