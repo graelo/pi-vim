@@ -1247,6 +1247,8 @@ Useful files when verifying feature behavior:
     control parser.
 - `src/buffer.ts`: pure prompt-buffer navigation, edit, search, visual, mark,
     register, and substitution operations.
+- `src/prose.ts`: paragraph and sentence model behind `{`, `}`, `(`, `)`,
+    `ip`/`ap`, and `is`/`as`.
 - `src/ex.ts`: finite Ex command-line parser.
 - `src/runtime-help.ts`: finite runtime help/feature registry and compact help
     output.

@@ -16,6 +16,7 @@ context: |
   - src/commands.ts: finite semantic key parser, counts, operators, motions, text objects, macro parser.
   - src/buffer.ts: pure prompt-buffer navigation/edit/search/visual/mark/register/substitution/line-transform operations.
   - src/ex.ts: finite Ex command parser; no broad Vimscript parser.
+  - src/prose.ts: paragraph and sentence model for {, }, (, ), ip/ap, is/as; src/text-position.ts: shared position/offset helpers.
   - src/prompt-structures.ts: prompt-native Markdown/list/tag/error-block structure ranges.
   - src/modal/engine.ts: modal state machine and side-effect decisions; avoid direct text splicing when buffer helpers fit.
   - src/modal/view.ts: testable status/view derivation.
