@@ -6,6 +6,7 @@ import {
   quotePairRange,
   type SurroundRange,
 } from "./buffer.ts";
+import { offsetToPosition } from "./text-position.ts";
 
 /** Text added before and after the surrounded range. */
 export type SurroundPair = { open: string; close: string };
@@ -52,12 +53,6 @@ export function surroundTargetFor(char: string): SurroundDeleteTarget | undefine
   if (bracket)
     return { kind: "bracket", open: bracket.open, close: bracket.close, trim: bracket.opening };
   return isPunctuation(char) ? { kind: "char", char } : undefined;
-}
-
-function offsetToPosition(text: string, offset: number): Position {
-  const before = text.slice(0, offset);
-  const line = before.split("\n").length - 1;
-  return { line, col: offset - (before.lastIndexOf("\n") + 1) };
 }
 
 function unchanged(text: string, cursor: Position): EditResult {
