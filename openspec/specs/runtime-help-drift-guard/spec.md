@@ -112,38 +112,6 @@ anchors contradict each other for supported pi-vim behavior.
     spec anchor or test anchor without an explicit approved exception
 - **THEN** the docs drift guard fails before the change is considered complete
 
-### Requirement: Drift guard validates diagnostic action metadata
-
-The project SHALL validate diagnostic/help action metadata against docs, specs,
-tests, and finite parser support before the change is considered complete.
-
-#### Scenario: Metadata docs anchor missing fails validation
-
-- **WHEN** a diagnostic/help metadata entry requires a `docs/features.md`
-    anchor and that anchor is missing
-- **THEN** the docs drift guard fails with an actionable message identifying
-    the metadata entry and missing anchor
-
-#### Scenario: Metadata spec or test anchor missing fails validation
-
-- **WHEN** a diagnostic/help metadata entry references a missing durable spec
-    file or missing test anchor
-- **THEN** the docs drift guard fails before the registry can be considered
-    aligned
-
-#### Scenario: Command-backed metadata must match finite Ex support
-
-- **WHEN** a diagnostic/help metadata entry names an Ex command such as
-    `vimdoctor`, `actions`, `messages`, or `vim inspect`
-- **THEN** automated validation verifies that the command is supported by the
-    finite parser or the entry declares an explicit non-command exception
-
-#### Scenario: Metadata-only invariant is validated
-
-- **WHEN** a diagnostic/help metadata entry is included in runtime discovery
-- **THEN** automated validation verifies that the entry is not part of the
-    bindable action ID set
-
 ### Requirement: Keybinding popup is bounded, width-safe, and locally scrollable
 
 Runtime read-only popup output SHALL be bounded to the terminal overlay
@@ -189,9 +157,8 @@ SHALL provide popup-local scrolling when bounded content overflows.
 
 ### Requirement: Drift guard validates read-only Ex popup command coverage
 
-The project SHALL validate that source-backed runtime help, diagnostic action
-metadata, user docs, specs, and tests agree on which read-only Ex commands open
-the generic popup.
+The project SHALL validate that source-backed runtime help, user docs, specs,
+and tests agree on which read-only Ex commands open the generic popup.
 
 #### Scenario: Popup command missing from docs fails validation
 
@@ -298,19 +265,6 @@ test-support metadata table.
     is exercised after anchor co-location
 - **THEN** user-facing runtime help behavior remains finite, source-backed,
     and unchanged except for validation source ownership
-
-### Requirement: Runtime help topics classify diagnostic action metadata
-
-The Vim editor SHALL use source-backed diagnostic/help action metadata when
-runtime help describes supported diagnostic surfaces.
-
-#### Scenario: Help topic explains diagnostic action limits
-
-- **WHEN** the editor executes `:help actions`, `:help diagnostics`, or
-    another supported topic covering diagnostic/help metadata
-- **THEN** the help message identifies the finite supported commands and
-    states that diagnostic/help action IDs are metadata-only and not user-plugin
-    or keybinding dispatch targets
 
 ### Requirement: Drift guard validates read-only popup documentation
 

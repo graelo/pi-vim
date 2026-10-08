@@ -254,16 +254,15 @@ Vim/Neovim parity.
 - **WHEN** a user reads quickref entries for `:vimdoctor`, `:keymap`,
     `:mapcheck`, `:help`, `:messages`, or `:vim inspect`
 - **THEN** the document identifies them as finite read-only
-    diagnostic/runtime-help commands and does not present their `pi-vim.*`
-    metadata IDs as configurable keybinding targets
+    diagnostic/runtime-help commands and does not name `pi-vim.*` action IDs
+    or present the commands as configurable keybinding targets
 
 #### Scenario: Quickref documents unsupported parity boundaries
 
 - **WHEN** a user reads the quick reference or runtime-help documentation
 - **THEN** it states that pi-vim does not provide a public plugin action
-    API, diagnostic action keybinding dispatch, runtime `:map`, runtime
-    `:action`, Vimscript, Neovim Lua, full Vim help tags, or broad quickref
-    parity
+    API, runtime `:map`, runtime `:action`, Vimscript, Neovim Lua, full Vim
+    help tags, or broad quickref parity
 
 ### Requirement: Feature guide documents keybinding discovery popup
 
@@ -473,14 +472,14 @@ operator composition, and explicit non-goals.
 ### Requirement: Documentation drift metadata stays out of runtime help paths
 
 The project SHALL keep documentation drift guard metadata for runtime help
-entries, diagnostic actions, and read-only popup command examples in
-test/dev-owned sources that are not imported by runtime modules, while
-preserving public runtime help and discovery behavior.
+entries and read-only popup command examples in test/dev-owned sources that
+are not imported by runtime modules, while preserving public runtime help and
+discovery behavior.
 
 #### Scenario: Runtime registries expose only runtime-needed fields
 
-- **WHEN** runtime help entries, diagnostic action entries, and read-only
-    popup builders are imported by the extension runtime
+- **WHEN** runtime help entries and read-only popup builders are imported by
+    the extension runtime
 - **THEN** those runtime objects omit docs/test-only fields such as OpenSpec
     spec paths, test file paths, parser-only examples, and documentation anchor
     fields unless a field is required for displayed user-facing output
@@ -488,9 +487,9 @@ preserving public runtime help and discovery behavior.
 #### Scenario: Drift guard preserves coverage through dev metadata
 
 - **WHEN** `npm test` runs the documentation drift guard
-- **THEN** every runtime help entry, diagnostic action, and read-only popup
-    command has matching test/dev metadata that validates feature-doc anchors,
-    spec files, parser examples, and excluded bindability boundaries
+- **THEN** every runtime help entry and read-only popup command has matching
+    test/dev metadata that validates feature-doc anchors, spec files, and
+    parser examples
 
 #### Scenario: Public runtime discovery behavior is unchanged
 

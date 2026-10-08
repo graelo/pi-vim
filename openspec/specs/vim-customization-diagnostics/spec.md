@@ -186,37 +186,6 @@ execution.
 - **THEN** they identify the finite command set and do not imply full Vim
     `:messages`, `:map`, `:verbose`, or Vimscript support
 
-### Requirement: Diagnostic action metadata preserves diagnostic command boundaries
-
-Diagnostic/help action metadata SHALL describe existing finite diagnostics
-without changing execution or editing side effects.
-
-#### Scenario: Metadata entry points to existing Ex command
-
-- **WHEN** a metadata entry names `pi-vim.doctor`, `pi-vim.keymap`,
-    `pi-vim.keybindings`, `pi-vim.mapcheck`, `pi-vim.help`,
-    `pi-vim.messages`, or `pi-vim.inspect`
-- **THEN** the described command is one of the explicit supported
-    diagnostic/runtime-help Ex commands and no additional dispatch path is
-    implied
-
-#### Scenario: Metadata lookup is read-only
-
-- **WHEN** the editor executes `:keymap pi-vim.help` or another metadata
-    lookup from normal or visual Ex mode
-- **THEN** prompt text, cursor position, mode restoration, visual selection,
-    search highlights, registers, marks, macro slots, and dot-repeat state
-    remain unchanged except for the transient diagnostic message and existing
-    message-history rules
-
-#### Scenario: Keymap diagnostics do not treat metadata-only actions as bindable
-
-- **WHEN** the editor explains a metadata-only diagnostic/help action through
-    keymap-oriented diagnostics
-- **THEN** it reports that the action is metadata-only or not bindable rather
-    than showing it as an unbound configurable action waiting for a user
-    keybinding
-
 ### Requirement: Keybinding discovery popup preserves customization state boundaries
 
 Runtime keybinding discovery popup display, popup-local scrolling, and dismissal
@@ -331,14 +300,15 @@ fields without inventing unsupported Vim mapping behavior.
 ### Requirement: Keybinding popup uses customization diagnostics vocabulary
 
 The keybinding discovery popup SHALL describe bindings using the same finite
-metadata boundaries as existing customization diagnostics.
+boundaries as existing customization diagnostics.
 
 #### Scenario: Metadata-only diagnostic actions remain non-bindable
 
-- **WHEN** the popup explains diagnostic or runtime-help action metadata such
-    as `pi-vim.doctor` or `pi-vim.help`
-- **THEN** it identifies those IDs as metadata-only or non-bindable rather
-    than presenting them as configurable keybinding targets
+- **WHEN** the popup or `:keymap` search runs for a diagnostic command name
+    such as `vimdoctor` or `pi-vim.doctor`
+- **THEN** no `pi-vim.*` action row is shown and no diagnostic command is
+    presented as a configurable keybinding target; the result is a bounded
+    no-match message unless a configurable action matches the query
 
 #### Scenario: Protected shortcuts remain protected
 
@@ -346,26 +316,6 @@ metadata boundaries as existing customization diagnostics.
     `:mapcheck <key>`
 - **THEN** it preserves the protected shortcut catalog boundary and does not
     present protected Pi shortcuts as available pi-vim bindings
-
-### Requirement: Diagnostic help actions have metadata-only entries searchable through keymap
-
-The Vim editor SHALL expose finite metadata for diagnostic and runtime-help
-actions without making those actions keybindable or plugin-dispatchable.
-
-#### Scenario: Keymap search finds diagnostic metadata
-
-- **WHEN** the editor executes `:keymap pi-vim.doctor` or another supported
-    diagnostic/help action ID
-- **THEN** it shows the matching metadata entry with its canonical `pi-vim.*`
-    ID, command name, diagnostic/runtime-help classification, and metadata-only
-    or non-bindable status
-
-#### Scenario: Unsupported diagnostic action remains unsupported
-
-- **WHEN** the editor executes `:keymap pi-vim.dump` or another unsupported
-    diagnostic-like action query
-- **THEN** it shows a bounded no-match message rather than inventing a
-    command, action, plugin API, or keybinding target
 
 ### Requirement: Pre-rename configuration is ignored with warnings
 
