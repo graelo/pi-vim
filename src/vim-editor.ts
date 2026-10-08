@@ -29,7 +29,12 @@ import type {
   VimRegister,
 } from "./types.ts";
 
-import { normalizeBufferPosition, pasteRegister, pasteRegisterBefore } from "./buffer.ts";
+import {
+  normalizeBufferPosition,
+  pasteRegister,
+  pasteRegisterBefore,
+  repeatRegister,
+} from "./buffer.ts";
 import { readClipboardText } from "./clipboard.ts";
 import { pendingDisplay } from "./commands.ts";
 import {
@@ -553,7 +558,12 @@ export class VimEditor extends CustomEditor {
         this.copyClipboard(effect.text);
         return;
       case "readClipboard":
-        this.readClipboardAndPaste(effect.register, effect.placement, effect.fallback);
+        this.readClipboardAndPaste(
+          effect.register,
+          effect.placement,
+          effect.fallback,
+          effect.count,
+        );
         return;
       case "terminalCursor":
         this.applyTerminalCursorStyle(effect.style);
@@ -577,15 +587,16 @@ export class VimEditor extends CustomEditor {
     slot: "+" | "*",
     placement: "after" | "before",
     fallback?: VimRegister,
+    count = 1,
   ): void {
     void readClipboardText()
       .then((text) => {
         const register: VimRegister = { type: "char", text };
-        this.pasteClipboardRegister(slot, placement, register);
+        this.pasteClipboardRegister(slot, placement, register, count);
       })
       .catch(() => {
         if (fallback) {
-          this.pasteClipboardRegister(slot, placement, fallback);
+          this.pasteClipboardRegister(slot, placement, fallback, count);
           return;
         }
         this.addRuntimeMessage({ kind: "error", text: "Clipboard paste failed" });
@@ -596,11 +607,13 @@ export class VimEditor extends CustomEditor {
     slot: "+" | "*",
     placement: "after" | "before",
     register: VimRegister,
+    count = 1,
   ): void {
+    const pasted = repeatRegister(register, count);
     const result =
       placement === "before"
-        ? pasteRegisterBefore(this.getText(), this.getCursor(), register)
-        : pasteRegister(this.getText(), this.getCursor(), register);
+        ? pasteRegisterBefore(this.getText(), this.getCursor(), pasted)
+        : pasteRegister(this.getText(), this.getCursor(), pasted);
     this.modalState = {
       ...this.modalState,
       clipboardRegisters: { ...this.modalState.clipboardRegisters, [slot]: register },

@@ -20,6 +20,10 @@ editor behavior is unchanged from 0.9.0.
 - `guu`, `gUU`, and `g~~` line forms, next to `gugu`, `gUgU`, and `g~g~`.
 - `iW` and `aW` text objects for whitespace-delimited WORDs (target
   `bigWord`, default `W`).
+- `` i` `` and `` a` `` text objects for backtick-quoted strings (target
+  `backtick`).
+- Counted paste: `3p` and `3P` paste three copies, including from named and
+  clipboard registers.
 
 ### Changed
 
@@ -35,7 +39,9 @@ editor behavior is unchanged from 0.9.0.
   - `dt,` right before a comma deletes the character under the cursor, and
     `F`/`T` operator targets no longer include it;
   - a register prefix works before counts, text objects, and character
-    searches (`"adiw`, `"a2yy`, `"adt,`).
+    searches (`"adiw`, `"a2yy`, `"adt,`), and commands that do not use
+    registers run and consume it (`"aj` moves down) instead of being
+    cancelled.
 - Published as `@graelo/pi-vim`. Install with
   `pi install npm:@graelo/pi-vim`, and update the JSDoc import of trusted
   JavaScript config to `./npm/node_modules/@graelo/pi-vim/config`.

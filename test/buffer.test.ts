@@ -1029,6 +1029,8 @@ describe("roadmap buffer helpers", () => {
     expect(yankObject('x "hi" y', 3, "around", "doubleQuote")).toBe('"hi" ');
     expect(yankObject('x "hi"', 3, "around", "doubleQuote")).toBe(' "hi"');
     expect(yankObject("say 'hi'", 0, "inner", "doubleQuote")).toBeUndefined();
+    expect(yankObject("run `ls -l` now", 0, "inner", "backtick")).toBe("ls -l");
+    expect(yankObject("run `ls -l` now", 5, "around", "backtick")).toBe("`ls -l` ");
     expect(yankObject("f(a) x", 3, "inner", "paren")).toBe("a");
     expect(yankObject("f(a) x", 1, "around", "paren")).toBe("(a)");
   });

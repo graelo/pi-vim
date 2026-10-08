@@ -271,7 +271,7 @@ W moves to --flag=value; E moves to the end of that WORD; gE from /tmp/a-b moves
 | `D` / `C`           | delete/change from cursor through line end                              |
 | `Y`                 | yank current line                                                       |
 | `J`                 | join current line with next line using one separating space when needed |
-| `p` / `P`           | paste after/before cursor or below/above line                           |
+| `p` / `P`           | paste after/before cursor or below/above line; `3p` pastes three copies |
 | `Ctrl-a` / `Ctrl-x` | increment/decrement signed integer under or after cursor                |
 | `~`                 | toggle case under cursor; count toggles span within current line        |
 | `r{char}`           | replace character(s) and stay normal                                    |
@@ -401,6 +401,7 @@ Text objects work after `d`, `c`, `y`, the case operators, and `ys`.
 | `iW` / `aW`               | inner/around whitespace-delimited WORD      |
 | `i'` / `a'`               | inside/around single quotes on current line |
 | `i"` / `a"`               | inside/around double quotes on current line |
+| `` i` `` / `` a` ``       | inside/around backticks on current line     |
 | `i(` / `a(` / `i)` / `a)` | inside/around parentheses                   |
 | `i[` / `a[` / `i]` / `a]` | inside/around brackets                      |
 | `i{` / `a{` / `i}` / `a}` | inside/around braces                        |
@@ -1019,6 +1020,9 @@ Behavior:
     remain unsupported.
 - Linewise registers paste below with `p` and above with `P`.
 - Charwise registers paste after with `p` and before with `P`.
+- A count pastes that many copies: `3p`, `"a2P`.
+- As in Vim, a register prefix before a command that does not use registers
+    (`"aj`, `"agUiw`) is ignored and consumed by that command.
 - Empty or missing register paste is a no-op.
 
 Examples:

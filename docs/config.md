@@ -1279,6 +1279,15 @@ in [`docs/settings.md`](settings.md).
 - Default keys: `i`
 - Compatibility aliases: none
 
+#### `textObject.target.backtick`
+
+<a id="config-action-textObject-target-backtick"></a>
+
+- Canonical factory: `vim.action.textObject.target.backtick()`
+- Supported mapping scopes: `operatorPending`
+- Default keys: `` ` ``
+- Compatibility aliases: none
+
 #### `textObject.target.bigWord`
 
 <a id="config-action-textObject-target-bigWord"></a>

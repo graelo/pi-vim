@@ -116,6 +116,7 @@ export type VimTextObjectTarget =
   | "bigWord"
   | "singleQuote"
   | "doubleQuote"
+  | "backtick"
   | "paren"
   | "bracket"
   | "brace"

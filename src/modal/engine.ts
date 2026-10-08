@@ -713,9 +713,7 @@ function applyNormalResolution(
   if (surround) return surround;
   if (result.type === "pending") return applyNormalPendingResolution(state, result);
   if (result.type === "motion")
-    return state.pendingRegister
-      ? invalidate(clearPending(state))
-      : moveUpdate(clearPending(state), result.motion, snapshot, result.count);
+    return moveUpdate(clearPending(state), result.motion, snapshot, result.count);
   if (result.type === "command")
     return applyNormalCommandResolution(state, snapshot, options, result);
   return applyNormalRemainingResolution(state, snapshot, options, keymap, key, result);
@@ -744,13 +742,7 @@ function handleNormalScopedInput(
   scopes?: VimConfigPlan["scopes"],
 ): ModalUpdate | undefined {
   const { sequence, match } = scopedInputSequence(state, key, keymap, "normal", scopes?.normal);
-  if (
-    state.pendingMacro ||
-    state.pendingMark ||
-    state.pendingRegister ||
-    (!match.exact && !match.isPrefix)
-  )
-    return;
+  if (state.pendingMacro || state.pendingMark || (!match.exact && !match.isPrefix)) return;
   if (!match.exact) return invalidate({ ...state, pending: sequence });
   if (match.exact.actionId.startsWith("macro.") || match.exact.actionId.startsWith("mark.")) {
     const handled = handleNormalMacroOrMark(
@@ -878,12 +870,11 @@ function handleNormalInput(
   const scopedUpdate = handleNormalScopedInput(state, snapshot, options, key, keymap, scopes);
   if (scopedUpdate) return scopedUpdate;
 
-  const startsLeader =
-    !state.pending && !state.pendingRegister && !state.pendingMacro && keymap.leader === key;
+  const startsLeader = !state.pending && !state.pendingMacro && keymap.leader === key;
   const pendingTargetUpdate = handlePendingTargetInput(state, snapshot, options, key, startsLeader);
   if (pendingTargetUpdate) return pendingTargetUpdate;
 
-  if (!state.pending && !state.pendingRegister && !startsLeader) {
+  if (!state.pending && !startsLeader) {
     const macroOrMark = handleNormalMacroOrMark(state, snapshot, options, keymap, key);
     if (macroOrMark) return macroOrMark;
   }
@@ -932,8 +923,6 @@ function applyVisualCommand(
   options: ModalOptions,
   command: Extract<SemanticCommandResult, { type: "command" }>["command"],
 ): ModalUpdate {
-  const registerAware = command === "deleteChar" || command === "pasteAfter";
-  if (state.pendingRegister && !registerAware) return invalidate(clearPending(state));
   if (command === "surroundSelection") return startVisualSurroundUpdate(state, snapshot, options);
   const modeCommand = applyVisualModeCommand(state, snapshot, options, command);
   if (modeCommand) return modeCommand;
@@ -957,12 +946,10 @@ function applyVisualBasicResolution(
   result: SemanticCommandResult,
 ): ModalUpdate | undefined {
   if (result.type === "motion") {
-    if (state.pendingRegister) return invalidate(clearPending(state));
-    return moveUpdate(state, result.motion, snapshot, result.count);
+    return moveUpdate(clearPending(state), result.motion, snapshot, result.count);
   }
   if (result.type === "charCommand") {
-    if (state.pendingRegister || result.command !== "replaceChar")
-      return invalidate(clearPending(state));
+    if (result.command !== "replaceChar") return invalidate(clearPending(state));
     return replaceVisualSelection(
       state,
       snapshot,
@@ -1000,7 +987,6 @@ function applyVisualResolution(
         operator,
         countForPendingSequence(result.pending),
       );
-    if (state.pendingRegister) return invalidate(clearPending(state));
     return invalidate({ ...state, pending: result.pending });
   }
   if (result.type === "invalid") return invalidate(clearPending(state));
@@ -1017,7 +1003,7 @@ function handleVisualScopedInput(
   scopes?: VimConfigPlan["scopes"],
 ): ModalUpdate | undefined {
   const { sequence, match } = scopedInputSequence(state, key, keymap, scope, scopes?.[scope]);
-  if (state.pendingMark || state.pendingRegister || (!match.exact && !match.isPrefix)) return;
+  if (state.pendingMark || (!match.exact && !match.isPrefix)) return;
   if (!match.exact) return invalidate({ ...state, pending: sequence });
   return applyVisualResolution(
     state,
@@ -1055,11 +1041,10 @@ function handleVisualPendingOrTransformInput(
   key: string,
   keymap: ResolvedVimKeymap,
 ): ModalUpdate | undefined {
-  const startsLeader =
-    !state.pending && !state.pendingRegister && !state.pendingMacro && keymap.leader === key;
+  const startsLeader = !state.pending && !state.pendingMacro && keymap.leader === key;
   const pendingTargetUpdate = handlePendingTargetInput(state, snapshot, options, key, startsLeader);
   if (pendingTargetUpdate) return pendingTargetUpdate;
-  if (!state.pending && !state.pendingRegister && !startsLeader && key === "u") {
+  if (!state.pending && !startsLeader && key === "u") {
     return transformVisualSelection(
       state,
       snapshot,
@@ -1068,7 +1053,7 @@ function handleVisualPendingOrTransformInput(
       "lowercase",
     );
   }
-  if (!state.pending && !state.pendingRegister && !startsLeader && key === "U") {
+  if (!state.pending && !startsLeader && key === "U") {
     return transformVisualSelection(
       state,
       snapshot,
@@ -1077,7 +1062,7 @@ function handleVisualPendingOrTransformInput(
       "uppercase",
     );
   }
-  if (!state.pending && !state.pendingRegister && !startsLeader) {
+  if (!state.pending && !startsLeader) {
     const markTarget = markPendingForKey(
       key,
       options,
@@ -1228,6 +1213,20 @@ export function modalPendingDisplay(state: ModalState): string | undefined {
   );
 }
 
+/** An operator still waiting for its target keeps the register prefix. */
+function keepsRegisterTarget(state: ModalState): boolean {
+  return Boolean(state.pending || state.pendingSearch?.operator || state.pendingMark?.operator);
+}
+
+/** Like Vim, the next complete command consumes a register prefix, even one that ignores it. */
+function consumeRegisterTarget(before: ModalState, update: ModalUpdate): ModalUpdate {
+  const target = before.pendingRegister;
+  if (!target || target === "awaitingSlot" || update.state.pendingRegister !== target)
+    return update;
+  if (keepsRegisterTarget(update.state)) return update;
+  return { ...update, state: clearRegisterTarget(update.state) };
+}
+
 export function handleModalInput(
   state: ModalState,
   snapshot: EditorSnapshot,
@@ -1235,7 +1234,10 @@ export function handleModalInput(
   data: string,
   diagnostics: VimDiagnostics = plan.diagnostics,
 ): ModalUpdate {
-  const update = routeModalInput(state, snapshot, plan, data, diagnostics);
+  const update = consumeRegisterTarget(
+    state,
+    routeModalInput(state, snapshot, plan, data, diagnostics),
+  );
   if (!state.recordingSlot || !shouldRecordInput(state, snapshot, update, plan.options, data))
     return update;
   return {

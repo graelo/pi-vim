@@ -95,6 +95,7 @@ export const KEYMAP_TEXT_OBJECT_TARGET_DESCRIPTORS = {
   bigWord: { defaults: ["W"] },
   singleQuote: { defaults: ["'"] },
   doubleQuote: { defaults: ['"'] },
+  backtick: { defaults: ["`"] },
   paren: { defaults: ["(", ")"] },
   bracket: { defaults: ["[", "]"] },
   brace: { defaults: ["{", "}"] },

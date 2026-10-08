@@ -24,6 +24,15 @@
 - [x] 4.1 Keep parser pending state after a register prefix; verify
     `"adiw`, `"a2yy`, `"adt,`, `"a2x`, and that `"aj` still cancels
 
+## 4b. Follow-ups
+
+- [x] 4.2 Let commands that ignore registers run and consume the prefix;
+    verify `"aj`, `"agUiw`, `"aq`, and visual `"ae`
+- [x] 4.3 Add counted `p`/`P`, including the clipboard path; verify charwise,
+    linewise, and named-register counts
+- [x] 4.4 Add the `backtick` text-object target; verify buffer and modal
+    `` di` `` / `` ca` ``
+
 ## 5. Docs and validation
 
 - [x] 5.1 Update `docs/features.md`, `docs/settings.md`, regenerate

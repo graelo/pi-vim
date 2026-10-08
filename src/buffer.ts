@@ -2142,6 +2142,16 @@ export function joinLineWithNext(text: string, cursor: Position): EditResult {
   };
 }
 
+/** `count` copies of `register` for a counted put (`3p`); linewise copies stack as lines. */
+export function repeatRegister(
+  register: VimRegister | undefined,
+  count = 1,
+): VimRegister | undefined {
+  if (!register || count <= 1) return register;
+  const copies = Array.from({ length: count }, () => register.text);
+  return { ...register, text: copies.join(register.type === "line" ? "\n" : "") };
+}
+
 export function pasteRegister(
   text: string,
   cursor: Position,
@@ -2373,6 +2383,7 @@ function delimiterRange(
   const delimiters: Partial<Record<VimTextObject["target"], [string, string]>> = {
     singleQuote: ["'", "'"],
     doubleQuote: ['"', '"'],
+    backtick: ["`", "`"],
     paren: ["(", ")"],
     bracket: ["[", "]"],
     brace: ["{", "}"],
@@ -2405,7 +2416,7 @@ function baseTextObjectRange(
 }
 
 function isDelimiterTarget(target: VimTextObject["target"]): boolean {
-  return ["singleQuote", "doubleQuote", "paren", "bracket", "brace"].includes(target);
+  return ["singleQuote", "doubleQuote", "backtick", "paren", "bracket", "brace"].includes(target);
 }
 
 export function textObjectRange(
@@ -2429,6 +2440,7 @@ function isPromptStructureTarget(target: VimTextObject["target"]): target is Pro
     "bigWord",
     "singleQuote",
     "doubleQuote",
+    "backtick",
     "paren",
     "bracket",
     "brace",

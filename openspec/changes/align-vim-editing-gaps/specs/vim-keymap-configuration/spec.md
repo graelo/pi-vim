@@ -16,3 +16,15 @@ default `W`, so `iW` and `aW` select whitespace-delimited WORDs.
     sequence
 - **THEN** pending operator text-object resolution uses that key as the WORD
     target
+
+### Requirement: Backtick text object participates in semantic keymap configuration
+
+The Vim keymap configuration SHALL expose `backtick` as a text-object target,
+default `` ` ``, so `` i` `` and `` a` `` select backtick-quoted strings with
+the same pairing rules as the other quote text objects.
+
+#### Scenario: Default backtick text object target is available
+
+- **WHEN** Pi starts with no `piVim.keymap` setting
+- **THEN** the resolved keymap binds `textObjects.targets.backtick` to `` ` ``
+    and `` di` `` deletes the text between the backticks around the cursor

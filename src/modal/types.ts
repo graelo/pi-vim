@@ -252,6 +252,7 @@ export type ModalEffect =
       register: ClipboardRegisterSlot;
       placement: "after" | "before";
       fallback?: VimRegister;
+      count?: number;
     }
   | { type: "invalidate" }
   | { type: "terminalCursor"; style: CursorStyle }

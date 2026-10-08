@@ -28,15 +28,17 @@ they are made Vim-like.
   exclusive, so `dF:` and `dT:` keep the character under the cursor.
 - A register prefix no longer cancels counts, text objects, character
   searches, or multi-key operators that follow it, so `"adiw`, `"a2yy`,
-  `"adt,`, and `"a2x` work.
+  `"adt,`, and `"a2x` work. Commands that do not use registers run and
+  consume the prefix, as in Vim (`"aj` moves down).
+- Counted paste: `3p` and `3P` put three copies.
+- New `` i` `` and `` a` `` text objects (target `backtick`, default `` ` ``).
 
 Non-goals:
 
-- Applying a register prefix to commands that do not use registers (`"aj`,
-  `"agUiw`); they keep cancelling the prefix.
 - Unicode letters as keyword characters; word classes stay ASCII, as for the
   `w` motion.
-- Counted quote text objects (`2i"`) and the backtick text object.
+- Counted quote text objects (`2i"`).
+- Counts on visual-mode paste.
 
 ## Capabilities
 
@@ -51,7 +53,8 @@ None.
   character-search operator ranges.
 - `vim-named-registers`: register prefixes before counted and multi-key
   operator targets.
-- `vim-keymap-configuration`: the `bigWord` text-object target.
+- `vim-keymap-configuration`: the `bigWord` and `backtick` text-object
+  targets.
 
 The unarchived `add-surround` change is amended so its quote-pairing scenario
 matches the text objects.

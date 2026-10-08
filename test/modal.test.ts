@@ -4303,6 +4303,41 @@ test("normal named register prefix writes deletes and operator yanks", () => {
   expect(yankedWord.effects).toEqual([{ type: "invalidate" }]);
 });
 
+test("backtick text objects work after operators", () => {
+  const inner = applyModalKeys({ mode: "normal" }, "run `ls -l` now", p(0, 6), ["d", "i", "`"]);
+  expect(inner.text).toBe("run `` now");
+  const around = applyModalKeys({ mode: "normal" }, "run `ls` now", p(0, 5), ["c", "a", "`"]);
+  expect(around.text).toBe("run now");
+  expect(around.state.mode).toBe("insert");
+});
+
+test("counted paste puts count copies", () => {
+  const charPaste = applyModalKeys(
+    { mode: "normal", register: { type: "char", text: "ab" } },
+    "-",
+    p(0, 0),
+    ["3", "p"],
+  );
+  expect(charPaste.text).toBe("-ababab");
+  expect(charPaste.cursor).toEqual(p(0, 6));
+
+  const linePaste = applyModalKeys(
+    { mode: "normal", register: { type: "line", text: "x" } },
+    "a\nb",
+    p(0, 0),
+    ["2", "P"],
+  );
+  expect(linePaste.text).toBe("x\nx\na\nb");
+
+  const namedPaste = applyModalKeys(
+    { mode: "normal", namedRegisters: { a: { type: "char", text: "x" } } },
+    "-",
+    p(0, 0),
+    ['"', "a", "3", "p"],
+  );
+  expect(namedPaste.text).toBe("-xxx");
+});
+
 test("register prefixes reach counts and operator targets", () => {
   const named = (state: { namedRegisters?: Record<string, unknown> }) => state.namedRegisters?.a;
   const textObject = applyModalKeys({ mode: "normal" }, "alpha beta", p(0, 7), [
@@ -4333,8 +4368,43 @@ test("register prefixes reach counts and operator targets", () => {
   expect(named(countedChar.state)).toEqual({ type: "char", text: "ab" });
 
   const motion = applyModalKeys({ mode: "normal" }, "one\ntwo", p(0, 0), ['"', "a", "j"]);
-  expect(motion.cursor).toEqual(p(0, 0));
+  expect(motion.cursor).toEqual(p(1, 0));
   expect(motion.state.pendingRegister).toBeUndefined();
+
+  const caseOperator = applyModalKeys({ mode: "normal" }, "abc def", p(0, 0), [
+    '"',
+    "a",
+    "g",
+    "U",
+    "i",
+    "w",
+  ]);
+  expect(caseOperator.text).toBe("ABC def");
+  expect(caseOperator.state.pendingRegister).toBeUndefined();
+  expect(caseOperator.state.namedRegisters?.a).toBeUndefined();
+
+  const ignoredThenYank = applyModalKeys(caseOperator.state, "abc", p(0, 0), ["y", "y"]);
+  expect(ignoredThenYank.state.namedRegisters?.a).toBeUndefined();
+  expect(ignoredThenYank.state.register).toEqual({ type: "line", text: "abc" });
+
+  const visualYank = applyModalKeys({ mode: "normal" }, "abc def", p(0, 0), [
+    "v",
+    "e",
+    '"',
+    "a",
+    "y",
+  ]);
+  expect(visualYank.state.namedRegisters?.a).toEqual({ type: "char", text: "abc" });
+
+  const visualMotion = applyModalKeys({ mode: "normal" }, "abc def", p(0, 0), [
+    "v",
+    '"',
+    "a",
+    "e",
+    "y",
+  ]);
+  expect(visualMotion.state.namedRegisters?.a).toBeUndefined();
+  expect(visualMotion.state.register).toEqual({ type: "char", text: "abc" });
 });
 
 test("named register paste reads named target and leaves unnamed paste unchanged", () => {
@@ -4423,6 +4493,7 @@ test("register prefix target is safe and one-shot", () => {
   expect(unsupported.state).toEqual({
     mode: "normal",
     namedRegisters: { a: { type: "line", text: "keep" } },
+    pendingMacro: "record",
   });
 
   const appended = handleModalInput(

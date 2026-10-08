@@ -113,6 +113,7 @@ const expectedTextObjectTargets = [
   "bigWord",
   "singleQuote",
   "doubleQuote",
+  "backtick",
   "paren",
   "bracket",
   "brace",

@@ -554,6 +554,7 @@ Defaults preserve Vim-style `iw`, `aw`, plus prompt-native objects.
 | `piVim.keymap.textObjects.targets.bigWord`        | `["W"]`      | WORD (whitespace-delimited) text object target.         |
 | `piVim.keymap.textObjects.targets.singleQuote`    | `["'"]`      | Single-quoted string target.                            |
 | `piVim.keymap.textObjects.targets.doubleQuote`    | `["\""]`     | Double-quoted string target.                            |
+| `piVim.keymap.textObjects.targets.backtick`       | `["`"]`      | Backtick-quoted string target.                          |
 | `piVim.keymap.textObjects.targets.paren`          | `["(", ")"]` | Parenthesized target.                                   |
 | `piVim.keymap.textObjects.targets.bracket`        | `["[", "]"]` | Bracketed target.                                       |
 | `piVim.keymap.textObjects.targets.brace`          | `["{", "}"]` | Braced target.                                          |

@@ -4,8 +4,8 @@
 
 The Vim editor SHALL keep a pending register prefix while the following keys
 are still a count, an operator, or an operator target, and SHALL apply the
-register when the resulting yank, delete, change, or paste runs. Commands that
-do not use registers still clear the prefix without running.
+register when the resulting yank, delete, change, or paste runs. As in Vim, a
+command that does not use registers runs normally and consumes the prefix.
 
 #### Scenario: Register prefix before a text-object delete
 
@@ -32,7 +32,14 @@ do not use registers still clear the prefix without running.
     `"a2x`
 - **THEN** the prompt becomes `c` and named register `a` holds `ab`
 
-#### Scenario: Register prefix before a motion is cleared
+#### Scenario: Register prefix before a motion is ignored
 
-- **WHEN** the user types `"aj`
-- **THEN** the cursor does not move and the register prefix is cleared
+- **WHEN** the user types `"aj` on the first of two lines
+- **THEN** the cursor moves to the second line and the register prefix is
+    cleared, so a later `yy` does not write register `a`
+
+#### Scenario: Register prefix before a case operator is ignored
+
+- **WHEN** the prompt is `abc def` with the cursor on `a` and the user types
+    `"agUiw`
+- **THEN** the prompt becomes `ABC def` and named register `a` is unchanged

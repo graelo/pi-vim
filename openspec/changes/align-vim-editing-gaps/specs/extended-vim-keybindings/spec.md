@@ -1,3 +1,23 @@
+## ADDED Requirements
+
+### Requirement: Paste accepts a count
+
+The Vim editor SHALL paste `count` copies for `p` and `P` in normal mode, from
+the unnamed, named, or clipboard register: charwise copies are joined, and
+linewise copies are stacked as lines.
+
+#### Scenario: Counted charwise paste
+
+- **WHEN** the unnamed register holds `ab`, the prompt is `-` with the cursor
+    on `-`, and the user types `3p`
+- **THEN** the prompt becomes `-ababab` with the cursor on the last `b`
+
+#### Scenario: Counted linewise paste
+
+- **WHEN** the unnamed register holds the line `x`, the prompt is `a` and `b`
+    on two lines with the cursor on `a`, and the user types `2P`
+- **THEN** two `x` lines are inserted above `a`
+
 ## MODIFIED Requirements
 
 ### Requirement: Operators support prompt text objects
@@ -12,11 +32,12 @@ ranges:
 - `aw` and `aW` add the blanks after the word, or the blanks before it when
   there are none after; on blanks they select the blanks and the following
   word;
-- quotes pair up from the start of the line when the cursor is on a quote;
-  otherwise the nearest quote before the cursor opens the string and the next
-  one closes it, and when there is none before, the first quoted string after
-  the cursor is used; quotes escaped with a backslash are skipped; `a"` and
-  `a'` add trailing blanks, or leading blanks when there are none trailing;
+- quotes (`"`, `'`, and backticks) pair up from the start of the line when the
+    cursor is on a quote; otherwise the nearest quote before the cursor opens
+    the string and the next one closes it, and when there is none before, the
+    first quoted string after the cursor is used; quotes escaped with a
+    backslash are skipped; `a"` and `a'` add trailing blanks, or leading blanks
+    when there are none trailing;
 - a cursor on either bracket of a pair selects that pair.
 
 #### Scenario: Change inner word

@@ -36,6 +36,7 @@ import {
   paragraphForwardPosition,
   pasteRegister,
   pasteRegisterBefore,
+  repeatRegister,
   replaceCharAt,
   shiftLinesFromCursor,
   substituteCharAt,
@@ -504,12 +505,13 @@ function applyCommandGroup1(
             register: clipboardTarget.slot,
             placement: "after",
             fallback: state.clipboardRegisters?.[clipboardTarget.slot],
+            ...(count > 1 ? { count } : {}),
           },
         ]);
       }
       return editUpdate(
         clearRegisterTarget(nextState),
-        pasteRegister(snapshot.text, snapshot.cursor, registerToRead(state)),
+        pasteRegister(snapshot.text, snapshot.cursor, repeatRegister(registerToRead(state), count)),
       );
     }
     case "pasteBefore": {
@@ -521,12 +523,17 @@ function applyCommandGroup1(
             register: clipboardTarget.slot,
             placement: "before",
             fallback: state.clipboardRegisters?.[clipboardTarget.slot],
+            ...(count > 1 ? { count } : {}),
           },
         ]);
       }
       return editUpdate(
         clearRegisterTarget(nextState),
-        pasteRegisterBefore(snapshot.text, snapshot.cursor, registerToRead(state)),
+        pasteRegisterBefore(
+          snapshot.text,
+          snapshot.cursor,
+          repeatRegister(registerToRead(state), count),
+        ),
       );
     }
     default:
@@ -670,16 +677,6 @@ export function applyCommand(
   recordRepeat = true,
 ): ModalUpdate {
   const nextState = clearCommandPending(state);
-  const registerAware = [
-    "deleteChar",
-    "deleteCharBefore",
-    "deleteToLineEnd",
-    "changeToLineEnd",
-    "yankLine",
-    "pasteAfter",
-    "pasteBefore",
-  ].includes(command);
-  if (state.pendingRegister && !registerAware) return invalidate(clearPending(state));
   const args = [state, snapshot, options, command, count, char, recordRepeat, nextState] as const;
   return (
     applyCommandGroup0(...args) ??
