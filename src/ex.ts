@@ -1,19 +1,12 @@
 import type { ActiveRegisterTarget } from "./modal/types.ts";
-import type {
-  LineRange,
-  PromptTransform,
-  PromptTransformAction,
-  ResolvedVimPromptTransforms,
-} from "./types.ts";
+import type { LineRange } from "./types.ts";
 
-import { normalizePromptTransformActionArgs } from "./prompt-transform-actions.ts";
 import { parseExDestination, parseExLineRange } from "./range.ts";
 
 export type ExParseContext = {
   lineCount: number;
   cursorLine: number;
   visualRange?: LineRange;
-  promptTransforms?: ResolvedVimPromptTransforms;
 };
 
 export type ParsedExSubstitution = {
@@ -55,14 +48,6 @@ export type ParsedExDestinationCommand = {
   destination: number;
 };
 
-export type ParsedExTransformCommand = {
-  type: "transform";
-  command: string;
-  range: LineRange;
-  rangeExplicit: boolean;
-  transform: PromptTransform;
-};
-
 export type ParsedExDiagnosticCommand = {
   type: "diagnostic";
   command: "vimdoctor" | "keymap" | "mapcheck" | "actions";
@@ -71,7 +56,7 @@ export type ParsedExDiagnosticCommand = {
 
 export type ParsedExRuntimeHelpCommand = {
   type: "runtimeHelp";
-  command: "help" | "features" | "messages";
+  command: "help" | "messages";
   query?: string;
 };
 
@@ -87,11 +72,6 @@ export type ParsedExInspectCommand = {
   query: "inspect";
 };
 
-export type ParsedExChangelogCommand = {
-  type: "changelog";
-  command: "changelog";
-};
-
 export type ParsedExQuitCommand = {
   type: "quit";
   command: "q" | "quit";
@@ -104,12 +84,10 @@ export type ExParseResult =
   | ParsedExRepeatSubstitution
   | ParsedExLineCommand
   | ParsedExDestinationCommand
-  | ParsedExTransformCommand
   | ParsedExDiagnosticCommand
   | ParsedExRuntimeHelpCommand
   | ParsedExKeybindingsCommand
   | ParsedExInspectCommand
-  | ParsedExChangelogCommand
   | { type: "nohlsearch"; command: "noh" | "nohlsearch" }
   | ParsedExQuitCommand
   | { type: "lineJump"; range: LineRange; line: number }
@@ -131,23 +109,14 @@ type ParsedCommandName =
   | "move"
   | "j"
   | "join"
-  | "quote"
-  | "unquote"
-  | "bulletize"
-  | "fence"
-  | "indent"
-  | "dedent"
-  | "reflow"
   | "vimdoctor"
   | "keymap"
   | "mapcheck"
   | "actions"
   | "help"
-  | "features"
   | "messages"
   | "keybindings"
   | "vimmode"
-  | "changelog"
   | "noh"
   | "nohlsearch"
   | "q"
@@ -161,43 +130,17 @@ type ParsedCommandType =
   | "copy"
   | "move"
   | "join"
-  | "transform"
   | "diagnostic"
   | "runtimeHelp"
   | "keybindings"
   | "inspect"
-  | "changelog"
   | "nohlsearch"
   | "quit";
 
 type ParsedCommand = {
   name: string;
   type: ParsedCommandType;
-  transformAction?: PromptTransformAction;
 };
-
-function transformActionForCommand(
-  command: string,
-  promptTransforms: ResolvedVimPromptTransforms | undefined,
-): PromptTransformAction | undefined {
-  const config = promptTransforms;
-  if (config?.enabled === false) return undefined;
-  const commands = config?.commands;
-  for (const action of [
-    "quote",
-    "unquote",
-    "bulletize",
-    "fence",
-    "indent",
-    "dedent",
-    "reflow",
-  ] as const) {
-    if (config?.actions[action] === false) continue;
-    const names = commands?.[action] ?? [action];
-    if (names.includes(command)) return action;
-  }
-  return undefined;
-}
 
 const COMMAND_TYPES: Record<ParsedCommandName, ParsedCommandType> = {
   s: "substitute",
@@ -214,23 +157,14 @@ const COMMAND_TYPES: Record<ParsedCommandName, ParsedCommandType> = {
   move: "move",
   j: "join",
   join: "join",
-  quote: "transform",
-  unquote: "transform",
-  bulletize: "transform",
-  fence: "transform",
-  indent: "transform",
-  dedent: "transform",
-  reflow: "transform",
   vimdoctor: "diagnostic",
   keymap: "diagnostic",
   mapcheck: "diagnostic",
   actions: "diagnostic",
   help: "runtimeHelp",
-  features: "runtimeHelp",
   messages: "runtimeHelp",
   keybindings: "keybindings",
   vimmode: "inspect",
-  changelog: "changelog",
   noh: "nohlsearch",
   nohlsearch: "nohlsearch",
   q: "quit",
@@ -245,7 +179,6 @@ export type ExCommandSuggestionKind = ParsedCommandType | "repeatSubstitute";
 
 function parseCommand(
   source: string,
-  context: ExParseContext,
 ): { ok: true; command: ParsedCommand; rest: string } | { ok: false; message: string } {
   const trimmed = source.trimStart();
   const name = /^[A-Za-z]+/.exec(trimmed)?.[0];
@@ -266,23 +199,14 @@ function parseCommand(
     "move",
     "j",
     "join",
-    "quote",
-    "unquote",
-    "bulletize",
-    "fence",
-    "indent",
-    "dedent",
-    "reflow",
     "vimdoctor",
     "keymap",
     "mapcheck",
     "actions",
     "help",
-    "features",
     "messages",
     "keybindings",
     "vimmode",
-    "changelog",
     "noh",
     "nohlsearch",
     "q",
@@ -290,16 +214,7 @@ function parseCommand(
   ]);
   if (supported.has(name)) {
     const type = commandType(name as ParsedCommandName);
-    if (type !== "transform")
-      return { ok: true, command: { name, type }, rest: trimmed.slice(name.length) };
-  }
-  const transformAction = transformActionForCommand(name, context.promptTransforms);
-  if (transformAction) {
-    return {
-      ok: true,
-      command: { name, type: "transform", transformAction },
-      rest: trimmed.slice(name.length),
-    };
+    return { ok: true, command: { name, type }, rest: trimmed.slice(name.length) };
   }
   return { ok: false, message: `Unsupported Ex command: ${name}` };
 }
@@ -425,13 +340,6 @@ function parseRegisterOperand(
   return { ok: false, message: "Invalid Ex register operand" };
 }
 
-function parseTransformArgs(
-  action: PromptTransformAction,
-  rest: string,
-): { ok: true; transform: PromptTransform } | { ok: false; message: string } {
-  return normalizePromptTransformActionArgs({ source: "ex", action, rest });
-}
-
 type ParsedCommandInput = { command: ParsedCommand; rest: string };
 
 function parseSubstitutionCommand(
@@ -495,24 +403,6 @@ function parseRuntimeHelpCommand(command: ParsedCommandInput): ExParseResult {
     : { type: "runtimeHelp", command: name };
 }
 
-function parseTransformCommand(
-  command: ParsedCommandInput,
-  range: LineRange,
-  rangeExplicit: boolean,
-): ExParseResult {
-  const action = command.command.transformAction;
-  if (!action) return { type: "error", message: "Unsupported Ex command" };
-  const transform = parseTransformArgs(action, command.rest);
-  if (!transform.ok) return { type: "error", message: transform.message };
-  return {
-    type: "transform",
-    command: command.command.name,
-    range,
-    rangeExplicit,
-    transform: transform.transform,
-  };
-}
-
 function parseLineCommand(
   command: ParsedCommandInput,
   range: LineRange,
@@ -536,11 +426,9 @@ function parseMetadataCommand(command: ParsedCommandInput): ExParseResult {
       ? { type: "keybindings", command: "keybindings", query }
       : { type: "keybindings", command: "keybindings" };
   }
-  if (command.command.type === "inspect")
-    return command.rest.trim() === "inspect"
-      ? { type: "inspect", command: "vimmode", query: "inspect" }
-      : { type: "error", message: "Unexpected Ex command arguments" };
-  return rejectTrailingArgs(command.rest) ?? { type: "changelog", command: "changelog" };
+  return command.rest.trim() === "inspect"
+    ? { type: "inspect", command: "vimmode", query: "inspect" }
+    : { type: "error", message: "Unexpected Ex command arguments" };
 }
 
 function parseParsedExCommand(
@@ -555,10 +443,8 @@ function parseParsedExCommand(
     return parseDestinationCommand(command, range, rangeExplicit, context);
   if (command.command.type === "diagnostic") return parseDiagnosticCommand(command);
   if (command.command.type === "runtimeHelp") return parseRuntimeHelpCommand(command);
-  if (["keybindings", "inspect", "changelog"].includes(command.command.type))
+  if (["keybindings", "inspect"].includes(command.command.type))
     return parseMetadataCommand(command);
-  if (command.command.type === "transform")
-    return parseTransformCommand(command, range, rangeExplicit);
   if (["delete", "yank", "put"].includes(command.command.type))
     return parseLineCommand(command, range, rangeExplicit);
   const trailing = rejectTrailingArgs(command.rest);
@@ -588,7 +474,7 @@ export function parseExCommand(commandLine: string, context: ExParseContext): Ex
       return { type: "lineJump", range: range.value.range, line: range.value.range.startLine };
     return { type: "error", message: "Unsupported Ex command" };
   }
-  const command = parseCommand(range.value.rest, context);
+  const command = parseCommand(range.value.rest);
   if (!command.ok) return { type: "error", message: command.message };
   return parseParsedExCommand(command, range.value.range, range.value.explicit, context);
 }
@@ -621,87 +507,24 @@ const CANDIDATE_NAMES_BY_COMMAND_TYPE: Record<string, string[]> = {
   repeatSubstitute: ["&", "&&"],
   lineJump: [] as string[],
   diagnostic: ["vimdoctor", "keymap", "mapcheck", "actions"],
-  runtimeHelp: ["help", "features", "messages"],
+  runtimeHelp: ["help", "messages"],
   keybindings: ["keybindings"],
   inspect: ["vimmode"],
-  changelog: ["changelog"],
-  transform: [] as string[],
 };
-
-function resolvedTransformCommandAliases(promptTransforms?: ResolvedVimPromptTransforms): string[] {
-  if (promptTransforms?.enabled === false) return [];
-  const commands = promptTransforms?.commands;
-  const actions: Array<{
-    action: PromptTransformAction;
-    enabled?: boolean;
-    commandNames: readonly string[];
-  }> = [
-    {
-      action: "quote",
-      enabled: promptTransforms?.actions.quote,
-      commandNames: commands?.quote ?? ["quote"],
-    },
-    {
-      action: "unquote",
-      enabled: promptTransforms?.actions.unquote,
-      commandNames: commands?.unquote ?? ["unquote"],
-    },
-    {
-      action: "bulletize",
-      enabled: promptTransforms?.actions.bulletize,
-      commandNames: commands?.bulletize ?? ["bulletize"],
-    },
-    {
-      action: "fence",
-      enabled: promptTransforms?.actions.fence,
-      commandNames: commands?.fence ?? ["fence"],
-    },
-    {
-      action: "indent",
-      enabled: promptTransforms?.actions.indent,
-      commandNames: commands?.indent ?? ["indent"],
-    },
-    {
-      action: "dedent",
-      enabled: promptTransforms?.actions.dedent,
-      commandNames: commands?.dedent ?? ["dedent"],
-    },
-    {
-      action: "reflow",
-      enabled: promptTransforms?.actions.reflow,
-      commandNames: commands?.reflow ?? ["reflow"],
-    },
-  ];
-
-  const names: string[] = [];
-  for (const entry of actions) {
-    if (entry.enabled === false) continue;
-    for (const name of entry.commandNames) {
-      names.push(name);
-    }
-  }
-  return names;
-}
 
 const allBuiltInCandidateNames = Object.values(CANDIDATE_NAMES_BY_COMMAND_TYPE).flat().sort();
 
 export function suggestExCommands(commandLine: string, context: ExParseContext): string[] {
   const source = commandLine.trim();
   if (source.length === 0) {
-    return stableUnique([
-      ...allBuiltInCandidateNames,
-      ...resolvedTransformCommandAliases(context.promptTransforms),
-    ]).sort();
+    return [...allBuiltInCandidateNames];
   }
 
   const range = parseExLineRange(source, context);
   const commandSource = range.ok ? range.value.rest.trim() : source;
   if (!/^[A-Za-z&]+$/.test(commandSource)) return [];
 
-  const allCandidates = stableUnique([
-    ...allBuiltInCandidateNames,
-    ...resolvedTransformCommandAliases(context.promptTransforms),
-  ]);
+  const allCandidates = allBuiltInCandidateNames;
   if (commandSource.length === 0) return allCandidates;
 
   const prefix = commandSource;

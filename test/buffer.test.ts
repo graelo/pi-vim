@@ -21,7 +21,6 @@ import {
   deleteSearchRange,
   insertBlockText,
   joinExLineRange,
-  applyPromptTransform,
   shiftLineRange,
   shiftLinesFromCursor,
   moveExLineRange,
@@ -1260,7 +1259,7 @@ describe("Ex line operations", () => {
     });
   });
 
-  test("shifts prompt line ranges with transform semantics", () => {
+  test("shifts prompt line ranges by indent and dedent", () => {
     expect(shiftLinesFromCursor("one\ntwo\nthree", p(0, 1), 2, "indent")).toMatchObject({
       ok: true,
       edit: { text: "  one\n  two\nthree", cursor: p(0, 1), changed: true },
@@ -1275,71 +1274,6 @@ describe("Ex line operations", () => {
       ok: true,
       edit: { text: "one", cursor: p(0, 0), changed: false },
     });
-  });
-
-  test("applies prompt transforms across Ex line ranges", () => {
-    expect(
-      applyPromptTransform("one\ntwo", { startLine: 0, endLine: 1 }, { action: "quote" }, p(0, 0)),
-    ).toMatchObject({ edit: { text: "> one\n> two", cursor: p(0, 0), changed: true } });
-    expect(
-      applyPromptTransform(
-        "> one\n> two",
-        { startLine: 0, endLine: 1 },
-        { action: "unquote" },
-        p(0, 0),
-      ),
-    ).toMatchObject({ edit: { text: "one\ntwo", changed: true } });
-    expect(
-      applyPromptTransform(
-        "a\n  b\n",
-        { startLine: 0, endLine: 2 },
-        { action: "bulletize" },
-        p(0, 0),
-      ),
-    ).toMatchObject({ edit: { text: "- a\n  - b\n", changed: true } });
-    expect(
-      applyPromptTransform(
-        "const x = 1;",
-        { startLine: 0, endLine: 0 },
-        { action: "fence", language: "ts" },
-        p(0, 0),
-      ),
-    ).toMatchObject({ edit: { text: "```ts\nconst x = 1;\n```", changed: true } });
-    expect(
-      applyPromptTransform(
-        "  one\n\ttwo",
-        { startLine: 0, endLine: 1 },
-        { action: "dedent" },
-        p(0, 0),
-      ),
-    ).toMatchObject({ edit: { text: "one\ntwo", changed: true } });
-  });
-
-  test("reflows prose while preserving fences and error blocks", () => {
-    const text =
-      "alpha beta gamma delta\n```\ncode stays as a very long line\n```\nTypeError: boom\n    at fn (x.ts:1:1)";
-    const result = applyPromptTransform(
-      text,
-      { startLine: 0, endLine: 5 },
-      { action: "reflow", width: 12 },
-      p(0, 0),
-    );
-    expect(result).toMatchObject({ ok: true, edit: { changed: true } });
-    expect(result.ok && result.edit.text).toBe(
-      "alpha beta\ngamma delta\n```\ncode stays as a very long line\n```\nTypeError: boom\n    at fn (x.ts:1:1)",
-    );
-  });
-
-  test("reflow preserves selected subranges inside existing code fences", () => {
-    const text = "intro\n```ts\nconst value = some very long expression here\n```\noutro";
-    const result = applyPromptTransform(
-      text,
-      { startLine: 2, endLine: 2 },
-      { action: "reflow", width: 12 },
-      p(2, 0),
-    );
-
-    expect(result).toMatchObject({ ok: true, edit: { text, changed: false } });
   });
 });
 

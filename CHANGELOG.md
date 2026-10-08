@@ -7,8 +7,8 @@ project uses [Semantic Versioning](https://semver.org/).
 ## [1.0.0] - 2026-10-08
 
 Hard fork of [pekochan069/pi-vimmode](https://github.com/pekochan069/pi-vimmode)
-at v0.9.0, published as `@graelo/pi-vimmode`. Editor behavior is unchanged
-from 0.9.0 apart from the fix below.
+at v0.9.0, published as `@graelo/pi-vimmode`. Apart from the removals and the
+fix below, editor behavior is unchanged from 0.9.0.
 
 ### Changed
 
@@ -17,10 +17,23 @@ from 0.9.0 apart from the fix below.
   JavaScript config to `./npm/node_modules/@graelo/pi-vimmode/config`.
 - The package now ships TypeScript sources directly; there is no bundled
   `dist/` build anymore.
-- `:changelog` reads release notes from the packaged `CHANGELOG.md`, which
-  replaces `RELEASE.md`.
+- `RELEASE.md` is replaced by this `CHANGELOG.md`.
 - Development toolchain moved from Bun, rolldown, oxlint, oxfmt and lefthook
   to npm, tsc, vitest, tsx, biome and rumdl.
+
+### Removed
+
+- Prompt transforms: the `:quote`, `:unquote`, `:bulletize`, `:fence`,
+  `:indent`, `:dedent`, and `:reflow` Ex commands, the `prompt.transform.*`
+  actions, and their `vim.prompt.*` and `vim.action.prompt.transform.*`
+  factories in trusted JavaScript config. Use Vim line shifts (`>>`, `<<`,
+  visual `>`/`<`) for indentation.
+- The action keymap layer and its presets: `piVimMode.keymap.actions`,
+  `piVimMode.keymap.actionPresets`, and `piVimMode.promptTransforms`. These
+  settings now produce a "removed in 1.0.0" warning (see `:vimdoctor`) and are
+  ignored.
+- `:features`; use `:help`, `:keybindings`, `:actions`, and `:mapcheck`.
+- `:changelog` and its Markdown popup renderer.
 
 ### Fixed
 

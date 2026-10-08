@@ -137,7 +137,6 @@ function optionsSummary(options: ResolvedVimEditorOptions): string {
     options.marks?.enabled === false ? "marks" : undefined,
     options.search?.highlight === false ? "search-highlight" : undefined,
     options.ui?.status?.enabled === false ? "status" : undefined,
-    options.promptTransforms?.enabled === false ? "transforms" : undefined,
   ].filter(Boolean);
   return disabled.length > 0 ? `disabled=${disabled.join(",")}` : "features=default";
 }

@@ -45,8 +45,8 @@ Example:
 Warnings are non-fatal. When settings or JS config produce warnings, Pi status
 shows `pi-vimmode: vim ⚠`. Run `:vimdoctor` in normal mode to see the retained
 warning count and first actionable warning for the live editor. Run
-`:help settings` or `:features settings` for compact runtime reminders, but this
-file remains the complete settings reference.
+`:help settings` for compact runtime reminders, but this file remains the
+complete settings reference.
 
 Common warning causes:
 
@@ -84,8 +84,7 @@ IDs.
 export default (vim) => {
   vim.g.mapleader = " ";
   vim.keymap.set("i", "<A-w>", vim.prompt.deleteWordBackward());
-  vim.keymap.set("n", "<leader>q", vim.prompt.reflow({ width: 88 }));
-  vim.keymap.set("v", "z>", vim.prompt.quote());
+  vim.keymap.set("n", "<leader>u", vim.action.operator.uppercase(), { desc: "Uppercase" });
   vim.keymap.set("n", "H", vim.action.motion.wordForward(), { desc: "Next word" });
   vim.keymap.set("n", "zz", "llll");
   vim.keymap.set("n", "zq", null);
@@ -98,11 +97,9 @@ modes, exact `"visualLine"` or `"visualBlock"`, and
 target. Arrays of modes are accepted. Each descriptor declares allowed scopes;
 unsupported scope combinations warn and do not install that mapping.
 
-`vim.action` exposes finite operator, motion, command, macro, mark, insert,
-text-object, and prompt-transform descriptor factories. `vim.prompt.*` remains
-the compatible alias for prompt-transform and insert built-ins. Prompt transform
-factories are `quote`, `unquote`, `bulletize`, `fence({ language })`, `indent`,
-`dedent`, and `reflow({ width })`; insert factories are `openLineBelow`,
+`vim.action` exposes finite operator, motion, command, macro, mark, insert, and
+text-object descriptor factories. `vim.prompt.*` remains the compatible alias
+for insert built-ins: `openLineBelow`,
 `openLineAbove`, `deleteWordBackward`, `deleteWordForward`,
 `deleteLineBackward`, `deleteLineForward`, `moveWordBackward`,
 `moveWordForward`, `moveLineStart`, and `moveLineEnd`.
@@ -120,7 +117,7 @@ assignment order inside the JS file. Invalid assignments warn and preserve the
 last valid value.
 
 JS config boundaries: no raw object export, no string target that names internal
-action IDs such as `"prompt.transform.reflow"`, no recursive mapping expansion
+action IDs such as `"operator.uppercase"`, no recursive mapping expansion
 beyond normal macro replay limits, no TypeScript config, no project-local JS, no
 file watchers, no plugin discovery, and no arbitrary custom action execution.
 String targets are replayed through the macro path, so Ex-command remaps such as
@@ -166,8 +163,7 @@ Rules:
     is configured. `<leader><leader>` is valid; a lone `<leader>` or
     `g<leader>x` is rejected.
 - Empty arrays do not override existing/default bindings for classic keymap
-    groups. In `piVimMode.keymap.actions`, an empty array unbinds that action in
-    the current settings scope.
+    groups.
 - `piVimMode.keymap.escape` defaults to `[]` and replaces the inherited escape
     alias list when set.
 - Escape aliases are key aliases such as `<D-j>` or `<C-j>`, not raw text
@@ -247,10 +243,8 @@ inherited leader.
   "piVimMode": {
     "leader": " ",
     "keymap": {
-      "actions": {
-        "prompt.transform.reflow": ["<leader>q"]
-      },
       "commands": {
+        "redo": ["<leader>r"],
         "showKeybindings": ["<leader>k"]
       }
     }
@@ -272,8 +266,8 @@ Rules:
     normal and all visual modes. Existing grammar on that prefix becomes
     unavailable, including counts for digit leaders, named-register entry for
     `"`, macro/mark keys, and direct visual `u`/`U` transforms.
-- Leader setting alone changes no key behavior. Insert escape/action and
-    multi-key text-object bindings retain existing validation and do not
+- Leader setting alone changes no key behavior. Insert escape and multi-key
+    text-object bindings retain existing validation and do not
     activate normal/visual prefix reservation.
 - Runtime keybinding views show expanded physical keys, not `<leader>` source
     notation.
@@ -394,7 +388,6 @@ Rules:
     semantics where keyword runs, punctuation runs, and whitespace are separate
     groups.
 - `piVimMode.keymap.insert` owns only physical insert edits and movement.
-    Semantic prompt transforms remain under `piVimMode.keymap.actions`.
 - Autocomplete-active input keeps Pi ownership and does not run insert bindings.
 - These are opt-in: with no `piVimMode.keymap.insert` config, every
     insert-mode key delegates to Pi default behavior.
@@ -523,10 +516,9 @@ commands. Insert mode remains Pi-owned, so the same physical key sequence
 delegates to Pi while inserting text unless pi-vimmode otherwise supports that
 insert-mode input.
 
-Use this command path for a shortcut to keybinding discovery. Do not configure
-`vimmode.*` diagnostic/help metadata IDs under `piVimMode.keymap.actions`:
-`vimmode.keybindings`, `vimmode.keymap`, `vimmode.help`, and other `vimmode.*`
-IDs are metadata-only, not bindable prompt transform actions.
+Use this command path for a shortcut to keybinding discovery. `vimmode.*`
+diagnostic/help metadata IDs such as `vimmode.keybindings`, `vimmode.keymap`,
+and `vimmode.help` are metadata-only and cannot be bound.
 
 ### Macro keymap
 
@@ -637,7 +629,7 @@ added by these settings.
 Protected Pi shortcuts such as `ctrl+p`, `ctrl+v`, `alt+v`, `ctrl+alt+v`,
 `ctrl+t`, and `tab` are rejected from all keymap groups by default. Adding a key
 to this allow-list within the same settings layer authorizes that key in classic
-keymap groups, escape aliases, and action keybindings of the same layer.
+keymap groups and escape aliases of the same layer.
 
 Example:
 
@@ -674,160 +666,6 @@ Rules:
     when normal-mode image paste should reach Pi.
 - To roll back, remove the key from `allowProtectedOverrides`.
 
-### Action keybindings
-
-`piVimMode.keymap.actions` binds finite prompt transform actions to
-normal/visual key sequences. It is a flat record from canonical action ID to an
-array of string entries or `{ "key", "args" }` entries. No action keybindings
-exist by default.
-
-Supported bindable action IDs:
-
-- `prompt.transform.quote`
-- `prompt.transform.unquote`
-- `prompt.transform.bulletize`
-- `prompt.transform.fence`
-- `prompt.transform.indent`
-- `prompt.transform.dedent`
-- `prompt.transform.reflow`
-
-<!-- #prompt-transform-action-quote -->
-<!-- #prompt-transform-action-unquote -->
-<!-- #prompt-transform-action-bulletize -->
-<!-- #prompt-transform-action-fence -->
-<!-- #prompt-transform-action-indent -->
-<!-- #prompt-transform-action-dedent -->
-<!-- #prompt-transform-action-reflow -->
-
-Example:
-
-```json
-{
-  "piVimMode": {
-    "keymap": {
-      "actions": {
-        "prompt.transform.reflow": ["gq", { "key": "gQ", "args": { "width": 100 } }],
-        "prompt.transform.fence": [{ "key": "gT", "args": { "language": "ts" } }],
-        "prompt.transform.quote": [{ "key": "g>" }]
-      }
-    }
-  }
-}
-```
-
-Action keybinding presets are selectable opt-in bundles backed by the same
-finite recipe metadata. They create no default keybindings and are not defaults,
-not recursive mappings, not runtime `:map`, not `.vimrc`, no plugin API, not a
-plugin API, not diagnostic/help action dispatch, and not Vim/Neovim parity. Run
-`:features keybindings` or `:features action presets` for compact runtime
-discovery.
-
-`piVimMode.keymap.actionPresets` accepts:
-
-- `paragraph-editing`
-- `markdown-wrapping`
-
-Resolution order is defaults, global whole-editor `piVimMode.preset`, global
-`keymap.actionPresets`, global explicit `keymap.actions`, project whole-editor
-`piVimMode.preset`, project `keymap.actionPresets`, then project explicit
-`keymap.actions`. Later presets replace earlier preset bindings for the same
-action ID. Explicit `piVimMode.keymap.actions` entries override preset-provided
-entries for the same action ID; an explicit empty action array clears that
-action from the preset.
-
-<!-- action-keybinding-preset:paragraph-editing -->
-<!-- action-keybinding-preset:markdown-wrapping -->
-
-Preset example:
-
-```json
-{
-  "piVimMode": {
-    "keymap": {
-      "actionPresets": ["paragraph-editing", "markdown-wrapping"],
-      "actions": {
-        "prompt.transform.quote": ["zq"],
-        "prompt.transform.unquote": []
-      }
-    }
-  }
-}
-```
-
-In this example, presets provide reflow/fence/quote/unquote bindings, explicit
-`quote` changes the quote key to `zq`, and explicit empty `unquote` removes the
-preset-provided unquote binding.
-
-Action keybinding recipes are copy-pasteable opt-in snippets. Recipes and
-presets share the same canonical action metadata: recipes are pasted under
-`piVimMode.keymap.actions`, while presets are selected by ID under
-`piVimMode.keymap.actionPresets`.
-
-<!-- action-keybinding-recipe:paragraph-editing -->
-
-Paragraph editing recipe:
-
-```json
-{
-  "piVimMode": {
-    "keymap": {
-      "actions": {
-        "prompt.transform.reflow": ["gq"],
-        "prompt.transform.quote": ["g>"],
-        "prompt.transform.unquote": ["g<"]
-      }
-    }
-  }
-}
-```
-
-<!-- action-keybinding-recipe:markdown-wrapping -->
-
-Markdown wrapping recipe:
-
-```json
-{
-  "piVimMode": {
-    "keymap": {
-      "actions": {
-        "prompt.transform.fence": ["gT"],
-        "prompt.transform.quote": ["g>"],
-        "prompt.transform.unquote": ["g<"]
-      }
-    }
-  }
-}
-```
-
-Normal mode action keys transform the current line; a count extends the line
-range, e.g. `3gq` reflows current line plus next two lines. Visual, visual-line,
-and visual-block action keys transform touched lines once, ignore visual counts,
-then return to normal mode. Visual-block action transforms are linewise, not
-rectangular.
-
-Parameterized args:
-
-- `prompt.transform.fence`: optional `{ "language": "ts" }`; language must not
-    contain whitespace.
-- `prompt.transform.reflow`: optional `{ "width": 72 }`; width must be an
-    integer from `20` through `240`.
-- `quote`, `unquote`, `bulletize`, `indent`, and `dedent` reject args.
-- Unknown arg keys reject that binding so typos do not silently fall back to
-    defaults.
-
-Rejected action key entries are ignored with warnings while valid sibling
-entries stay usable. Rejections include unknown action IDs, invalid args,
-protected Pi shortcuts, disabled prompt transform actions, duplicate keys across
-different actions, exact grammar conflicts, and prefix-shadow conflicts.
-Same-action repeated keys dedupe without warning. Use `:vimdoctor` for retained
-warnings and `:mapcheck <key>` to inspect accepted or rejected action keys.
-
-`piVimMode.keymap.actions` accepts canonical `prompt.transform.*` IDs only.
-Non-canonical action IDs are unsupported and do not install keybinding dispatch.
-`piVimMode.promptTransforms.actions` remains the enable/disable boolean surface
-for transforms, and `piVimMode.promptTransforms.commands` remains the Ex
-command-name surface; neither moves into `keymap.actions`.
-
 ### Keymap validation
 
 Example shift operator remap:
@@ -849,16 +687,14 @@ With this config, `]]` indents the current line in normal mode, `[[` dedents it,
 and visual `]` / `[` shifts selected lines.
 
 - Unknown action names warn and are ignored.
-- `keymap.actionPresets` must be an array of supported preset ID strings.
-- Each classic keymap binding value must be an array of strings;
-    `keymap.actions` also accepts `{ "key", "args" }` entries.
+- Each classic keymap binding value must be an array of strings.
+- `keymap.actions`, `keymap.actionPresets`, and top-level `promptTransforms`
+    were removed in 1.0.0; they warn and are ignored.
 - Protected shortcuts are ignored with warnings.
 - Duplicate bindings inside a classic group warn.
 - Duplicate bindings across the resolved classic keymap warn.
 - A shorter classic binding shadowed by a longer binding prefix warns, e.g.
     `g` and `gg`.
-- Action binding conflicts reject before dispatch; classic grammar remains
-    owner until explicitly unbound or remapped.
 
 ## Macro behavior settings
 
@@ -943,43 +779,6 @@ objects still work.
 | `piVimMode.promptStructures.targets.listItem`       | `true`  | Enables list item target.              |
 | `piVimMode.promptStructures.targets.tag`            | `true`  | Enables XML-ish tag target.            |
 | `piVimMode.promptStructures.targets.errorBlock`     | `true`  | Enables pasted error block target.     |
-
-## Prompt transform settings
-
-These settings enable/disable finite prompt transform Ex commands and configure
-command names. They are separate from `piVimMode.keymap.actions`:
-`promptTransforms.actions` are boolean enable flags, and
-`promptTransforms.commands` are Ex command names such as `:quote` or `:reflow`.
-
-| Path                                           | Default     | Effect                                 |
-| ---------------------------------------------- | ----------- | -------------------------------------- |
-| `piVimMode.promptTransforms.enabled`           | `true`      | Enables all prompt transform commands. |
-| `piVimMode.promptTransforms.actions.quote`     | `true`      | Enables quote transform.               |
-| `piVimMode.promptTransforms.actions.unquote`   | `true`      | Enables unquote transform.             |
-| `piVimMode.promptTransforms.actions.bulletize` | `true`      | Enables bulletize transform.           |
-| `piVimMode.promptTransforms.actions.fence`     | `true`      | Enables fence transform.               |
-| `piVimMode.promptTransforms.actions.indent`    | `true`      | Enables indent transform.              |
-| `piVimMode.promptTransforms.actions.dedent`    | `true`      | Enables dedent transform.              |
-| `piVimMode.promptTransforms.actions.reflow`    | `true`      | Enables reflow transform.              |
-| `piVimMode.promptTransforms.commands.quote`    | `["quote"]` | Ex command names that run quote.       |
-| `piVimMode.promptTransforms.commands.fence`    | `["fence"]` | Ex command names that run fence.       |
-
-Command-name arrays exist for every transform action: `quote`, `unquote`,
-`bulletize`, `fence`, `indent`, `dedent`, `reflow`.
-
-Example:
-
-```json
-{
-  "piVimMode": {
-    "promptStructures": { "targets": { "tag": false } },
-    "promptTransforms": {
-      "actions": { "reflow": false },
-      "commands": { "quote": ["qte"], "fence": ["wrap"] }
-    }
-  }
-}
-```
 
 ## UI settings
 

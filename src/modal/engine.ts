@@ -55,7 +55,6 @@ import {
 import { protectedShortcutForKey } from "../customization.ts";
 import { appendMappingToken } from "../mapping-scopes.ts";
 import { scrollHelpPopup } from "../read-only-popup.ts";
-import { applyPromptTransformAction, applyVisualPromptTransformAction } from "./actions.ts";
 import {
   clearCommandPending,
   clearExMessage,
@@ -484,13 +483,8 @@ function remapUpdate(
   key: string,
 ): ModalUpdate | undefined {
   const keymap = keymapForOptions(options);
-  const actionKeys = new Set(
-    keymap.actions.accepted
-      .filter((action) => !action.modes || action.modes.includes(mode))
-      .map((action) => action.key),
-  );
   const remaps = keymap.remaps.accepted.filter(
-    (remap) => (!remap.modes || remap.modes.includes(mode)) && !actionKeys.has(remap.key),
+    (remap) => !remap.modes || remap.modes.includes(mode),
   );
   const sequence = appendMappingToken(
     state.pending ?? "",
@@ -664,10 +658,6 @@ function applyNormalResolution(
       : moveUpdate(clearPending(state), result.motion, snapshot, result.count);
   if (result.type === "command")
     return applyNormalCommandResolution(state, snapshot, options, result);
-  if (result.type === "action")
-    return state.pendingRegister
-      ? invalidate(clearPending(state))
-      : applyPromptTransformAction(state, snapshot, options, result);
   return applyNormalRemainingResolution(state, snapshot, options, keymap, key, result);
 }
 function scopedInputSequence(
@@ -918,10 +908,6 @@ function applyVisualBasicResolution(
       visualKindForMode(state.mode),
       result.char,
     );
-  }
-  if (result.type === "action") {
-    if (state.pendingRegister) return invalidate(clearPending(state));
-    return applyVisualPromptTransformAction(state, snapshot, options, result);
   }
   return undefined;
 }

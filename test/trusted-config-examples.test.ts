@@ -33,15 +33,11 @@ describe("trusted config examples", () => {
   });
 
   test("async workflow", async () => {
-    expect(await load("async.config.js")).toContainEqual({
+    const operations = await load("async.config.js");
+    expect(operations).toContainEqual({ kind: "leaf", path: "search.maxHighlights", value: 50 });
+    expect(operations).toContainEqual({
       kind: "map",
-      mapping: {
-        kind: "action",
-        actionId: "prompt.transform.reflow",
-        key: "gq",
-        args: { width: 88 },
-        modes: ["normal"],
-      },
+      mapping: { kind: "descriptor", actionId: "motion.lineEnd", key: "gl", modes: ["normal"] },
     });
   });
 
@@ -49,8 +45,8 @@ describe("trusted config examples", () => {
     const operations = await load("imported-preset.config.js");
     expect(operations).toContainEqual({
       kind: "leaf",
-      path: "keymap.actionPresets",
-      value: ["markdown-wrapping"],
+      path: "promptStructures.targets",
+      value: { codeFence: true, headingSection: true, listItem: true },
     });
     expect(operations).toContainEqual({ kind: "leaf", path: "startMode", value: "normal" });
   });

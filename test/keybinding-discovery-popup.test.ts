@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { resolveVimOptions } from "../src/config.ts";
-import { keybindingDiscoveryPopup, keybindingsPopup } from "../src/keybinding-discovery-popup.ts";
+import { keybindingsPopup } from "../src/keybinding-discovery-popup.ts";
 
 describe("keybinding discovery popups", () => {
   test("builds dedicated keybindings catalog popup", () => {
@@ -9,7 +9,6 @@ describe("keybinding discovery popups", () => {
       piVimMode: {
         keymap: {
           commands: { redo: ["U"] },
-          actions: { "prompt.transform.reflow": ["gq"] },
         },
       },
     });
@@ -25,7 +24,6 @@ describe("keybinding discovery popups", () => {
     expect(text).toContain("▸ Commands");
     expect(text).toContain("Key            Mode        Action");
     expect(text).toContain("U              normal      command.redo");
-    expect(text).toContain("gq             n/v         prompt.transform.reflow");
     expect(text).not.toContain("vimmode.keybindings metadata-only not bindable");
     expect(text).toContain("ctrl+p");
     expect(text).toContain("protected for Pi command/model palette");
@@ -42,17 +40,5 @@ describe("keybinding discovery popups", () => {
       query: "ctrl+p",
     });
     expect(popup.lines.join("\n")).toContain("protected for Pi command/model palette");
-  });
-
-  test("keeps features keybindings recipe popup distinct", () => {
-    const { options } = resolveVimOptions(undefined);
-    const popup = keybindingDiscoveryPopup(options);
-
-    expect(popup).toMatchObject({
-      title: "Keybinding discovery",
-      source: "features",
-      query: "keybindings",
-    });
-    expect(popup.lines.join("\n")).toContain("Source-backed prompt transform keybinding recipes");
   });
 });

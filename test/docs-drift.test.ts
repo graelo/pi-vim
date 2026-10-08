@@ -1,21 +1,12 @@
 import { describe, expect, test } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 
-import {
-  ACTION_KEYBINDING_PRESETS,
-  ACTION_KEYBINDING_RECIPES,
-} from "../src/action-keybinding-recipes.ts";
-import { DEFAULT_VIM_OPTIONS, resolveVimOptions } from "../src/config.ts";
+import { VIM_ACTION_METADATA } from "../src/config-metadata.ts";
+import { DEFAULT_VIM_OPTIONS } from "../src/config.ts";
 import { DIAGNOSTIC_ACTIONS } from "../src/diagnostic-actions.ts";
 import { parseExCommand } from "../src/ex.ts";
-import { keybindingDiscoveryPopup, keybindingsPopup } from "../src/keybinding-discovery-popup.ts";
-import {
-  PROMPT_TRANSFORM_ACTIONS,
-  bindablePromptTransformActionIds,
-} from "../src/prompt-transform-actions.ts";
 import { runtimeHelpEntries, runtimeHelpMessage } from "../src/runtime-help.ts";
 import {
-  ACTION_RECIPE_DOCS_METADATA,
   DIAGNOSTIC_ACTION_DOCS_METADATA,
   POPUP_COMMAND_DOCS_METADATA,
 } from "./support/runtime-docs-metadata.ts";
@@ -120,7 +111,7 @@ describe("diagnostic action documentation", () => {
   });
 
   test("diagnostic action metadata is excluded from bindable action IDs", () => {
-    const bindableIds = bindablePromptTransformActionIds();
+    const bindableIds = VIM_ACTION_METADATA.filter(({ bindable }) => bindable).map(({ id }) => id);
     for (const entry of DIAGNOSTIC_ACTIONS) expect(bindableIds).not.toContain(entry.id);
   });
 });
@@ -134,14 +125,6 @@ describe("documentation behavior", () => {
         "error",
       );
     }
-  });
-
-  test("action recipe metadata covers every recipe and preset both directions", () => {
-    const recipeIds = ACTION_KEYBINDING_RECIPES.map((recipe) => recipe.id);
-    const presetIds = ACTION_KEYBINDING_PRESETS.map((preset) => preset.id);
-    const metadataIds = ACTION_RECIPE_DOCS_METADATA.map((entry) => entry.id);
-    expectSameIds(recipeIds, metadataIds);
-    expectSameIds(presetIds, metadataIds);
   });
 
   test("docs cover WORD and previous-end motion names without lowercase retune claims", () => {
@@ -203,7 +186,6 @@ describe("documentation data contracts", () => {
       "piVimMode.macros.enabled": String(DEFAULT_VIM_OPTIONS.macros!.enabled),
       "piVimMode.marks.enabled": String(DEFAULT_VIM_OPTIONS.marks!.enabled),
       "piVimMode.promptStructures.enabled": String(DEFAULT_VIM_OPTIONS.promptStructures!.enabled),
-      "piVimMode.promptTransforms.enabled": String(DEFAULT_VIM_OPTIONS.promptTransforms!.enabled),
     };
 
     for (const [path, defaultValue] of Object.entries(defaults)) {
@@ -225,39 +207,11 @@ describe("documentation data contracts", () => {
     expect(featuresDoc).toContain(":delete a");
     expect(featuresDoc).toContain("piVimMode.ui.workbench.reservedRows");
   });
-
-  test("prompt transform action registry stays aligned with docs", () => {
-    const documentedIds = new Set(allUserDocs.match(/prompt\.transform\.[a-z]+/g) ?? []);
-    for (const action of PROMPT_TRANSFORM_ACTIONS) {
-      expect(documentedIds.has(action.id)).toBe(true);
-      expect(allUserDocs).toContain(action.docsAnchor);
-    }
-    for (const id of documentedIds) {
-      expect(PROMPT_TRANSFORM_ACTIONS.some((action) => action.id === id)).toBe(true);
-    }
-    expect(allUserDocs).not.toContain("promptTransform.*");
-    expect(allUserDocs).not.toContain("promptTransform.reflow");
-    expect(allUserDocs).not.toMatch(
-      /legacy `promptTransform\.\*`[^.]*(supported|searchable|alias)/i,
-    );
-    expect(allUserDocs).not.toMatch(/promptTransform\.\*[^.]*(diagnostic|search|config)/i);
-  });
 });
 
 describe("keybinding popup documentation", () => {
-  test("read-only popup docs and registry-backed action IDs stay aligned", () => {
-    const popup = keybindingDiscoveryPopup(DEFAULT_VIM_OPTIONS);
-    const dedicatedPopup = keybindingsPopup(DEFAULT_VIM_OPTIONS);
-    const popupText = [
-      popup.title,
-      ...popup.lines,
-      dedicatedPopup.title,
-      ...dedicatedPopup.lines,
-    ].join("\n");
-    const popupIds = new Set(popupText.match(/prompt\.transform\.[a-z]+/g) ?? []);
-
+  test("read-only popup docs stay aligned with the keybindings command", () => {
     expect(featuresDoc).toContain(`<!-- ${POPUP_COMMAND_DOCS_METADATA[0]!.docsAnchor} -->`);
-    expect(featuresDoc).toContain(":features keybindings");
     expect(featuresDoc).toContain(":keybindings");
     expect(featuresDoc).toContain(":keybindings <query>");
     expect(settingsDoc).toContain("piVimMode.keymap.commands.showKeybindings");
@@ -273,74 +227,15 @@ describe("keybinding popup documentation", () => {
     expect(featuresDoc).toContain("no command palette");
     expect(featuresDoc).toContain("no Vim help tags");
     expect(featuresDoc).toContain("no diagnostic/help action keybinding dispatch");
-    expect(featuresDoc).toContain("no default action keybindings");
     expect(featuresDoc).toContain("no default keybinding for `:keybindings`");
     expect(featuresDoc).toContain("no unbounded output log");
-    const bindableIds: readonly string[] = bindablePromptTransformActionIds();
-    for (const id of popupIds) {
-      expect(bindableIds).toContain(id);
-      expect(allUserDocs).toContain(id);
+    for (const removed of [":features", ":changelog", "prompt.transform."]) {
+      expect(allUserDocs).not.toContain(removed);
     }
   });
 });
 
-describe("action keybinding documentation", () => {
-  test("action keybinding recipe docs anchors and configs stay aligned", () => {
-    for (const recipe of ACTION_KEYBINDING_RECIPES) {
-      const docs = ACTION_RECIPE_DOCS_METADATA.find((entry) => entry.id === recipe.id)!;
-      expect(allUserDocs).toContain(`<!-- ${docs.docsAnchor} -->`);
-      const result = resolveVimOptions({ piVimMode: { keymap: { actions: recipe.actions } } });
-      expect(result.warnings).toEqual([]);
-      for (const binding of recipe.expected) {
-        expect(bindablePromptTransformActionIds()).toContain(binding.actionId);
-        expect(allUserDocs).toContain(binding.actionId);
-        expect(allUserDocs).toContain(binding.key);
-      }
-    }
-  });
-
-  test("action keybinding preset docs anchors and configs stay aligned", () => {
-    expect(allUserDocs).toContain("piVimMode.keymap.actionPresets");
-    for (const preset of ACTION_KEYBINDING_PRESETS) {
-      const docs = ACTION_RECIPE_DOCS_METADATA.find((entry) => entry.id === preset.id)!;
-      expect(allUserDocs).toContain(`<!-- ${docs.presetDocsAnchor} -->`);
-      expect(allUserDocs).toContain(preset.id);
-      expect(allUserDocs).toContain("no default");
-      expect(allUserDocs).toContain("no plugin API");
-      const result = resolveVimOptions({
-        piVimMode: { keymap: { actionPresets: [preset.id] } },
-      });
-      expect(result.warnings).toEqual([]);
-      expect(result.options.keymap?.actions.accepted).toEqual(preset.expected);
-      for (const binding of preset.expected) {
-        expect(bindablePromptTransformActionIds()).toContain(binding.actionId);
-        expect(allUserDocs).toContain(binding.actionId);
-        expect(allUserDocs).toContain(binding.key);
-      }
-    }
-  });
-
-  test("documented keymap.actions example shape parses", () => {
-    const result = resolveVimOptions({
-      piVimMode: {
-        keymap: {
-          actions: {
-            "prompt.transform.reflow": ["gq", { key: "gQ", args: { width: 100 } }],
-            "prompt.transform.fence": [{ key: "gT", args: { language: "ts" } }],
-            "prompt.transform.quote": [{ key: "g>" }],
-          },
-        },
-      },
-    });
-    expect(result.warnings).toEqual([]);
-    expect(result.options.keymap?.actions.accepted.map((binding) => binding.actionId)).toEqual([
-      "prompt.transform.reflow",
-      "prompt.transform.reflow",
-      "prompt.transform.fence",
-      "prompt.transform.quote",
-    ]);
-  });
-
+describe("release documentation", () => {
   test("release docs include checks and package contents inspection", () => {
     expect(readme).toContain("npm run check");
     expect(readme).toContain("npm pack --dry-run");

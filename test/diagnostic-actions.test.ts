@@ -15,7 +15,6 @@ describe("diagnostic/help action metadata", () => {
       "vimmode.keybindings",
       "vimmode.mapcheck",
       "vimmode.help",
-      "vimmode.features",
       "vimmode.messages",
       "vimmode.inspect",
     ]);
@@ -41,7 +40,6 @@ describe("diagnostic/help action metadata", () => {
     expect(searchDiagnosticActions("vimmode.doctor")[0]?.id).toBe("vimmode.doctor");
     expect(searchDiagnosticActions("vimdoctor")[0]?.id).toBe("vimmode.doctor");
     expect(searchDiagnosticActions("metadata-only")[0]?.id).toBeTruthy();
-    expect(searchDiagnosticActions(":features redo")[0]?.id).toBe("vimmode.features");
     expect(searchDiagnosticActions("vimmode.dump")).toEqual([]);
   });
 

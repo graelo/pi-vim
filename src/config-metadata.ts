@@ -20,18 +20,10 @@ import {
   type VimMappingFamily,
   type VimMappingScope,
 } from "./mapping-scopes.ts";
-import {
-  PROMPT_TRANSFORM_ACTIONS,
-  type PromptTransformActionArg,
-} from "./prompt-transform-actions.ts";
 
 export { VIM_MAPPING_SCOPES, type VimMappingScope } from "./mapping-scopes.ts";
 
-type ActionSource =
-  | "keymap-descriptor"
-  | "prompt-transform-registry"
-  | "diagnostic-registry"
-  | "trusted-config-api";
+type ActionSource = "keymap-descriptor" | "diagnostic-registry" | "trusted-config-api";
 
 export type VimActionMetadata = {
   id: string;
@@ -41,7 +33,6 @@ export type VimActionMetadata = {
   bindable: boolean;
   factoryPath?: string;
   publicScopes?: readonly VimMappingScope[];
-  args?: readonly PromptTransformActionArg[];
   aliases?: readonly string[];
   anchor?: string;
 };
@@ -52,28 +43,8 @@ type ActionFactoryPath<Id extends VimFiniteActionId> = Id extends "command.easym
 
 type ActionAliases<Id extends VimFiniteActionId> = Id extends "command.easymotion"
   ? readonly ["vim.action.command.easymotion()"]
-  : Id extends `prompt.transform.${infer Action}` | `insert.${infer Action}`
+  : Id extends `insert.${infer Action}`
     ? readonly [`vim.prompt.${Action}()`]
-    : readonly [];
-
-type ActionArgs<Id extends VimFiniteActionId> = Id extends "prompt.transform.fence"
-  ? readonly [
-      {
-        name: "language";
-        type: "string";
-        required: false;
-        description: string;
-      },
-    ]
-  : Id extends "prompt.transform.reflow"
-    ? readonly [
-        {
-          name: "width";
-          type: "integer";
-          required: false;
-          description: string;
-        },
-      ]
     : readonly [];
 
 type NormalVisualScopes = readonly ["normal", "visual", "visualLine", "visualBlock"];
@@ -125,14 +96,13 @@ type PublicActionScopes<Id extends VimFiniteActionId> = Id extends "escape"
 
 type VimPublicActionMetadataFor<Id extends VimFiniteActionId> = Omit<
   VimActionMetadata,
-  "id" | "source" | "bindable" | "factoryPath" | "publicScopes" | "args" | "aliases" | "anchor"
+  "id" | "source" | "bindable" | "factoryPath" | "publicScopes" | "aliases" | "anchor"
 > & {
   id: Id;
   source: Exclude<ActionSource, "diagnostic-registry">;
   bindable: true;
   factoryPath: ActionFactoryPath<Id>;
   publicScopes: PublicActionScopes<Id>;
-  args: ActionArgs<Id>;
   aliases: ActionAliases<Id>;
   anchor: string;
 };
@@ -153,25 +123,18 @@ function actionAnchor(id: string): string {
 function publicActionFields<Id extends VimFiniteActionId>(
   id: Id,
   publicScopes: readonly VimMappingScope[],
-): Pick<
-  VimPublicActionMetadataFor<Id>,
-  "factoryPath" | "publicScopes" | "args" | "aliases" | "anchor"
-> {
-  const promptAction = PROMPT_TRANSFORM_ACTIONS.find((entry) => entry.id === id);
+): Pick<VimPublicActionMetadataFor<Id>, "factoryPath" | "publicScopes" | "aliases" | "anchor"> {
   const factoryPath =
     id === "command.easymotion" ? "vim.action.command.easymotion.goToChar()" : `vim.action.${id}()`;
   const aliases =
     id === "command.easymotion"
       ? ["vim.action.command.easymotion()"]
-      : id.startsWith("prompt.transform.")
-        ? [`vim.prompt.${id.slice("prompt.transform.".length)}()`]
-        : id.startsWith("insert.")
-          ? [`vim.prompt.${id.slice("insert.".length)}()`]
-          : [];
+      : id.startsWith("insert.")
+        ? [`vim.prompt.${id.slice("insert.".length)}()`]
+        : [];
   return {
     factoryPath: factoryPath as ActionFactoryPath<Id>,
     publicScopes: publicScopes as PublicActionScopes<Id>,
-    args: (promptAction?.args ?? []) as ActionArgs<Id>,
     aliases: aliases as unknown as ActionAliases<Id>,
     anchor: actionAnchor(id),
   };
@@ -222,17 +185,6 @@ export const VIM_ACTION_METADATA: readonly (
   ...descriptorMetadata("insert", KEYMAP_INSERT_DESCRIPTORS),
   ...descriptorMetadata("textObject.kind", KEYMAP_TEXT_OBJECT_KIND_DESCRIPTORS),
   ...descriptorMetadata("textObject.target", KEYMAP_TEXT_OBJECT_TARGET_DESCRIPTORS),
-  ...PROMPT_TRANSFORM_ACTIONS.map(
-    ({ id, modes }) =>
-      ({
-        id,
-        source: "prompt-transform-registry" as const,
-        defaults: [],
-        scopes: modes,
-        bindable: true as const,
-        ...publicActionFields(id, modes),
-      }) as VimPublicActionMetadata,
-  ),
   ...DIAGNOSTIC_ACTIONS.map(({ id }) => ({
     id,
     source: "diagnostic-registry" as const,
@@ -296,12 +248,6 @@ const PROPERTY_FACTS = {
     acceptedShape: '"block" | "bar" | "underline"',
     assignment: "replaces cursor style",
     jsonPaths: ["piVimMode.cursor.visualBlock"],
-    aliases: [],
-  },
-  "keymap.actionPresets": {
-    acceptedShape: 'readonly ("paragraph-editing" | "markdown-wrapping")[]',
-    assignment: "replaces preset list",
-    jsonPaths: ["piVimMode.keymap.actionPresets"],
     aliases: [],
   },
   "keymap.operatorMotions": {
@@ -466,24 +412,6 @@ const PROPERTY_FACTS = {
     jsonPaths: ["piVimMode.promptStructures.targets"],
     aliases: [],
   },
-  "promptTransforms.enabled": {
-    acceptedShape: "boolean",
-    assignment: "replaces value",
-    jsonPaths: ["piVimMode.promptTransforms.enabled"],
-    aliases: [],
-  },
-  "promptTransforms.actions": {
-    acceptedShape: "partial record of prompt-transform actions to booleans",
-    assignment: "replaces whole record; does not merge keys",
-    jsonPaths: ["piVimMode.promptTransforms.actions"],
-    aliases: [],
-  },
-  "promptTransforms.commands": {
-    acceptedShape: "partial record of prompt-transform actions to string arrays",
-    assignment: "replaces whole record; does not merge keys",
-    jsonPaths: ["piVimMode.promptTransforms.commands"],
-    aliases: [],
-  },
 } as const satisfies Record<TrustedJsOptionPath, PropertyFacts>;
 
 type PropertyMetadataFor<Path extends TrustedJsOptionPath> = {
@@ -558,8 +486,6 @@ export const CONFIG_LEAVES: readonly ConfigLeaf[] = leaves([
   ),
   ...VIM_MOTION_OPERATOR_ACTIONS.map((action) => `keymap.operatorMotions.${action}`),
   ...Object.keys(KEYMAP_INSERT_DESCRIPTORS).map((action) => `keymap.insert.${action}`),
-  "keymap.actionPresets",
-  "keymap.actions.accepted",
   "keymap.remaps.accepted",
   "keymap.allowProtectedOverrides",
   "ui.status.enabled",
@@ -590,9 +516,4 @@ export const CONFIG_LEAVES: readonly ConfigLeaf[] = leaves([
   ...Object.keys(DEFAULT_VIM_OPTIONS.promptStructures!.targets).map(
     (target) => `promptStructures.targets.${target}`,
   ),
-  "promptTransforms.enabled",
-  ...PROMPT_TRANSFORM_ACTIONS.flatMap(({ action }) => [
-    `promptTransforms.actions.${action}`,
-    `promptTransforms.commands.${action}`,
-  ]),
 ]);

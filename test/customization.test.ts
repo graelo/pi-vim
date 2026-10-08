@@ -50,10 +50,10 @@ describe("vim customization helpers", () => {
 
   test("hides disabled macro and mark actions from diagnostics", () => {
     const { options } = resolveVimOptions(undefined, { piVimMode: { preset: "minimal" } });
-    expect(keymapMessage(options.keymap!, "macro", undefined, options.macros, options.marks)).toBe(
+    expect(keymapMessage(options.keymap!, "macro", options.macros, options.marks)).toBe(
       "keymap: no match for macro",
     );
-    expect(actionsMessage(options.keymap!, "mark", undefined, options.macros, options.marks)).toBe(
+    expect(actionsMessage(options.keymap!, "mark", options.macros, options.marks)).toBe(
       "actions: no match for mark",
     );
   });
@@ -100,67 +100,18 @@ describe("vim customization helpers", () => {
     );
   });
 
-  test("reports canonical prompt transform action bindings only", () => {
-    const { options, warnings } = resolveVimOptions({
-      piVimMode: {
-        keymap: {
-          actions: {
-            "prompt.transform.reflow": ["gq"],
-            "prompt.transform.quote": ["gg"],
-          },
-        },
-      },
-    });
-    const message = actionsMessage(options.keymap!, "reflow", options.promptTransforms);
-    expect(message).toContain("prompt.transform.reflow");
-    expect(message).not.toContain("promptTransform");
-    expect(
-      actionsMessage(options.keymap!, "promptTransform.reflow", options.promptTransforms),
-    ).toBe("actions: no match for promptTransform.reflow");
-    expect(keymapMessage(options.keymap!, "promptTransform.reflow", options.promptTransforms)).toBe(
-      "keymap: no match for promptTransform.reflow",
-    );
-    expect(
-      keymapMessage(options.keymap!, "prompt.transform.reflow", options.promptTransforms),
-    ).toContain("gq");
-    expect(mapcheckMessage(options.keymap!, "gq")).toBe("mapcheck: gq -> prompt.transform.reflow");
-    expect(mapcheckMessage(options.keymap!, "gg", warnings)).toContain("rejected");
-  });
-
-  test("reports disabled prompt transforms as disabled registry entries", () => {
-    const { options, warnings } = resolveVimOptions({
-      piVimMode: {
-        promptTransforms: { actions: { reflow: false } },
-        keymap: { actions: { "prompt.transform.reflow": ["gq"] } },
-      },
-    });
-
-    const actions = actionsMessage(options.keymap!, "reflow", options.promptTransforms);
-    expect(actions).toContain("prompt.transform.reflow");
-    expect(actions).toContain("disabled");
-    expect(actions).toContain("width?:integer");
-    expect(actions).not.toContain("promptTransform");
-    expect(keymapMessage(options.keymap!, "reflow", options.promptTransforms)).toContain(
-      "disabled",
-    );
-    expect(mapcheckMessage(options.keymap!, "gq", warnings)).toContain("prompt.transform.reflow");
-    expect(doctorMessage(options, { warnings })).toContain("prompt.transform.reflow");
-  });
-
   test("formats keybinding catalog from effective resolved bindings", () => {
     const { options } = resolveVimOptions({
       piVimMode: {
         leader: ",",
         keymap: {
           escape: ["<D-j>"],
-          commands: { redo: ["U"] },
-          actions: { "prompt.transform.reflow": ["<leader>q"] },
+          commands: { redo: ["U"], undo: ["<leader>q"] },
         },
       },
     });
     const lines = keybindingCatalogLines({
       keymap: options.keymap!,
-      promptTransforms: options.promptTransforms,
       macros: options.macros,
       marks: options.marks,
     }).join("\n");
@@ -173,7 +124,7 @@ describe("vim customization helpers", () => {
     expect(lines).toContain("Macros");
     expect(lines).toContain("Marks");
     expect(lines).toContain("Searches");
-    expect(lines).toContain("Prompt transforms");
+    expect(lines).not.toContain("Prompt transforms");
     expect(lines).not.toContain("Effective pi-vimmode keybindings");
     expect(lines).not.toContain("Diagnostic/help metadata");
     expect(lines).toContain("Protected Pi shortcuts");
@@ -181,9 +132,8 @@ describe("vim customization helpers", () => {
     expect(lines).toContain("Key            Mode        Action");
     expect(lines).toContain("U              normal      command.redo");
     expect(lines).toContain("super+j        modal       escape.alias");
-    expect(lines).toContain(",q             n/v         prompt.transform.reflow");
+    expect(lines).toContain(",q             normal      command.undo");
     expect(lines).not.toContain("<leader>");
-    expect(lines).not.toContain("promptTransform");
     expect(lines).not.toContain(" → ");
     expect(lines).not.toContain("vimmode.help metadata-only not bindable");
     expect(lines).toContain("ctrl+p");
@@ -197,7 +147,6 @@ describe("vim customization helpers", () => {
     const { options } = resolveVimOptions(undefined, { piVimMode: { preset: "minimal" } });
     const lines = keybindingCatalogLines({
       keymap: options.keymap!,
-      promptTransforms: options.promptTransforms,
       macros: options.macros,
       marks: options.marks,
     }).join("\n");
@@ -213,16 +162,11 @@ describe("vim customization helpers", () => {
       piVimMode: {
         keymap: {
           commands: { redo: ["U"] },
-          actions: {
-            "prompt.transform.reflow": ["gq"],
-            "vimmode.keybindings": ["gk"],
-          },
         },
       },
     });
     const context = {
       keymap: options.keymap!,
-      promptTransforms: options.promptTransforms,
       macros: options.macros,
       marks: options.marks,
       warnings,
@@ -244,12 +188,8 @@ describe("vim customization helpers", () => {
     expect(keybindingDetailLines(context, "ctrl+alt+v").join("\n")).toContain(
       "protected for image/clipboard paste",
     );
-    expect(keybindingDetailLines(context, "gq").join("\n")).toContain("prompt.transform.reflow");
     expect(keybindingDetailLines(context, "help").join("\n")).toContain(
       "No keybinding match for help",
-    );
-    expect(keybindingDetailLines(context, "vimmode.keybindings").join("\n")).toContain(
-      "vimmode.keybindings rejected",
     );
     expect(keybindingDetailLines(context, "vimscript").join("\n")).toContain(
       "No keybinding match for vimscript",

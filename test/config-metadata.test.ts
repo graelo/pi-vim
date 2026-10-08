@@ -21,7 +21,6 @@ import {
   KEYMAP_TEXT_OBJECT_KIND_DESCRIPTORS,
   KEYMAP_TEXT_OBJECT_TARGET_DESCRIPTORS,
 } from "../src/keymap-descriptors.ts";
-import { PROMPT_TRANSFORM_ACTIONS } from "../src/prompt-transform-actions.ts";
 
 type Assert<T extends true> = T;
 type OperatorPendingIsNotVimMode = Assert<"operatorPending" extends VimMode ? false : true>;
@@ -46,7 +45,6 @@ describe("canonical config metadata", () => {
       ...descriptorIds("insert", KEYMAP_INSERT_DESCRIPTORS),
       ...descriptorIds("textObject.kind", KEYMAP_TEXT_OBJECT_KIND_DESCRIPTORS),
       ...descriptorIds("textObject.target", KEYMAP_TEXT_OBJECT_TARGET_DESCRIPTORS),
-      ...PROMPT_TRANSFORM_ACTIONS.map(({ id }) => id),
       ...DIAGNOSTIC_ACTIONS.map(({ id }) => id),
     ].sort();
 
@@ -98,7 +96,6 @@ describe("canonical config metadata", () => {
       "cursor.visual",
       "cursor.visualLine",
       "cursor.visualBlock",
-      "keymap.actionPresets",
       "keymap.operatorMotions",
       "ui.status.enabled",
       "ui.status.position",
@@ -126,9 +123,6 @@ describe("canonical config metadata", () => {
       "feedback.noop",
       "promptStructures.enabled",
       "promptStructures.targets",
-      "promptTransforms.enabled",
-      "promptTransforms.actions",
-      "promptTransforms.commands",
     ]);
     expect(new Set(VIM_CONFIG_PROPERTY_METADATA.map(({ anchor }) => anchor)).size).toBe(
       VIM_CONFIG_PROPERTY_METADATA.length,
@@ -156,7 +150,6 @@ describe("canonical config metadata", () => {
       ...descriptorIds("insert", KEYMAP_INSERT_DESCRIPTORS),
       ...descriptorIds("textObject.kind", KEYMAP_TEXT_OBJECT_KIND_DESCRIPTORS),
       ...descriptorIds("textObject.target", KEYMAP_TEXT_OBJECT_TARGET_DESCRIPTORS),
-      ...PROMPT_TRANSFORM_ACTIONS.map(({ id }) => id),
     ].sort();
     expect(bindable.map(({ id }) => id).sort()).toEqual(expected);
     expect(new Set(bindable.map(({ anchor }) => anchor)).size).toBe(bindable.length);
@@ -171,7 +164,7 @@ describe("canonical config metadata", () => {
     }
   });
 
-  test("derives public scopes and prompt arguments without duplicate mappings", () => {
+  test("derives public scopes without duplicate mappings", () => {
     for (const action of VIM_ACTION_METADATA.filter(({ bindable }) => bindable)) {
       const expectedScopes =
         action.id === "escape"
@@ -180,18 +173,13 @@ describe("canonical config metadata", () => {
               (scope) => !action.id.startsWith("mark.") || scope !== "operatorPending",
             );
       expect(action.publicScopes).toEqual(expectedScopes);
-      if (action.id.startsWith("prompt.transform.")) {
-        expect(action.args).toEqual(
-          PROMPT_TRANSFORM_ACTIONS.find(({ id }) => id === action.id)?.args ?? [],
-        );
-      }
     }
   });
 
   test("has one source-backed default for every catalogued config leaf", () => {
     expect(new Set(CONFIG_LEAVES.map(({ path }) => path)).size).toBe(CONFIG_LEAVES.length);
     for (const leaf of CONFIG_LEAVES) expect(leaf.defaultValue).toEqual(valueAtPath(leaf.path));
-    expect(CONFIG_LEAVES.map(({ path }) => path)).toContain("keymap.actionPresets");
+    expect(CONFIG_LEAVES.map(({ path }) => path)).not.toContain("keymap.actionPresets");
     expect(
       CONFIG_LEAVES.find(({ path }) => path === "keymap.allowProtectedOverrides")
         ?.protectedShortcuts,

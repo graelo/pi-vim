@@ -1,19 +1,7 @@
 import type { ResolvedVimEditorOptions } from "./types.ts";
 
-import { actionKeybindingRecipeMessage } from "./action-keybinding-recipes.ts";
-import {
-  keymapForOptions,
-  macrosForOptions,
-  marksForOptions,
-  promptTransformsForOptions,
-} from "./config.ts";
-import {
-  actionsMessage,
-  mapcheckMessage,
-  protectedShortcutForKey,
-  searchActions,
-  type VimDiagnostics,
-} from "./customization.ts";
+import type { VimDiagnostics } from "./customization.ts";
+
 import { diagnosticActionMessage, searchDiagnosticActions } from "./diagnostic-actions.ts";
 
 export type RuntimeHelpCategory =
@@ -22,7 +10,6 @@ export type RuntimeHelpCategory =
   | "editing"
   | "search"
   | "ex"
-  | "transforms"
   | "registers"
   | "marks"
   | "macros"
@@ -57,10 +44,10 @@ const ENTRIES = [
   {
     id: "runtime-help",
     category: "diagnostics",
-    topics: ["help", "features", "messages", "runtime", "inspect", "vimmode"],
+    topics: ["help", "messages", "runtime", "inspect", "vimmode"],
     summary:
-      ":help, :features, and :keybindings show compact source-backed pi-vimmode help; :vimmode inspect summarizes current prompt-local state; :messages shows recent runtime messages",
-    examples: [":help search", ":features redo", ":keybindings", ":vimmode inspect", ":messages"],
+      ":help and :keybindings show compact source-backed pi-vimmode help; :vimmode inspect summarizes current prompt-local state; :messages shows recent runtime messages",
+    examples: [":help search", ":keybindings", ":vimmode inspect", ":messages"],
     limits: ["finite topics only", "no pager", "no Vim help tags"],
     docsAnchor: "runtime-help:runtime-help",
     specAnchor: "openspec/specs/vim-ex-command-line/spec.md",
@@ -83,18 +70,8 @@ const ENTRIES = [
     category: "ex",
     topics: ["ex", ":", "substitute", "s", "commands", "repeat", "register", "line", "quit", "q"],
     summary:
-      "finite Ex command-line supports :s substitution, :& repeat substitution, bare line jumps, line commands with register operands, transforms, diagnostics, runtime help, packaged :changelog, and :q/:quit Pi shutdown",
-    examples: [
-      ":3",
-      ":$",
-      ":s/old/new/",
-      ":%s/old/new/gn",
-      ":&",
-      ":delete a",
-      ":changelog",
-      ":q",
-      ":help ex",
-    ],
+      "finite Ex command-line supports :s substitution, :& repeat substitution, bare line jumps, line commands with register operands, diagnostics, runtime help, and :q/:quit Pi shutdown",
+    examples: [":3", ":$", ":s/old/new/", ":%s/old/new/gn", ":&", ":delete a", ":q", ":help ex"],
     limits: [
       "no Vimscript",
       "no confirmation flag",
@@ -128,18 +105,6 @@ const ENTRIES = [
     docsAnchor: "runtime-help:motions",
     specAnchor: "openspec/specs/extended-vim-keybindings/spec.md",
     testAnchors: ["test/commands.test.ts", "test/buffer.test.ts", "test/modal.test.ts"],
-  },
-  {
-    id: "transforms",
-    category: "transforms",
-    topics: ["transforms", "transform", "quote", "reflow", "fence", "bulletize"],
-    summary:
-      "prompt transforms are finite Ex commands for quoting, bulletizing, fencing, indenting, dedenting, and prose reflow",
-    examples: [":quote", ":fence ts", ":reflow 72"],
-    limits: ["prompt-local", "configurable command names only", "no arbitrary Ex grammar"],
-    docsAnchor: "runtime-help:prompt-transforms",
-    specAnchor: "openspec/specs/vim-ex-command-line/spec.md",
-    testAnchors: ["test/modal.test.ts", "test/config.test.ts"],
   },
   {
     id: "registers",
@@ -203,7 +168,7 @@ export function runtimeHelpEntries(
 export function runtimeHelpMessage(topic: string | undefined, context: RuntimeHelpContext): string {
   const query = topic?.trim();
   if (!query) {
-    return "help: :help <topic>, :features [query], :keybindings [query], :vimmode inspect, :messages, :actions, :keymap, :mapcheck, :vimdoctor";
+    return "help: :help <topic>, :keybindings [query], :vimmode inspect, :messages, :actions, :keymap, :mapcheck, :vimdoctor";
   }
   const wantsDiagnosticActions = ["actions", "action", "diagnostics", "diagnostic"].includes(
     query.toLowerCase(),
@@ -220,27 +185,6 @@ export function runtimeMessagesMessage(messages: readonly { text: string }[] | u
   if (!messages || messages.length === 0) return "messages: none retained";
   const latest = messages.at(-1)!;
   return `messages: ${messages.length} retained; latest: ${latest.text}`;
-}
-
-export function runtimeFeaturesMessage(
-  query: string | undefined,
-  context: RuntimeHelpContext,
-): string {
-  const needle = query?.trim();
-  if (!needle) {
-    return "features: modes, motions, editing, search, Ex commands, transforms, registers, marks, macros, keybindings, diagnostics, runtime help, settings, Pi shortcuts; :features <query>";
-  }
-  const recipe = actionKeybindingRecipeMessage(needle);
-  if (recipe) return recipe;
-  const state = effectiveStateMessage(needle, context);
-  if (state) return state;
-  const action = actionFeatureMessage(needle, context);
-  if (action) return action;
-  const protectedShortcut = protectedShortcutForKey(needle);
-  if (protectedShortcut) return mapcheckMessage(keymapForOptions(context.options), needle);
-  const entry = findEntry(needle);
-  if (entry) return compactEntry(entry, context);
-  return `features: no match for ${needle}`;
 }
 
 function findEntry(query: string): RuntimeHelpEntry | undefined {
@@ -263,34 +207,4 @@ function findEntry(query: string): RuntimeHelpEntry | undefined {
 function compactEntry(entry: RuntimeHelpEntry, _context: RuntimeHelpContext): string {
   const limit = entry.limits[0] ? ` limit: ${entry.limits.join(", ")}` : "";
   return `${entry.id}: ${entry.summary}; examples ${entry.examples.join(", ")};${limit}`;
-}
-
-function actionFeatureMessage(query: string, context: RuntimeHelpContext): string | undefined {
-  const options = context.options;
-  const keymap = keymapForOptions(options);
-  const transforms = promptTransformsForOptions(options);
-  const macros = macrosForOptions(options);
-  const marks = marksForOptions(options);
-  const action = searchActions(keymap, query, transforms, macros, marks)[0];
-  return action ? actionsMessage(keymap, query, transforms, macros, marks) : undefined;
-}
-
-function effectiveStateMessage(query: string, context: RuntimeHelpContext): string | undefined {
-  const needle = query.toLowerCase();
-  const options = context.options;
-  const macros = macrosForOptions(options);
-  const marks = marksForOptions(options);
-  if (needle.includes("nohlsearch") || needle === "noh") {
-    return ":noh/:nohlsearch supported; clears visible prompt search highlights; preserves n/N repeat-search state";
-  }
-  if (needle.includes("macro")) {
-    return macros.enabled ? `macros enabled; slots ${macros.slots.join(",")}` : "macros disabled";
-  }
-  if (needle.includes("mark")) {
-    return marks.enabled ? `marks enabled; slots ${marks.slots.join(",")}` : "marks disabled";
-  }
-  if (needle.includes("workbench") || needle.includes("reservedrows")) {
-    return `workbench reservedRows=${options.ui?.workbench.reservedRows ?? 0}`;
-  }
-  return undefined;
 }

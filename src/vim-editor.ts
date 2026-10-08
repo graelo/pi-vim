@@ -38,7 +38,6 @@ import {
   DEFAULT_VIM_OPTIONS,
   escapeAliasesForScope,
   keymapForOptions,
-  promptTransformsForOptions,
   searchForOptions,
   uiForOptions,
   easymotionForOptions,
@@ -109,7 +108,6 @@ function workbenchSuggestions(
     lineCount: 1,
     cursorLine: 0,
     visualRange: state.pendingEx.visualRange,
-    promptTransforms: promptTransformsForOptions(options),
   });
   const selectedIndex = state.pendingEx.selectedSuggestion ?? 0;
   const items = suggestions.map((text, index) => ({

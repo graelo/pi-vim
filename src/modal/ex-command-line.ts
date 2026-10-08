@@ -18,7 +18,6 @@ import type {
 } from "./types.ts";
 
 import {
-  applyPromptTransform,
   copyExLineRange,
   deleteExLineRange,
   joinExLineRange,
@@ -28,7 +27,7 @@ import {
   substituteLineRangeRegex,
   yankExLineRange,
 } from "../buffer.ts";
-import { keymapForOptions, promptTransformsForOptions } from "../config.ts";
+import { keymapForOptions } from "../config.ts";
 import {
   parseExCommand,
   suggestExCommands,
@@ -36,7 +35,6 @@ import {
   type ParsedExSubstitution,
 } from "../ex.ts";
 import {
-  changelogPopup,
   diagnosticPopup,
   inspectPopup,
   keybindingsPopup,
@@ -333,10 +331,6 @@ function executeExPopupCommand(
   if (parsed.type === "inspect") {
     return openReadOnlyPopup(state, inspectPopup({ state, snapshot, options, diagnostics }));
   }
-
-  if (parsed.type === "changelog") {
-    return openReadOnlyPopup(state, changelogPopup());
-  }
   return undefined;
 }
 
@@ -365,24 +359,6 @@ function executeExDirectCommand(
   return undefined;
 }
 
-function executeExTransformCommand(
-  state: ModalState,
-  snapshot: EditorSnapshot,
-  parsed: ExParseResult,
-): ModalUpdate | undefined {
-  if (parsed.type === "transform") {
-    const result = applyPromptTransform(
-      snapshot.text,
-      parsed.range,
-      parsed.transform,
-      snapshot.cursor,
-    );
-    if (!result.ok) return invalidate(finishExState(state, "error", result.message));
-    return finishExEdit(state, result, lineMessage(result.lines, "transformed"));
-  }
-  return undefined;
-}
-
 function executeExYankCommand(
   state: ModalState,
   snapshot: EditorSnapshot,
@@ -405,9 +381,6 @@ function executeExEditRangeCommand(
   snapshot: EditorSnapshot,
   parsed: ExParseResult,
 ): ModalUpdate | undefined {
-  const transformUpdate = executeExTransformCommand(state, snapshot, parsed);
-  if (transformUpdate) return transformUpdate;
-
   const yankUpdate = executeExYankCommand(state, snapshot, parsed);
   if (yankUpdate) return yankUpdate;
 
@@ -470,7 +443,6 @@ function executeExCommand(
     lineCount: snapshot.lines.length,
     cursorLine: snapshot.cursor.line,
     visualRange: pendingEx.visualRange,
-    promptTransforms: promptTransformsForOptions(options),
   });
   if (parsed.type === "empty") return invalidate(finishExState(state));
   if (parsed.type === "error") return invalidate(finishExState(state, "error", parsed.message));
@@ -534,7 +506,6 @@ function exCommandWordBoundaries(
 
 export function completePendingExCommand(
   pendingEx: NonNullable<ModalState["pendingEx"]>,
-  options: ModalOptions,
 ): { command: string; cursor: number } | undefined {
   const command = pendingEx.command;
   const cursor = exCursor(pendingEx);
@@ -545,7 +516,6 @@ export function completePendingExCommand(
     lineCount: 1,
     cursorLine: 0,
     visualRange: pendingEx.visualRange,
-    promptTransforms: promptTransformsForOptions(options),
   });
 
   let replacement: string | undefined;
@@ -570,10 +540,7 @@ export function completePendingExCommand(
   };
 }
 
-function suggestExCommandsForPending(
-  pendingEx: NonNullable<ModalState["pendingEx"]>,
-  options: ModalOptions,
-): string[] {
+function suggestExCommandsForPending(pendingEx: NonNullable<ModalState["pendingEx"]>): string[] {
   const command = pendingEx.command;
   if (!/^[A-Za-z&\s]*$/.test(command)) return [];
   const cursor = exCursor(pendingEx);
@@ -584,7 +551,6 @@ function suggestExCommandsForPending(
     lineCount: 1,
     cursorLine: 0,
     visualRange: pendingEx.visualRange,
-    promptTransforms: promptTransformsForOptions(options),
   });
 }
 
@@ -722,7 +688,7 @@ function exSuggestionNavigation(
   direction: "previous" | "next",
 ): ModalUpdate | undefined {
   if (options.exCommand?.autocomplete === false) return undefined;
-  const suggestions = suggestExCommandsForPending(pendingEx, options);
+  const suggestions = suggestExCommandsForPending(pendingEx);
   const hasHistory = (state.exHistory ?? []).length > 0;
   if (suggestions.length === 0 || (hasHistory && !pendingEx.command)) return undefined;
   const selected =
@@ -798,7 +764,7 @@ function autocompleteExCommand(
   options: ModalOptions,
 ): string | undefined {
   if (options.exCommand?.autocomplete === false || !pendingEx.command) return undefined;
-  const suggestions = suggestExCommandsForPending(pendingEx, options);
+  const suggestions = suggestExCommandsForPending(pendingEx);
   if (suggestions.length === 0) return undefined;
   const selected = pendingEx.selectedSuggestion ?? 0;
   if (selected >= suggestions.length) return undefined;
@@ -820,7 +786,7 @@ function handleExTabInput(
   const command = autocompleteExCommand(pendingEx, options);
   if (command)
     return invalidate({ ...state, pendingEx: editPendingEx(pendingEx, command, command.length) });
-  const completed = completePendingExCommand(pendingEx, options);
+  const completed = completePendingExCommand(pendingEx);
   return completed
     ? invalidate({
         ...state,

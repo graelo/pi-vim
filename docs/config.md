@@ -145,16 +145,6 @@ in [`docs/settings.md`](settings.md).
 
 ### `vim.keymap`
 
-#### `vim.keymap.actionPresets`
-
-<a id="config-property-keymap-actionPresets"></a>
-
-- Accepted shape: `readonly ("paragraph-editing" | "markdown-wrapping")[]`
-- Built-in default: `unset`
-- Assignment semantics: replaces preset list
-- JSON crosswalk: `piVimMode.keymap.actionPresets`
-- Compatibility aliases: none
-
 #### `vim.keymap.operatorMotions`
 
 <a id="config-property-keymap-operatorMotions"></a>
@@ -239,38 +229,6 @@ in [`docs/settings.md`](settings.md).
 - Built-in default: `{"codeFence": true, "errorBlock": true, "headingSection": true, "listItem": true, "tag": true}`
 - Assignment semantics: replaces whole record; does not merge keys
 - JSON crosswalk: `piVimMode.promptStructures.targets`
-- Compatibility aliases: none
-
-### `vim.promptTransforms`
-
-#### `vim.promptTransforms.actions`
-
-<a id="config-property-promptTransforms-actions"></a>
-
-- Accepted shape: `partial record of prompt-transform actions to booleans`
-- Built-in default: `{"bulletize": true, "dedent": true, "fence": true, "indent": true, "quote": true, "reflow": true, "unquote": true}`
-- Assignment semantics: replaces whole record; does not merge keys
-- JSON crosswalk: `piVimMode.promptTransforms.actions`
-- Compatibility aliases: none
-
-#### `vim.promptTransforms.commands`
-
-<a id="config-property-promptTransforms-commands"></a>
-
-- Accepted shape: `partial record of prompt-transform actions to string arrays`
-- Built-in default: `{"bulletize": ["bulletize"], "dedent": ["dedent"], "fence": ["fence"], "indent": ["indent"], "quote": ["quote"], "reflow": ["reflow"], "unquote": ["unquote"]}`
-- Assignment semantics: replaces whole record; does not merge keys
-- JSON crosswalk: `piVimMode.promptTransforms.commands`
-- Compatibility aliases: none
-
-#### `vim.promptTransforms.enabled`
-
-<a id="config-property-promptTransforms-enabled"></a>
-
-- Accepted shape: `boolean`
-- Built-in default: `true`
-- Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.promptTransforms.enabled`
 - Compatibility aliases: none
 
 ### `vim.search`
@@ -467,7 +425,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.changeToLineEnd()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `C`
 - Compatibility aliases: none
 
@@ -477,7 +434,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.decrementNumber()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `ctrl+x`
 - Compatibility aliases: none
 
@@ -487,7 +443,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.deleteChar()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `x`
 - Compatibility aliases: none
 
@@ -497,7 +452,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.deleteCharBefore()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `X`
 - Compatibility aliases: none
 
@@ -507,7 +461,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.deleteToLineEnd()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `D`
 - Compatibility aliases: none
 
@@ -517,7 +470,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.easymotion.goToChar()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.action.command.easymotion()`](#config-action-command-easymotion)
 
@@ -527,7 +479,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.findCharBackward()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `F`
 - Compatibility aliases: none
 
@@ -537,7 +488,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.findCharForward()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `f`
 - Compatibility aliases: none
 
@@ -547,7 +497,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.incrementNumber()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `ctrl+a`
 - Compatibility aliases: none
 
@@ -557,7 +506,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.insertAfter()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `a`
 - Compatibility aliases: none
 
@@ -567,7 +515,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.insertBefore()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `i`
 - Compatibility aliases: none
 
@@ -577,7 +524,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.insertLineEnd()`
 - Supported mapping scopes: `normal`, `visualBlock`
-- Arguments: none
 - Default keys: `A`
 - Compatibility aliases: none
 
@@ -587,7 +533,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.insertLineStart()`
 - Supported mapping scopes: `normal`, `visualBlock`
-- Arguments: none
 - Default keys: `I`
 - Compatibility aliases: none
 
@@ -597,7 +542,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.joinLine()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `J`
 - Compatibility aliases: none
 
@@ -607,7 +551,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.openLineAbove()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `O`
 - Compatibility aliases: none
 
@@ -617,7 +560,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.openLineBelow()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `o`
 - Compatibility aliases: none
 
@@ -627,7 +569,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.pasteAfter()`
 - Supported mapping scopes: `normal`, `visualLine`
-- Arguments: none
 - Default keys: `p`
 - Compatibility aliases: none
 
@@ -637,7 +578,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.pasteBefore()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `P`
 - Compatibility aliases: none
 
@@ -647,7 +587,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.redo()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `ctrl+r`
 - Compatibility aliases: none
 
@@ -657,7 +596,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.repeatChange()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `.`
 - Compatibility aliases: none
 
@@ -667,7 +605,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.repeatCharSearch()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `;`
 - Compatibility aliases: none
 
@@ -677,7 +614,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.repeatCharSearchReverse()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `,`
 - Compatibility aliases: none
 
@@ -687,7 +623,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.repeatSearch()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `n`
 - Compatibility aliases: none
 
@@ -697,7 +632,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.repeatSearchReverse()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `N`
 - Compatibility aliases: none
 
@@ -707,7 +641,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.replaceChar()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `r`
 - Compatibility aliases: none
 
@@ -717,7 +650,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.reselectVisual()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `gv`
 - Compatibility aliases: none
 
@@ -727,7 +659,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.searchWordBackward()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `#`
 - Compatibility aliases: none
 
@@ -737,7 +668,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.searchWordForward()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `*`
 - Compatibility aliases: none
 
@@ -747,7 +677,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.showKeybindings()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: none
 
@@ -757,7 +686,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.startExCommand()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `:`
 - Compatibility aliases: none
 
@@ -767,7 +695,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.startSearch()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `/`
 - Compatibility aliases: none
 
@@ -777,7 +704,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.startSearchBackward()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `?`
 - Compatibility aliases: none
 
@@ -787,7 +713,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.substituteChar()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `s`
 - Compatibility aliases: none
 
@@ -797,7 +722,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.substituteLine()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `S`
 - Compatibility aliases: none
 
@@ -807,7 +731,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.tillCharBackward()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `T`
 - Compatibility aliases: none
 
@@ -817,7 +740,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.tillCharForward()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `t`
 - Compatibility aliases: none
 
@@ -827,7 +749,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.toggleCase()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `~`
 - Compatibility aliases: none
 
@@ -837,7 +758,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.undo()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `u`
 - Compatibility aliases: none
 
@@ -847,7 +767,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.visualBlock()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: none
 
@@ -857,7 +776,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.visualChar()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `v`
 - Compatibility aliases: none
 
@@ -867,7 +785,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.visualLine()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `V`
 - Compatibility aliases: none
 
@@ -877,7 +794,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.yankLine()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `Y`
 - Compatibility aliases: none
 
@@ -889,7 +805,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.escape()`
 - Supported mapping scopes: `visual`, `visualLine`, `visualBlock`, `insert`, `operatorPending`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: none
 
@@ -901,7 +816,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.insert.deleteLineBackward()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.deleteLineBackward()`](#config-action-insert-deleteLineBackward)
 
@@ -911,7 +825,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.insert.deleteLineForward()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.deleteLineForward()`](#config-action-insert-deleteLineForward)
 
@@ -921,7 +834,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.insert.deleteWordBackward()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.deleteWordBackward()`](#config-action-insert-deleteWordBackward)
 
@@ -931,7 +843,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.insert.deleteWordForward()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.deleteWordForward()`](#config-action-insert-deleteWordForward)
 
@@ -941,7 +852,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.insert.moveLineEnd()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.moveLineEnd()`](#config-action-insert-moveLineEnd)
 
@@ -951,7 +861,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.insert.moveLineStart()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.moveLineStart()`](#config-action-insert-moveLineStart)
 
@@ -961,7 +870,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.insert.moveWordBackward()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.moveWordBackward()`](#config-action-insert-moveWordBackward)
 
@@ -971,7 +879,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.insert.moveWordForward()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.moveWordForward()`](#config-action-insert-moveWordForward)
 
@@ -981,7 +888,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.insert.openLineAbove()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.openLineAbove()`](#config-action-insert-openLineAbove)
 
@@ -991,7 +897,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.insert.openLineBelow()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.openLineBelow()`](#config-action-insert-openLineBelow)
 
@@ -1003,7 +908,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.macro.play()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `@`
 - Compatibility aliases: none
 
@@ -1013,7 +917,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.macro.record()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `q`
 - Compatibility aliases: none
 
@@ -1025,7 +928,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.mark.jumpExact()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `` ` ``
 - Compatibility aliases: none
 
@@ -1035,7 +937,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.mark.jumpLine()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `'`
 - Compatibility aliases: none
 
@@ -1045,7 +946,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.mark.set()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `m`
 - Compatibility aliases: none
 
@@ -1057,7 +957,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.bufferEnd()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `G`
 - Compatibility aliases: none
 
@@ -1067,7 +966,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.bufferStart()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `gg`
 - Compatibility aliases: none
 
@@ -1077,7 +975,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.down()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `j`, `down`
 - Compatibility aliases: none
 
@@ -1087,7 +984,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.firstNonBlank()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `^`, `_`
 - Compatibility aliases: none
 
@@ -1097,7 +993,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.halfPageDown()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `ctrl+d`
 - Compatibility aliases: none
 
@@ -1107,7 +1002,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.halfPageUp()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `ctrl+u`
 - Compatibility aliases: none
 
@@ -1117,7 +1011,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.left()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `h`, `left`
 - Compatibility aliases: none
 
@@ -1127,7 +1020,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.lineEnd()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `$`
 - Compatibility aliases: none
 
@@ -1137,7 +1029,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.lineStart()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `0`
 - Compatibility aliases: none
 
@@ -1147,7 +1038,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.matchingPair()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `%`
 - Compatibility aliases: none
 
@@ -1157,7 +1047,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.paragraphBackward()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `{`
 - Compatibility aliases: none
 
@@ -1167,7 +1056,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.paragraphForward()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `}`
 - Compatibility aliases: none
 
@@ -1177,7 +1065,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.right()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `l`, `right`
 - Compatibility aliases: none
 
@@ -1187,7 +1074,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.up()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `k`, `up`
 - Compatibility aliases: none
 
@@ -1197,7 +1083,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.wordBackward()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `b`
 - Compatibility aliases: none
 
@@ -1207,7 +1092,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.wordBackwardBig()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `B`
 - Compatibility aliases: none
 
@@ -1217,7 +1101,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.wordEnd()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `e`
 - Compatibility aliases: none
 
@@ -1227,7 +1110,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.wordEndBig()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `E`
 - Compatibility aliases: none
 
@@ -1237,7 +1119,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.wordForward()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `w`
 - Compatibility aliases: none
 
@@ -1247,7 +1128,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.wordForwardBig()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `W`
 - Compatibility aliases: none
 
@@ -1257,7 +1137,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.wordPreviousEnd()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `ge`
 - Compatibility aliases: none
 
@@ -1267,7 +1146,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.motion.wordPreviousEndBig()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `gE`
 - Compatibility aliases: none
 
@@ -1279,7 +1157,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.operator.change()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `c`
 - Compatibility aliases: none
 
@@ -1289,7 +1166,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.operator.dedent()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `<`
 - Compatibility aliases: none
 
@@ -1299,7 +1175,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.operator.delete()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `d`
 - Compatibility aliases: none
 
@@ -1309,7 +1184,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.operator.indent()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `>`
 - Compatibility aliases: none
 
@@ -1319,7 +1193,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.operator.lowercase()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `gu`
 - Compatibility aliases: none
 
@@ -1329,7 +1202,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.operator.toggleCase()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `g~`
 - Compatibility aliases: none
 
@@ -1339,7 +1211,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.operator.uppercase()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `gU`
 - Compatibility aliases: none
 
@@ -1349,81 +1220,8 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.operator.yank()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `y`
 - Compatibility aliases: none
-
-### `vim.action.prompt`
-
-#### `prompt.transform.bulletize`
-
-<a id="config-action-prompt-transform-bulletize"></a>
-
-- Canonical factory: `vim.action.prompt.transform.bulletize()`
-- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
-- Default keys: none
-- Compatibility aliases: [`vim.prompt.bulletize()`](#config-action-prompt-transform-bulletize)
-
-#### `prompt.transform.dedent`
-
-<a id="config-action-prompt-transform-dedent"></a>
-
-- Canonical factory: `vim.action.prompt.transform.dedent()`
-- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
-- Default keys: none
-- Compatibility aliases: [`vim.prompt.dedent()`](#config-action-prompt-transform-dedent)
-
-#### `prompt.transform.fence`
-
-<a id="config-action-prompt-transform-fence"></a>
-
-- Canonical factory: `vim.action.prompt.transform.fence()`
-- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: `language?: string` — Optional code fence language without whitespace.
-- Default keys: none
-- Compatibility aliases: [`vim.prompt.fence()`](#config-action-prompt-transform-fence)
-
-#### `prompt.transform.indent`
-
-<a id="config-action-prompt-transform-indent"></a>
-
-- Canonical factory: `vim.action.prompt.transform.indent()`
-- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
-- Default keys: none
-- Compatibility aliases: [`vim.prompt.indent()`](#config-action-prompt-transform-indent)
-
-#### `prompt.transform.quote`
-
-<a id="config-action-prompt-transform-quote"></a>
-
-- Canonical factory: `vim.action.prompt.transform.quote()`
-- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
-- Default keys: none
-- Compatibility aliases: [`vim.prompt.quote()`](#config-action-prompt-transform-quote)
-
-#### `prompt.transform.reflow`
-
-<a id="config-action-prompt-transform-reflow"></a>
-
-- Canonical factory: `vim.action.prompt.transform.reflow()`
-- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: `width?: integer` — Optional prose width from 20 through 240 columns.
-- Default keys: none
-- Compatibility aliases: [`vim.prompt.reflow()`](#config-action-prompt-transform-reflow)
-
-#### `prompt.transform.unquote`
-
-<a id="config-action-prompt-transform-unquote"></a>
-
-- Canonical factory: `vim.action.prompt.transform.unquote()`
-- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
-- Default keys: none
-- Compatibility aliases: [`vim.prompt.unquote()`](#config-action-prompt-transform-unquote)
 
 ### `vim.action.textObject`
 
@@ -1433,7 +1231,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.textObject.kind.around()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `a`
 - Compatibility aliases: none
 
@@ -1443,7 +1240,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.textObject.kind.inner()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `i`
 - Compatibility aliases: none
 
@@ -1453,7 +1249,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.textObject.target.brace()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `{`, `}`
 - Compatibility aliases: none
 
@@ -1463,7 +1258,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.textObject.target.bracket()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `[`, `]`
 - Compatibility aliases: none
 
@@ -1473,7 +1267,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.textObject.target.codeFence()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `f`
 - Compatibility aliases: none
 
@@ -1483,7 +1276,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.textObject.target.doubleQuote()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `"`
 - Compatibility aliases: none
 
@@ -1493,7 +1285,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.textObject.target.errorBlock()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `e`
 - Compatibility aliases: none
 
@@ -1503,7 +1294,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.textObject.target.headingSection()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `h`
 - Compatibility aliases: none
 
@@ -1513,7 +1303,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.textObject.target.listItem()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `l`
 - Compatibility aliases: none
 
@@ -1523,7 +1312,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.textObject.target.paragraph()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `p`
 - Compatibility aliases: none
 
@@ -1533,7 +1321,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.textObject.target.paren()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `(`, `)`
 - Compatibility aliases: none
 
@@ -1543,7 +1330,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.textObject.target.singleQuote()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `'`
 - Compatibility aliases: none
 
@@ -1553,7 +1339,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.textObject.target.tag()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `t`
 - Compatibility aliases: none
 
@@ -1563,7 +1348,6 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.textObject.target.word()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `w`
 - Compatibility aliases: none
 

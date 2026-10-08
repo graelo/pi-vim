@@ -129,7 +129,7 @@ Canonical user-facing docs live under `docs/`:
 
 - [`docs/features.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/features.md):
     supported modes, motions, edits, operators, prompt-native text objects,
-    prompt transforms, character search, prompt search, visual modes, Ex
+    character search, prompt search, visual modes, Ex
     command-line commands, registers, marks, macros, UI/status rendering, Pi
     shortcut compatibility, limitations, recovery, and validation examples.
 - [`docs/settings.md`](https://github.com/graelo/pi-vimmode/blob/main/docs/settings.md):

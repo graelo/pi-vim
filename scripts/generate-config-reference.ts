@@ -29,7 +29,6 @@ export const ACTION_MARKERS = {
 type PublicActionMetadata = VimActionMetadata & {
   factoryPath: string;
   publicScopes: readonly string[];
-  args: readonly { name: string; type: string; required: boolean; description: string }[];
   aliases: readonly string[];
   anchor: string;
 };
@@ -109,10 +108,6 @@ function addActionErrors(errors: string[], actions: readonly PublicActionMetadat
   for (const action of actions) {
     if (!action.factoryPath) errors.push(`missing factory path: ${action.id}`);
     if (!action.publicScopes) errors.push(`missing public scopes: ${action.id}`);
-    if (!action.args) errors.push(`missing argument metadata: ${action.id}`);
-    if (action.args)
-      for (const name of duplicates(action.args.map(({ name }) => name)))
-        errors.push(`duplicate argument name for ${action.id}: ${name}`);
     if (!action.anchor) errors.push(`missing action anchor: ${action.id}`);
   }
 }
@@ -209,13 +204,6 @@ ${entries
     .join("\n");
 }
 
-function renderArguments(action: PublicActionMetadata): string {
-  if (action.args.length === 0) return "none";
-  return action.args
-    .map((arg) => `\`${arg.name}${arg.required ? "" : "?"}: ${arg.type}\` — ${arg.description}`)
-    .join("; ");
-}
-
 export function renderActionReference(
   actions: readonly VimActionMetadata[] = VIM_ACTION_METADATA,
 ): string {
@@ -235,7 +223,6 @@ ${entries
 
 - Canonical factory: \`${action.factoryPath}\`
 - Supported mapping scopes: ${action.publicScopes.map((scope) => `\`${scope}\``).join(", ") || "none"}
-- Arguments: ${renderArguments(action)}
 - Default keys: ${action.defaults.length === 0 ? "none" : action.defaults.map(inlineCode).join(", ")}
 - Compatibility aliases: ${renderAliases(action.aliases, action.anchor)}
 `,

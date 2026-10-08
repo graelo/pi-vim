@@ -1,4 +1,3 @@
-import type { ActionKeybindingRecipe } from "../../src/action-keybinding-recipes.ts";
 import type { DiagnosticActionEntry } from "../../src/diagnostic-actions.ts";
 export type DocsDriftMetadata = {
   docsAnchor: string;
@@ -16,12 +15,6 @@ export type PopupCommandDocsMetadata = {
   docsAnchor: string;
 };
 
-export type ActionRecipeDocsMetadata = {
-  id: ActionKeybindingRecipe["id"];
-  docsAnchor: string;
-  presetDocsAnchor: string;
-};
-
 export const DIAGNOSTIC_ACTION_DOCS_METADATA = [
   "vimmode.doctor",
   "vimmode.actions",
@@ -29,7 +22,6 @@ export const DIAGNOSTIC_ACTION_DOCS_METADATA = [
   "vimmode.keybindings",
   "vimmode.mapcheck",
   "vimmode.help",
-  "vimmode.features",
   "vimmode.messages",
   "vimmode.inspect",
 ].map((id) => ({
@@ -48,16 +40,6 @@ export const POPUP_COMMAND_DOCS_METADATA = [
   {
     command: ":help <topic>",
     parserExample: "help search",
-    docsAnchor: "runtime-help:keybinding-discovery-popup",
-  },
-  {
-    command: ":features",
-    parserExample: "features",
-    docsAnchor: "runtime-help:keybinding-discovery-popup",
-  },
-  {
-    command: ":features <query>",
-    parserExample: "features redo",
     docsAnchor: "runtime-help:keybinding-discovery-popup",
   },
   {
@@ -111,16 +93,3 @@ export const POPUP_COMMAND_DOCS_METADATA = [
     docsAnchor: "runtime-help:keybinding-discovery-popup",
   },
 ] as const satisfies readonly PopupCommandDocsMetadata[];
-
-export const ACTION_RECIPE_DOCS_METADATA = [
-  {
-    id: "paragraph-editing",
-    docsAnchor: "action-keybinding-recipe:paragraph-editing",
-    presetDocsAnchor: "action-keybinding-preset:paragraph-editing",
-  },
-  {
-    id: "markdown-wrapping",
-    docsAnchor: "action-keybinding-recipe:markdown-wrapping",
-    presetDocsAnchor: "action-keybinding-preset:markdown-wrapping",
-  },
-] as const satisfies readonly ActionRecipeDocsMetadata[];

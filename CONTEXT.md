@@ -24,16 +24,6 @@ commands that act on the prompt buffer. _Avoid_: Vim commands, colon commands
 addressed range using `:s`-style syntax. _Avoid_: Substitute character, `s`
 command, prompt search
 
-**Prompt transform action**: A finite prompt-local transformation such as
-quoting, bulletizing, fencing, indenting, dedenting, or reflowing prompt-buffer
-lines. It is not an Ex command, even when an Ex command can invoke the same
-transformation. _Avoid_: Prompt transform command, generic Vim action, plugin
-action
-
-**Action keybinding**: A configured normal/visual-mode key sequence that invokes
-a prompt transform action. It is not a command alias and does not imply runtime
-mapping support. _Avoid_: Ex command name, `:map`, recursive mapping
-
 **Leader key**: An optional configured key that replaces a leading `<leader>`
 token as a reusable mapping prefix. When used by normal or visual mappings, it
 reserves that prefix across normal and visual keymap grammar; it is unset by
@@ -94,8 +84,3 @@ matches a literal Ex substitution pattern.” Developer: “If visual mode opens
 `:'<,'>s/old/new/g`, does `'<,'>` mean local marks?” Domain expert: “No. That
 visual range marker only refers to the captured selected lines for this Ex
 command.”
-
-Developer: “If `gq` reflows the prompt, is `gq` a prompt transform action?”
-Domain expert: “No. Reflow is the prompt transform action. `gq` is an action
-keybinding that invokes it. It is not an Ex command name or a recursive
-mapping.”

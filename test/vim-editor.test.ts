@@ -954,33 +954,6 @@ test("Ex row composes with visual selection and search highlights", () => {
   expect(visualEx).toContain(":'<,'>");
 });
 
-test("keybinding discovery popup renders as real overlay panel", () => {
-  const { editor, overlays } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
-  const baseline = editor.render(32);
-
-  runEx(editor, "features keybindings");
-  const editorLines = editor.render(32);
-  const editorText = editorLines.join("\n");
-  const overlay = overlays.at(-1);
-  const overlayLines = overlay?.component.render(64) ?? [];
-  const overlayText = overlayLines.join("\n");
-
-  expect(overlay).toBeDefined();
-  expect(overlay?.hidden).toBe(false);
-  expect(overlay?.options).toMatchObject({ anchor: "center", width: "90%", maxHeight: "90%" });
-  expect(editorLines.length).toBe(baseline.length);
-  expect(editorText).not.toContain("Keybinding discovery");
-  expect(overlayText).toContain("╭");
-  expect(overlayText).toContain("Keybinding discovery");
-  expect(overlayText).toContain("1-9/9");
-  expect(overlayText).toContain("│ Source-backed");
-  expect(overlayText).toContain("j/k ↑/↓ scroll");
-  expect(overlayText).toContain("Esc close");
-  expect(overlayText).not.toContain("↓1");
-  expect(overlayText).not.toContain("…");
-  expectRenderedWidth(overlayLines, 64);
-});
-
 test("dedicated keybindings command renders as real overlay panel", () => {
   const { editor, overlays } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
   const baseline = editor.render(32);
@@ -1026,36 +999,20 @@ test("configured showKeybindings key renders same overlay shell", () => {
 });
 
 test("keybinding discovery overlay scroll reveals hidden bounded rows", () => {
-  const options: ResolvedVimEditorOptions = {
-    ...DEFAULT_VIM_OPTIONS,
-    startMode: "normal",
-    keymap: {
-      ...DEFAULT_VIM_OPTIONS.keymap!,
-      actions: {
-        accepted: Array.from({ length: 8 }, (_, index) => ({
-          key: `g${index}`,
-          actionId: "prompt.transform.quote",
-          args: { action: "quote" },
-        })),
-      },
-    },
-  };
-  const { editor, overlays } = createEditor(options);
+  const { editor, overlays } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
 
-  runEx(editor, "features keybindings");
+  runEx(editor, "keybindings");
   const overlay = overlays.at(-1)?.component as Required<Component>;
   expect(overlay).toBeDefined();
   const initial = overlay.render(80).join("\n");
   expect(initial).toContain("1-10/");
-  expect(initial).toContain("Source-backed");
-  expect(initial).not.toContain("prompt.transform.quote -> g7");
+  expect(initial).toContain("Type :keybindings");
 
   typeKeys(overlay, ["j", "j", "j", "j", "j", "j"]);
   const scrolled = overlay.render(80).join("\n");
   expect(scrolled).toContain("7-16/");
-  expect(scrolled).toContain("prompt.transform.quote -> g7");
   expect(scrolled).toContain("↑");
-  expect(scrolled).not.toContain("Source-backed");
+  expect(scrolled).not.toContain("Type :keybindings");
   expectRenderedWidth(overlay.render(80), 80);
 
   overlay.handleInput("k");
@@ -1067,27 +1024,18 @@ test("runtime help uses generic read-only popup", () => {
   const baseline = editor.render(48);
 
   runEx(editor, "help search");
-  let lines = editor.render(48);
-  let overlayText = overlays.at(-1)?.component.render(64).join("\n") ?? "";
+  const lines = editor.render(48);
+  const overlayText = overlays.at(-1)?.component.render(64).join("\n") ?? "";
   expect(lines.length).toBe(baseline.length);
   expect(lines.join("\n")).not.toContain("prompt search");
   expect(overlayText).toContain(":help search");
   expect(overlayText).toContain("prompt search");
-
-  runEx(editor, "features redo");
-  lines = editor.render(48);
-  overlayText = overlays.at(-1)?.component.render(64).join("\n") ?? "";
-  expect(lines.length).toBe(baseline.length);
-  expect(lines.join("\n")).not.toContain("command.redo");
-  expect(overlayText).toContain(":features redo");
-  expect(overlayText).toContain("command.redo");
 });
 
 test("representative read-only Ex commands open live popups", () => {
   const { editor, overlays } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
   const cases = [
     ["help search", ":help search", "prompt search"],
-    ["features redo", ":features redo", "command.redo"],
     ["actions redo", ":actions redo", "command.redo"],
     ["keymap redo", ":keymap redo", "command.redo"],
     ["mapcheck ctrl+p", ":mapcheck ctrl+p", "protected"],
@@ -1600,7 +1548,7 @@ test("configured Ex keymap enters Ex from normal and delegates in insert", () =>
   expect(editor.getText()).toBe(":");
 });
 
-test("honors prompt-native structure and transform config through live editor", () => {
+test("honors prompt-native structure config through live editor", () => {
   const { editor } = createEditor({
     ...DEFAULT_VIM_OPTIONS,
     startMode: "normal",
@@ -1608,26 +1556,11 @@ test("honors prompt-native structure and transform config through live editor", 
       ...DEFAULT_VIM_OPTIONS.promptStructures!,
       targets: { ...DEFAULT_VIM_OPTIONS.promptStructures!.targets, codeFence: false },
     },
-    promptTransforms: {
-      ...DEFAULT_VIM_OPTIONS.promptTransforms!,
-      actions: { ...DEFAULT_VIM_OPTIONS.promptTransforms!.actions, reflow: false },
-      commands: { ...DEFAULT_VIM_OPTIONS.promptTransforms!.commands, quote: ["qte"] },
-    },
   });
 
   editor.setText("```ts\nconst x = 1;\n```\nplain words here");
   typeKeys(editor, ["g", "g", "j", "d", "i", "f"]);
   expect(editor.getText()).toBe("```ts\nconst x = 1;\n```\nplain words here");
-
-  runEx(editor, "quote");
-  expect(editor.getText()).toBe("```ts\nconst x = 1;\n```\nplain words here");
-
-  typeKeys(editor, ["g", "g"]);
-  runEx(editor, "qte");
-  expect(editor.getText()).toBe("> ```ts\nconst x = 1;\n```\nplain words here");
-
-  runEx(editor, "4reflow 10");
-  expect(editor.getText()).toBe("> ```ts\nconst x = 1;\n```\nplain words here");
 });
 
 test("executes finite Ex line commands and aliases from normal mode", () => {
@@ -1912,7 +1845,6 @@ test("configured showKeybindings key survives live editor option cloning", () =>
       },
       macros: { ...DEFAULT_VIM_OPTIONS.keymap!.macros, record: ["Q"] },
       marks: { ...DEFAULT_VIM_OPTIONS.keymap!.marks, set: ["M"] },
-      actions: { accepted: [] },
     },
   });
 
@@ -2033,7 +1965,7 @@ test("default shift operators and existing editor behavior remain compatible", (
   typeKeys(editor, ["g", "g", ">", ">", "j", "."]);
   expect(editor.getText()).toBe("  one\n  two");
 
-  runEx(editor, "%dedent");
+  typeKeys(editor, ["g", "g", "<", "<", "j", "."]);
   expect(editor.getText()).toBe("one\ntwo");
 
   typeKeys(editor, ["g", "g", "d", "w"]);

@@ -79,14 +79,6 @@ export const DIAGNOSTIC_ACTIONS = [
     [":help actions", ":help diagnostics"],
   ),
   entry(
-    "vimmode.features",
-    "runtimeHelp",
-    ":features",
-    ["features", "feature", "discovery", "matrix"],
-    "metadata-only runtimeHelp action for finite feature discovery and effective state",
-    [":features redo", ":features vimmode.doctor"],
-  ),
-  entry(
     "vimmode.messages",
     "runtimeHelp",
     ":messages",

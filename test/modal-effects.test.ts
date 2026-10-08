@@ -242,7 +242,6 @@ describe("golden modal effects", () => {
           moveLineStart: [],
           moveLineEnd: [],
         },
-        actions: { accepted: [] },
       },
     };
     const result = runGolden({ mode: "normal" }, "abc", p(0, 0), ["\x10"], allowOptions);
@@ -269,7 +268,6 @@ describe("golden modal effects", () => {
           moveLineStart: [],
           moveLineEnd: [],
         },
-        actions: { accepted: [] },
       },
     };
     const result = runGolden(

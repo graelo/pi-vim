@@ -1,15 +1,9 @@
 import { expect, test } from "vitest";
-import { readFileSync } from "node:fs";
 
 import type { ModalEffect, ModalOptions, ModalState } from "../src/modal/types.ts";
-import type { EasymotionTarget, ResolvedVimEditorOptions } from "../src/types.ts";
+import type { EasymotionTarget } from "../src/types.ts";
 
-import {
-  createVimConfigPlan,
-  DEFAULT_VIM_KEYMAP,
-  resolveVimOptions,
-  type VimConfigPlan,
-} from "../src/config.ts";
+import { DEFAULT_VIM_KEYMAP, resolveVimOptions, type VimConfigPlan } from "../src/config.ts";
 import { encodeMappingTokens } from "../src/mapping-scopes.ts";
 import {
   canFastDelegateInsertInput,
@@ -756,7 +750,7 @@ test("visual diagnostic Ex commands preserve visual state", () => {
 
 test("keybindings opens catalog popup without editing state", () => {
   const configured = resolveVimOptions({
-    piVimMode: { keymap: { actions: { "prompt.transform.reflow": ["gq"] } } },
+    piVimMode: { keymap: { commands: { redo: ["U"] } } },
   }).options;
   const initial: ModalState = {
     mode: "normal",
@@ -789,8 +783,8 @@ test("keybindings opens catalog popup without editing state", () => {
   expect(result.state.helpPopup?.source).toBe("keybindings");
   expect(popupText).not.toContain("Effective pi-vimmode keybindings");
   expect(popupText).toContain("Key            Mode        Action");
-  expect(popupText).toContain("prompt.transform.reflow");
-  expect(popupText).toContain("gq");
+  expect(popupText).toContain("command.redo");
+  expect(popupText).toContain("U");
   expect(popupText).toContain("no runtime :map");
   expect(result.state.register).toEqual(initial.register);
   expect(result.state.namedRegisters).toEqual(initial.namedRegisters);
@@ -872,93 +866,13 @@ test("visual keybindings Ex command restores visual source state", () => {
   });
 });
 
-test("features keybindings opens popup without editing state", () => {
-  const configured = resolveVimOptions({
-    piVimMode: { keymap: { actions: { "prompt.transform.reflow": ["gq"] } } },
-  }).options;
-  const initial: ModalState = {
-    mode: "normal",
-    register: { type: "char", text: "saved" },
-    namedRegisters: { a: { type: "line", text: "line" } },
-    marks: { a: p(0, 1) },
-    macros: { a: ["x"] },
-    lastPlayedMacro: "a",
-    lastSearch: { query: "abc", direction: "forward" },
-    searchHighlight: { query: "abc", current: p(0, 0) },
-    lastRepeatableChange: { type: "command", command: "deleteChar" },
-    messageHistory: [{ kind: "info", text: "kept" }],
-  };
-  const result = applyModalKeys(
-    initial,
-    "abc",
-    p(0, 1),
-    [
-      ":",
-      "f",
-      "e",
-      "a",
-      "t",
-      "u",
-      "r",
-      "e",
-      "s",
-      " ",
-      "k",
-      "e",
-      "y",
-      "b",
-      "i",
-      "n",
-      "d",
-      "i",
-      "n",
-      "g",
-      "s",
-      "\r",
-    ],
-    configured,
-  );
-  const popupText = [result.state.helpPopup?.title, ...(result.state.helpPopup?.lines ?? [])].join(
-    "\n",
-  );
-
-  expect(result.text).toBe("abc");
-  expect(result.cursor).toEqual(p(0, 1));
-  expect(result.state.mode).toBe("normal");
-  expect(result.state.exMessage).toBeUndefined();
-  expect(result.state.helpPopup?.title).toBe("Keybinding discovery");
-  expect(popupText).toContain("paragraph-editing");
-  expect(popupText).toContain("markdown-wrapping");
-  expect(popupText).toContain("prompt.transform.reflow");
-  expect(popupText).toContain("gq");
-  expect(popupText).toContain("piVimMode.keymap.actions");
-  expect(popupText).toContain("piVimMode.keymap.actionPresets");
-  expect(popupText).toContain("opt-in");
-  expect(popupText).toContain("no defaults");
-  expect(popupText).toContain("no plugin API");
-  expect(popupText).toContain("no runtime :map");
-  expect(popupText).toContain("no runtime :action");
-  expect(popupText).toContain("no command palette");
-  expect(popupText).toContain("no Vim help pager");
-  expect(result.state.register).toEqual(initial.register);
-  expect(result.state.namedRegisters).toEqual(initial.namedRegisters);
-  expect(result.state.marks).toEqual(initial.marks);
-  expect(result.state.macros).toEqual(initial.macros);
-  expect(result.state.lastPlayedMacro).toEqual(initial.lastPlayedMacro);
-  expect(result.state.lastSearch).toEqual(initial.lastSearch);
-  expect(result.state.searchHighlight).toEqual(initial.searchHighlight);
-  expect(result.state.lastRepeatableChange).toEqual(initial.lastRepeatableChange);
-  expect(result.state.messageHistory).toEqual(initial.messageHistory);
-});
-
 test("popup dismisses with escape without clearing durable state", () => {
   const initial: ModalState = {
     mode: "normal",
     helpPopup: {
-      title: "Keybinding discovery",
-      lines: ["prompt.transform.reflow -> gq"],
-      source: "features",
-      query: "keybindings",
+      title: ":keybindings",
+      lines: ["U              normal      command.redo"],
+      source: "keybindings",
       scrollOffset: 0,
     },
     register: { type: "char", text: "saved" },
@@ -986,7 +900,7 @@ test("popup scroll keys are local and read-only", () => {
   const initial: ModalState = {
     mode: "normal",
     helpPopup: {
-      title: "Keybinding discovery",
+      title: ":keybindings",
       lines: [
         "one",
         "two",
@@ -1001,8 +915,7 @@ test("popup scroll keys are local and read-only", () => {
         "eleven",
         "twelve",
       ],
-      source: "features",
-      query: "keybindings",
+      source: "keybindings",
       scrollOffset: 0,
     },
     register: { type: "char", text: "saved" },
@@ -1051,7 +964,7 @@ test("popup scroll and dismissal are excluded from macro recording", () => {
     recordingSlot: "a",
     macros: { a: [] },
     helpPopup: {
-      title: "Keybinding discovery",
+      title: ":keybindings",
       lines: [
         "one",
         "two",
@@ -1066,8 +979,7 @@ test("popup scroll and dismissal are excluded from macro recording", () => {
         "eleven",
         "twelve",
       ],
-      source: "features",
-      query: "keybindings",
+      source: "keybindings",
       scrollOffset: 0,
     },
   };
@@ -1097,14 +1009,10 @@ test("runtime help Ex commands report info without editing state", () => {
   };
   const result = applyModalKeys(initial, "abc", p(0, 1), [
     ":",
-    "f",
+    "h",
     "e",
-    "a",
-    "t",
-    "u",
-    "r",
-    "e",
-    "s",
+    "l",
+    "p",
     " ",
     "v",
     "i",
@@ -1134,38 +1042,11 @@ test("runtime help Ex commands report info without editing state", () => {
   expect(result.state.searchHighlight).toEqual(initial.searchHighlight);
   expect(result.state.lastRepeatableChange).toEqual(initial.lastRepeatableChange);
   expect(result.state.exMessage).toBeUndefined();
-  expect(result.state.helpPopup?.title).toBe(":features vimmode.doctor");
+  expect(result.state.helpPopup?.title).toBe(":help vimmode.doctor");
   expect(result.state.helpPopup?.lines.join("\n")).toContain("vimmode.doctor");
 });
 
-test("changelog Ex command preserves prompt state and records successful history", () => {
-  const initial: ModalState = {
-    mode: "normal",
-    register: { type: "char", text: "saved" },
-    marks: { a: p(0, 1) },
-    macros: { a: ["x"] },
-    lastSearch: { query: "abc", direction: "forward" },
-    lastRepeatableChange: { type: "command", command: "deleteChar" },
-  };
-  const result = applyModalKeys(initial, "abc", p(0, 1), [":", ..."changelog", "\r"]);
-
-  expect(result.text).toBe("abc");
-  expect(result.cursor).toEqual(p(0, 1));
-  expect(result.state.register).toEqual(initial.register);
-  expect(result.state.marks).toEqual(initial.marks);
-  expect(result.state.macros).toEqual(initial.macros);
-  expect(result.state.lastSearch).toEqual(initial.lastSearch);
-  expect(result.state.lastRepeatableChange).toEqual(initial.lastRepeatableChange);
-  expect(result.state.exHistory).toEqual(["changelog"]);
-  const { version } = JSON.parse(readFileSync("package.json", "utf8")) as { version: string };
-  expect(result.state.helpPopup).toMatchObject({
-    title: `pi-vimmode v${version} changes`,
-    source: "changelog",
-  });
-  expect(result.state.helpPopup?.markdown).not.toContain("Changelog unavailable");
-});
-
-test("visual features keybindings popup restores visual state after marker deletion", () => {
+test("visual keybindings popup restores visual state after marker deletion", () => {
   const opened = handleModalInput(
     { mode: "visual", visualAnchor: p(0, 1) },
     { text: "one\ntwo", lines: ["one", "two"], cursor: p(1, 2) },
@@ -1181,28 +1062,7 @@ test("visual features keybindings popup restores visual state after marker delet
       "\b",
     ).state;
   }
-  for (const key of [
-    "f",
-    "e",
-    "a",
-    "t",
-    "u",
-    "r",
-    "e",
-    "s",
-    " ",
-    "k",
-    "e",
-    "y",
-    "b",
-    "i",
-    "n",
-    "d",
-    "i",
-    "n",
-    "g",
-    "s",
-  ]) {
+  for (const key of ["k", "e", "y", "b", "i", "n", "d", "i", "n", "g", "s"]) {
     state = handleModalInput(
       state,
       { text: "one\ntwo", lines: ["one", "two"], cursor: p(1, 2) },
@@ -1221,7 +1081,7 @@ test("visual features keybindings popup restores visual state after marker delet
   expect(result.state.visualAnchor).toEqual(p(0, 1));
   expect(result.effects).toContainEqual({ type: "restoreCursor", position: p(1, 2) });
   expect(result.state.exMessage).toBeUndefined();
-  expect(result.state.helpPopup?.title).toBe("Keybinding discovery");
+  expect(result.state.helpPopup?.title).toBe(":keybindings");
 });
 
 test("visual runtime help Ex commands preserve visual state after marker deletion", () => {
@@ -1402,13 +1262,13 @@ test("keybinding popup does not pollute retained runtime messages", () => {
     {
       mode: "normal",
       messageHistory: history,
-      pendingEx: { command: "features keybindings", sourceMode: "normal" },
+      pendingEx: { command: "keybindings", sourceMode: "normal" },
     },
     snapshot,
     options,
     "\r",
   );
-  expect(popup.state.helpPopup?.title).toBe("Keybinding discovery");
+  expect(popup.state.helpPopup?.title).toBe(":keybindings");
   expect(popup.state.messageHistory).toEqual(history);
 
   const dismissed = handleModalInput(popup.state, snapshot, options, "\x1b");
@@ -1424,7 +1284,7 @@ test("keybinding popup does not pollute retained runtime messages", () => {
   expect(messages.state.exMessage).toBeUndefined();
   expect(messages.state.helpPopup?.lines).toContain("messages: 1 retained");
   expect(messages.state.helpPopup?.lines).toContain("latest: kept");
-  expect(messages.state.helpPopup?.lines.join("\n")).not.toContain("Keybinding discovery");
+  expect(messages.state.helpPopup?.lines.join("\n")).not.toContain("Key            Mode");
   expect(messages.state.messageHistory).toEqual(history);
 });
 
@@ -1970,162 +1830,15 @@ test("Ex history recall moves command cursor to end", () => {
   expect(substituted.state.pendingEx?.cursor).toBe("s/old/new/".length);
 });
 
-test("Ex transforms current, explicit, and visual ranges", () => {
-  const quoted = applyModalKeys({ mode: "normal" }, "one\ntwo", p(0, 0), [
-    ":",
-    "q",
-    "u",
-    "o",
-    "t",
-    "e",
-    "\r",
-  ]);
-  expect(quoted.text).toBe("> one\ntwo");
-  expect(quoted.state.exMessage).toEqual({ kind: "success", text: "1 line transformed" });
-
-  const bulletized = applyModalKeys({ mode: "normal" }, "one\ntwo\nthree", p(0, 0), [
-    ":",
-    "2",
-    ",",
-    "3",
-    "b",
-    "u",
-    "l",
-    "l",
-    "e",
-    "t",
-    "i",
-    "z",
-    "e",
-    "\r",
-  ]);
-  expect(bulletized.text).toBe("one\n- two\n- three");
-
-  const fenced = applyModalKeys(
-    { mode: "visualLine", visualAnchor: p(0, 0) },
-    "const x = 1;\nconst y = 2;",
-    p(1, 0),
-    [":", "f", "e", "n", "c", "e", " ", "t", "s", "\r"],
-  );
-  expect(fenced.text).toBe("```ts\nconst x = 1;\nconst y = 2;\n```");
-  expect(fenced.state.mode).toBe("normal");
-});
-
-test("keybound prompt transform actions edit normal ranges silently", () => {
-  const actionOptions = resolveVimOptions({
-    piVimMode: {
-      keymap: {
-        actions: {
-          "prompt.transform.quote": ["g>"],
-          "prompt.transform.bulletize": ["g*"],
-          "prompt.transform.fence": [{ key: "gT", args: { language: "ts" } }],
-          "prompt.transform.reflow": [{ key: "gq", args: { width: 20 } }],
-        },
-      },
-    },
-  }).options;
-
-  const quoted = applyModalKeys({ mode: "normal" }, "one\ntwo", p(0, 0), ["g", ">"], actionOptions);
-  expect(quoted.text).toBe("> one\ntwo");
-  expect(quoted.state.exMessage).toBeUndefined();
-
-  const bulletized = applyModalKeys(
-    { mode: "normal" },
-    "one\ntwo\nthree\nfour",
-    p(1, 0),
-    ["3", "g", "*"],
-    actionOptions,
-  );
-  expect(bulletized.text).toBe("one\n- two\n- three\n- four");
-
-  const fenced = applyModalKeys(
-    { mode: "normal" },
-    "const x = 1;",
-    p(0, 0),
-    ["g", "T"],
-    actionOptions,
-  );
-  expect(fenced.text).toBe("```ts\nconst x = 1;\n```");
-
-  const reflowed = applyModalKeys(
-    { mode: "normal" },
-    "alpha beta gamma delta epsilon",
-    p(0, 0),
-    ["g", "q"],
-    actionOptions,
-  );
-  expect(reflowed.text).toBe("alpha beta gamma\ndelta epsilon");
-});
-
 test("project semantic action exact keys override built-in grammar", () => {
   const options = resolveVimOptions(undefined, {
-    piVimMode: {
-      keymap: { actions: { "prompt.transform.quote": [{ key: "u", modes: ["normal"] }] } },
-    },
+    piVimMode: { keymap: { motions: { lineEnd: ["u"] } } },
   }).options;
 
   const result = applyModalKeys({ mode: "normal" }, "hello", p(0, 0), ["u"], options);
-  expect(result.text).toBe("> hello");
-});
-
-test("keybound prompt transform actions edit visual touched lines", () => {
-  const actionOptions = resolveVimOptions({
-    piVimMode: { keymap: { actions: { "prompt.transform.quote": ["g>"] } } },
-  }).options;
-
-  const visual = applyModalKeys(
-    { mode: "visual", visualAnchor: p(0, 1) },
-    "one\ntwo\nthree",
-    p(1, 1),
-    ["g", ">"],
-    actionOptions,
-  );
-  expect(visual.text).toBe("> one\n> two\nthree");
-  expect(visual.state.mode).toBe("normal");
-  expect(visual.state.visualAnchor).toBeUndefined();
-
-  const visualLine = applyModalKeys(
-    { mode: "visualLine", visualAnchor: p(1, 0) },
-    "one\ntwo\nthree",
-    p(2, 0),
-    ["3", "g", ">"],
-    actionOptions,
-  );
-  expect(visualLine.text).toBe("one\n> two\n> three");
-
-  const visualBlock = applyModalKeys(
-    { mode: "visualBlock", visualAnchor: p(0, 1) },
-    "one\ntwo\nthree",
-    p(2, 1),
-    ["g", ">"],
-    actionOptions,
-  );
-  expect(visualBlock.text).toBe("> one\n> two\n> three");
-});
-
-test("mode-scoped action prefixes do not shadow other modes", () => {
-  const actionOptions = resolveVimOptions(undefined, undefined, {
-    appendKeymap: true,
-    warnings: [],
-    partial: {
-      keymap: {
-        actions: {
-          "prompt.transform.quote": [{ key: "zq", modes: ["normal"] }],
-          "prompt.transform.unquote": [{ key: "z", modes: ["visual"] }],
-        },
-      },
-    },
-  }).options;
-
-  const visual = applyModalKeys(
-    { mode: "visual", visualAnchor: p(0, 0) },
-    "> one",
-    p(0, 4),
-    ["z"],
-    actionOptions,
-  );
-  expect(visual.text).toBe("one");
-  expect(visual.state.pending).toBeUndefined();
+  const lineEnd = applyModalKeys({ mode: "normal" }, "hello", p(0, 0), ["$"]);
+  expect(result.text).toBe("hello");
+  expect(result.cursor).toEqual(lineEnd.cursor);
 });
 
 test("scoped command binding overrides macro record key", () => {
@@ -2557,125 +2270,6 @@ test("scoped unmap disables inherited visual command", () => {
   );
   expect(result.text).toBe("hello");
   expect(result.state.mode).toBe("visual");
-});
-
-test("exact semantic actions win when a stale remap survives resolution", () => {
-  const actionOptions = resolveVimOptions({
-    piVimMode: {
-      leader: ",",
-      keymap: {
-        actions: {
-          "prompt.transform.quote": [{ key: "<leader>u", modes: ["normal"] }],
-        },
-      },
-    },
-  }).options;
-  const conflictingOptions: ModalOptions = {
-    ...actionOptions,
-    keymap: {
-      ...actionOptions.keymap!,
-      remaps: { accepted: [{ key: ",u", inputs: ["l"], modes: ["normal"] }] },
-    },
-  };
-
-  const actionPlan = createVimConfigPlan(actionOptions, []);
-  const result = applyModalKeys({ mode: "normal" }, "hello", p(0, 0), [",", "u"], {
-    ...actionPlan,
-    options: conflictingOptions as ResolvedVimEditorOptions,
-  });
-
-  expect(result.text).toBe("> hello");
-  expect(result.effects.some((effect) => effect.type === "playMacro")).toBe(false);
-});
-
-test("keybound prompt transform actions report no-op feedback and skip dot-repeat", () => {
-  const actionOptions = resolveVimOptions({
-    piVimMode: {
-      feedback: { noop: "status" },
-      keymap: {
-        actions: { "prompt.transform.unquote": ["g<"], "prompt.transform.quote": ["g>"] },
-      },
-    },
-  }).options;
-
-  const unchanged = applyModalKeys({ mode: "normal" }, "one", p(0, 0), ["g", "<"], actionOptions);
-  expect(unchanged.text).toBe("one");
-  expect(unchanged.state.exMessage).toEqual({
-    kind: "info",
-    text: "prompt transform made no changes",
-  });
-
-  const quoted = applyModalKeys(
-    {
-      mode: "normal",
-      register: { type: "char", text: "x" },
-      marks: { a: p(0, 0) },
-      searchHighlight: { query: "one", current: p(0, 0) },
-      lastSearch: { query: "one", direction: "forward" },
-      messageHistory: [{ kind: "info", text: "old" }],
-      lastRepeatableChange: { type: "command", command: "deleteChar" },
-    },
-    "one",
-    p(0, 0),
-    ["g", ">"],
-    actionOptions,
-  );
-  expect(quoted.text).toBe("> one");
-  expect(quoted.state.register).toEqual({ type: "char", text: "x" });
-  expect(quoted.state.marks).toEqual({ a: p(0, 0) });
-  expect(quoted.state.searchHighlight).toBeUndefined();
-  expect(quoted.state.lastSearch).toEqual({ query: "one", direction: "forward" });
-  expect(quoted.state.messageHistory).toEqual([{ kind: "info", text: "old" }]);
-  expect(quoted.state.lastRepeatableChange).toEqual({ type: "command", command: "deleteChar" });
-
-  const noPreviousRepeat = applyModalKeys(
-    { mode: "normal" },
-    "one",
-    p(0, 0),
-    ["g", ">", "."],
-    actionOptions,
-  );
-  expect(noPreviousRepeat.text).toBe("> one");
-});
-
-test("macro recording captures and replays action key sequences", () => {
-  const actionOptions = resolveVimOptions({
-    piVimMode: { keymap: { actions: { "prompt.transform.quote": ["g>"] } } },
-  }).options;
-  const recorded = applyModalKeys(
-    { mode: "normal" },
-    "one",
-    p(0, 0),
-    ["q", "a", "g", ">", "q"],
-    actionOptions,
-  );
-  expect(recorded.text).toBe("> one");
-  expect(recorded.state.macros?.a).toEqual(["g", ">"]);
-
-  const played = handleModalInput(
-    recorded.state,
-    { text: "two", lines: ["two"], cursor },
-    actionOptions,
-    "@",
-  );
-  const playback = handleModalInput(
-    played.state,
-    { text: "two", lines: ["two"], cursor },
-    actionOptions,
-    "a",
-  );
-  expect(playback.effects).toContainEqual({ type: "playMacro", slot: "a", inputs: ["g", ">"] });
-});
-
-test("Ex transform argument errors do not edit text", () => {
-  const update = handleModalInput(
-    { mode: "normal", pendingEx: { command: "reflow wide", sourceMode: "normal" } },
-    { text: "alpha beta", lines: ["alpha beta"], cursor },
-    options,
-    "\r",
-  );
-  expect(update.effects.some((effect) => effect.type === "edit")).toBe(false);
-  expect(update.state.exMessage).toEqual({ kind: "error", text: "Invalid reflow width" });
 });
 
 test("transient Ex message clears on next handled input", () => {
@@ -3122,7 +2716,7 @@ test("active leader overrides normal structural prefixes", () => {
     const configured = resolveVimOptions({
       piVimMode: {
         leader,
-        keymap: { actions: { "prompt.transform.quote": ["<leader>x"] } },
+        keymap: { commands: { redo: ["<leader>x"] } },
       },
     }).options;
     const result = handleModalInput({ mode: "normal" }, snapshot, configured, leader);
@@ -3137,11 +2731,7 @@ test("visual leader overrides direct case transform across visual modes", () => 
   const configured = resolveVimOptions({
     piVimMode: {
       leader: "u",
-      keymap: {
-        actions: {
-          "prompt.transform.quote": [{ key: "<leader>x", modes: ["visual"] }],
-        },
-      },
+      keymap: { operators: { uppercase: ["<leader>x"] } },
     },
   }).options;
 
@@ -3159,7 +2749,7 @@ test("invalid leader continuation preserves durable modal state", () => {
     piVimMode: {
       leader: '"',
       feedback: { noop: "status" },
-      keymap: { actions: { "prompt.transform.quote": ["<leader>q"] } },
+      keymap: { commands: { redo: ["<leader>q"] } },
     },
   }).options;
   const initial: ModalState = {
@@ -3191,7 +2781,7 @@ test("pending register keeps ownership of leader character", () => {
   const configured = resolveVimOptions({
     piVimMode: {
       leader: "w",
-      keymap: { actions: { "prompt.transform.quote": ["<leader>x"] } },
+      keymap: { commands: { redo: ["<leader>x"] } },
     },
   }).options;
   const result = handleModalInput(

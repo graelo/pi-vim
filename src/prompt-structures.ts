@@ -260,7 +260,7 @@ function resolveTag(
   return isNonEmpty(range) ? range : undefined;
 }
 
-export function isErrorBlockLine(line: string): boolean {
+function isErrorBlockLine(line: string): boolean {
   return (
     /(?:error|exception|traceback|panic|fatal|failed|failure)/i.test(line) ||
     /^\s+at\s+\S+/.test(line) ||

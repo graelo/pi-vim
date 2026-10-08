@@ -9,7 +9,6 @@ import type {
   LineRange,
   Position,
   PromptStructureTarget,
-  PromptTransform,
   ResolvedVimPromptStructures,
   TextRange,
   VimMotion,
@@ -18,7 +17,7 @@ import type {
   VimTextObjectKind,
 } from "./types.ts";
 
-import { isErrorBlockLine, resolvePromptStructureRange } from "./prompt-structures.ts";
+import { resolvePromptStructureRange } from "./prompt-structures.ts";
 import {
   blockSelectionText,
   isVisualCellSelected,
@@ -874,13 +873,6 @@ function replaceLineRange(
   };
 }
 
-function bulletizeLine(line: string): string {
-  if (line.trim().length === 0) return line;
-  const indent = /^\s*/.exec(line)?.[0] ?? "";
-  const content = line.slice(indent.length).replace(/^(?:[-+*]|\d+[.)])\s+(?:\[[ xX]\]\s+)?/, "");
-  return `${indent}- ${content}`;
-}
-
 function dedentLine(line: string): string {
   if (line.startsWith("  ")) return line.slice(2);
   if (line.startsWith("\t")) return line.slice(1);
@@ -888,117 +880,26 @@ function dedentLine(line: string): string {
   return line;
 }
 
-function wrapWords(words: string[], width: number): string[] {
-  const output: string[] = [];
-  let current = "";
-  for (const word of words) {
-    if (current.length === 0) {
-      current = word;
-      continue;
-    }
-    if (current.length + 1 + word.length <= width) current = `${current} ${word}`;
-    else {
-      output.push(current);
-      current = word;
-    }
-  }
-  if (current.length > 0) output.push(current);
-  return output;
-}
+export type LineShiftAction = "indent" | "dedent";
 
-function reflowLines(lines: readonly string[], width: number, initialInFence = false): string[] {
-  const output: string[] = [];
-  let paragraph: string[] = [];
-  let inFence = initialInFence;
-
-  const flush = () => {
-    if (paragraph.length === 0) return;
-    const indent = /^\s*/.exec(paragraph[0] ?? "")?.[0] ?? "";
-    const words = paragraph.flatMap((line) => line.trim().split(/\s+/).filter(Boolean));
-    const wrapped = wrapWords(words, Math.max(10, width - indent.length)).map(
-      (line) => `${indent}${line}`,
-    );
-    output.push(...wrapped);
-    paragraph = [];
-  };
-
-  for (const line of lines) {
-    if (/^\s*(```|~~~)/.test(line)) {
-      flush();
-      inFence = !inFence;
-      output.push(line);
-      continue;
-    }
-    if (
-      inFence ||
-      isErrorBlockLine(line) ||
-      line.trim().length === 0 ||
-      /^\s*[-+*]\s+/.test(line)
-    ) {
-      flush();
-      output.push(line);
-      continue;
-    }
-    paragraph.push(line);
-  }
-  flush();
-  return output;
-}
-
-function startsInsideFence(lines: readonly string[], startLine: number): boolean {
-  let inFence = false;
-  for (let index = 0; index < startLine; index++) {
-    if (/^\s*(```|~~~)/.test(lines[index] ?? "")) inFence = !inFence;
-  }
-  return inFence;
-}
-
-export function applyPromptTransform(
+function shiftLinesOnce(
   text: string,
   range: LineRange,
-  transform: PromptTransform,
+  action: LineShiftAction,
   originalCursor: Position,
 ): ExLineEditResult {
   const lines = splitText(text);
   const safeRange = clampLineRange(lines, range);
   const selected = lines.slice(safeRange.startLine, safeRange.endLine + 1);
-  let replacement: string[];
-
-  switch (transform.action) {
-    case "quote":
-      replacement = selected.map((line) => `> ${line}`);
-      break;
-    case "unquote":
-      replacement = selected.map((line) => line.replace(/^\s*> ?/, ""));
-      break;
-    case "bulletize":
-      replacement = selected.map(bulletizeLine);
-      break;
-    case "fence":
-      replacement = [`${"```"}${transform.language ?? ""}`, ...selected, "```"];
-      break;
-    case "indent":
-      replacement = selected.map((line) => `  ${line}`);
-      break;
-    case "dedent":
-      replacement = selected.map(dedentLine);
-      break;
-    case "reflow":
-      replacement = reflowLines(
-        selected,
-        transform.width ?? 80,
-        startsInsideFence(lines, safeRange.startLine),
-      );
-      break;
-  }
-
+  const replacement =
+    action === "indent" ? selected.map((line) => `  ${line}`) : selected.map(dedentLine);
   return replaceLineRange(text, safeRange, replacement, originalCursor);
 }
 
 export function shiftLineRange(
   text: string,
   range: LineRange,
-  action: Extract<PromptTransform["action"], "indent" | "dedent">,
+  action: LineShiftAction,
   originalCursor: Position,
   depth = 1,
 ): ExLineEditResult {
@@ -1006,12 +907,12 @@ export function shiftLineRange(
   let currentResult: ExLineEditResult | undefined;
   let changed = false;
   for (let i = 0; i < Math.max(1, depth); i += 1) {
-    currentResult = applyPromptTransform(currentText, range, { action }, originalCursor);
+    currentResult = shiftLinesOnce(currentText, range, action, originalCursor);
     if (!currentResult.ok) return currentResult;
     changed ||= currentResult.edit.changed;
     currentText = currentResult.edit.text;
   }
-  if (!currentResult?.ok) return applyPromptTransform(text, range, { action }, originalCursor);
+  if (!currentResult?.ok) return shiftLinesOnce(text, range, action, originalCursor);
   return { ...currentResult, edit: { ...currentResult.edit, changed } };
 }
 
@@ -1019,7 +920,7 @@ export function shiftLinesFromCursor(
   text: string,
   cursor: Position,
   count: number,
-  action: Extract<PromptTransform["action"], "indent" | "dedent">,
+  action: LineShiftAction,
 ): ExLineEditResult {
   const lines = splitText(text);
   const pos = clampPosition(lines, cursor);
