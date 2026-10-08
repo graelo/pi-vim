@@ -36,7 +36,7 @@ session shutdown events.
 
 - **WHEN** the active UI editor component is already the lifecycle's Vim
     editor factory
-- **THEN** installation refreshes Vim options and status but MUST NOT call
+- **THEN** installation refreshes Vim options but MUST NOT call
     `setEditorComponent` again
 
 #### Scenario: Non-Vim component is replaced
@@ -71,35 +71,6 @@ registration.
 - **THEN** the lifecycle tracks that editor instance for later terminal cursor
     reset
 
-### Requirement: Settings refresh is owned by lifecycle installation
-
-The Vim extension lifecycle SHALL refresh Vim options during each install
-attempt by loading settings for the active context `cwd` and updating extension
-status from load warnings.
-
-#### Scenario: Settings load uses context cwd
-
-- **WHEN** installation runs for a context with `cwd`
-- **THEN** the lifecycle calls the Vim settings loader with that `cwd`
-
-#### Scenario: Successful settings load sets normal status
-
-- **WHEN** the Vim settings loader returns no warnings during installation
-- **THEN** the lifecycle sets status key `pi-vimmode` to `vim`
-
-#### Scenario: Settings warnings set warning status
-
-- **WHEN** the Vim settings loader returns one or more warnings during
-    installation
-- **THEN** the lifecycle sets status key `pi-vimmode` to `vim ⚠`
-
-#### Scenario: Config module remains free of lifecycle behavior
-
-- **WHEN** the lifecycle module is extracted
-- **THEN** `src/config.ts` remains responsible for resolving/loading Vim
-    options only and MUST NOT register Pi hooks, install editor components,
-    schedule reload work, or track editor instances
-
 ### Requirement: Delayed reinstall tolerates stale reload contexts
 
 The Vim extension lifecycle SHALL tolerate stale context failures from delayed
@@ -121,7 +92,7 @@ reinstall callbacks while preserving immediate install failures.
 #### Scenario: Delayed reinstall refreshes settings again
 
 - **WHEN** a scheduled delayed reinstall runs successfully
-- **THEN** it refreshes Vim options and status before checking or setting the
+- **THEN** it refreshes Vim options before checking or setting the
     editor component
 
 ### Requirement: Session shutdown resets tracked terminal cursor styles
@@ -167,8 +138,8 @@ behavior and preserve existing config/editor validation.
 
 - **WHEN** `npm test` is executed
 - **THEN** tests cover lifecycle hook registration, immediate install, delayed
-    reinstall scheduling, factory identity, settings refresh/status, stale
-    delayed context handling, and shutdown cleanup
+    reinstall scheduling, factory identity, settings refresh and warning
+    notices, stale delayed context handling, and shutdown cleanup
 
 #### Scenario: Existing tests continue to pass
 
@@ -257,5 +228,43 @@ coordination while preserving existing lifecycle installation behavior.
 - **WHEN** lifecycle install hooks run for `session_start`,
     `resources_discover`, and `agent_end`
 - **THEN** stable factory identity, settings refresh, delayed reinstall,
-    status updates, and stale delayed-context handling continue to satisfy
+    warning notices, and stale delayed-context handling continue to satisfy
     existing lifecycle requirements
+
+### Requirement: Lifecycle installation refreshes settings and notifies warnings
+
+The Vim extension lifecycle SHALL refresh Vim options during each install
+attempt by loading settings for the active context `cwd`. It MUST NOT set a Pi
+footer status entry. When the retained settings diagnostics change and contain
+warnings, it SHALL show one transient warning notification with the warning
+count that points to `:vimdoctor`.
+
+#### Scenario: Settings load uses context cwd
+
+- **WHEN** installation runs for a context with `cwd`
+- **THEN** the lifecycle calls the Vim settings loader with that `cwd`
+
+#### Scenario: Lifecycle sets no footer status
+
+- **WHEN** installation, `/vimmode off`, or `/vimmode on` runs
+- **THEN** the lifecycle MUST NOT call `setStatus`, so the extension adds no
+    line to the Pi footer
+
+#### Scenario: New settings warnings notify once
+
+- **WHEN** the Vim settings loader returns warnings that differ from the
+    retained diagnostics
+- **THEN** the lifecycle notifies `pi-vimmode: N settings warnings; run
+    :vimdoctor` at warning level
+
+#### Scenario: Unchanged settings warnings stay quiet
+
+- **WHEN** a later install returns the same warnings
+- **THEN** the lifecycle shows no further notification
+
+#### Scenario: Config module remains free of lifecycle behavior
+
+- **WHEN** the lifecycle module is extracted
+- **THEN** `src/config.ts` remains responsible for resolving/loading Vim
+    options only and MUST NOT register Pi hooks, install editor components,
+    schedule reload work, or track editor instances

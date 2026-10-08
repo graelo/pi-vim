@@ -95,7 +95,8 @@ The project SHALL document runtime customization diagnostics in
 
 #### Scenario: User troubleshoots vim warning status
 
-- **WHEN** a user opens `docs/features.md` after seeing `vim ⚠`
+- **WHEN** a user opens `docs/features.md` after a settings warning
+    notification
 - **THEN** the document explains that `:vimdoctor` reports retained settings
     diagnostics and that invalid fields are ignored without discarding valid
     siblings
