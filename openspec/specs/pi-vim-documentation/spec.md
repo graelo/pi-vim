@@ -469,27 +469,28 @@ operator composition, and explicit non-goals.
     punctuation-aware boundary model unless source behavior and tests actually
     implement that boundary model
 
-### Requirement: Documentation drift metadata stays out of runtime help paths
+### Requirement: Documentation drift metadata has one owner per registry
 
-The project SHALL keep documentation drift guard metadata for runtime help
-entries and read-only popup command examples in test/dev-owned sources that
-are not imported by runtime modules, while preserving public runtime help and
-discovery behavior.
+The project SHALL keep each piece of documentation drift metadata in exactly
+one source: runtime help entries carry their own docs, spec, and test anchors
+in the runtime help registry, and read-only popup command examples stay in
+test/dev-owned sources that runtime modules do not import, while preserving
+public runtime help and discovery behavior.
 
 #### Scenario: Runtime registries expose only runtime-needed fields
 
-- **WHEN** runtime help entries and read-only popup builders are imported by
+- **WHEN** read-only popup builders and other runtime modules are imported by
     the extension runtime
-- **THEN** those runtime objects omit docs/test-only fields such as OpenSpec
-    spec paths, test file paths, parser-only examples, and documentation anchor
-    fields unless a field is required for displayed user-facing output
+- **THEN** they omit docs/test-only fields such as parser-only examples and
+    popup documentation anchors, and the runtime help registry is the only
+    runtime source of drift anchors
 
 #### Scenario: Drift guard preserves coverage through dev metadata
 
 - **WHEN** `npm test` runs the documentation drift guard
-- **THEN** every runtime help entry and read-only popup command has matching
-    test/dev metadata that validates feature-doc anchors, spec files, and
-    parser examples
+- **THEN** every runtime help entry is validated through its registry-owned
+    anchors, and every read-only popup command through matching test/dev
+    metadata that validates feature-doc anchors and parser examples
 
 #### Scenario: Public runtime discovery behavior is unchanged
 
@@ -503,9 +504,9 @@ discovery behavior.
 #### Scenario: Published runtime source excludes docs/test-only metadata
 
 - **WHEN** the package is packed with its `src/` runtime sources
-- **THEN** the runtime modules do not include metadata strings that exist only
-    for drift validation, such as OpenSpec spec paths, test file paths,
-    `specAnchor`, `testAnchors`, or parser examples moved to test/dev metadata
+- **THEN** the runtime modules include no drift metadata other than the
+    runtime help registry anchors, and in particular no popup parser examples
+    or popup docs anchors moved to test/dev metadata
 
 ### Requirement: Documentation covers visual reselection
 
