@@ -1,4 +1,5 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "vitest";
+import { readFileSync } from "node:fs";
 
 import type { ModalEffect, ModalOptions, ModalState } from "../src/modal/types.ts";
 import type { EasymotionTarget, ResolvedVimEditorOptions } from "../src/types.ts";
@@ -1156,11 +1157,12 @@ test("changelog Ex command preserves prompt state and records successful history
   expect(result.state.lastSearch).toEqual(initial.lastSearch);
   expect(result.state.lastRepeatableChange).toEqual(initial.lastRepeatableChange);
   expect(result.state.exHistory).toEqual(["changelog"]);
+  const { version } = JSON.parse(readFileSync("package.json", "utf8")) as { version: string };
   expect(result.state.helpPopup).toMatchObject({
-    title: "pi-vimmode v0.9.0 changes",
+    title: `pi-vimmode v${version} changes`,
     source: "changelog",
   });
-  expect(result.state.helpPopup?.markdown).toContain("Changelog unavailable for v0.9.0");
+  expect(result.state.helpPopup?.markdown).not.toContain("Changelog unavailable");
 });
 
 test("visual features keybindings popup restores visual state after marker deletion", () => {

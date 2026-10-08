@@ -2,14 +2,9 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const RELEASE_ASSET_FILE = "release-notes.json";
+export const CHANGELOG_FILE = "CHANGELOG.md";
 
-const REPOSITORY_RELEASES_URL = "https://github.com/pekochan069/pi-vimmode/releases";
-
-type ReleaseAsset = {
-  version: string;
-  content: string;
-};
+const REPOSITORY_RELEASES_URL = "https://github.com/graelo/pi-vimmode/releases";
 
 export type CurrentRelease = {
   available: boolean;
@@ -18,13 +13,8 @@ export type CurrentRelease = {
   version: string;
 };
 
-type Heading = {
-  index: number;
-  text: string;
-};
-
-function invalidRelease(message: string): never {
-  throw new Error(`Invalid RELEASE.md: ${message}`);
+function invalidChangelog(message: string): never {
+  throw new Error(`Invalid CHANGELOG.md: ${message}`);
 }
 
 function fenceMarker(line: string): string | undefined {
@@ -35,94 +25,95 @@ function closesFence(line: string, fence: string): boolean {
   return new RegExp(`^\\s*${fence[0]}{${fence.length},}\\s*$`).test(line);
 }
 
-function nextTopLevelHeading(lines: readonly string[], startIndex: number): Heading | undefined {
+/**
+ * Calls `visit` for every line outside fenced code blocks, and `visitFenced` for lines inside
+ * them (fence markers excluded); throws on an unclosed fence.
+ */
+function forEachProseLine(
+  lines: readonly string[],
+  startIndex: number,
+  visit: (line: string, index: number) => boolean | void,
+  visitFenced?: (line: string) => void,
+): void {
   let fence: string | undefined;
-
   for (let index = startIndex; index < lines.length; index++) {
     const line = lines[index]!;
     if (fence) {
       if (closesFence(line, fence)) fence = undefined;
+      else visitFenced?.(line);
       continue;
     }
-
     const marker = fenceMarker(line);
     if (marker) {
       fence = marker;
       continue;
     }
-    if (/^#(?!#)\s+/.test(line)) return { index, text: line };
+    if (visit(line, index) === true) return;
   }
-
-  if (fence) invalidRelease("contains unclosed fenced code block");
+  if (fence) invalidChangelog("contains unclosed fenced code block");
 }
 
-function releaseLineState(
-  line: string,
-  fence: string | undefined,
-): {
-  fence: string | undefined;
-  hasSection: boolean;
-  hasContent: boolean;
-} {
-  if (fence) {
-    const closed = closesFence(line, fence);
-    return {
-      fence: closed ? undefined : fence,
-      hasSection: false,
-      hasContent: !closed && Boolean(line.trim()),
-    };
-  }
-  const marker = fenceMarker(line);
-  if (marker) return { fence: marker, hasSection: false, hasContent: false };
-  if (/^#(?!#)\s+/.test(line)) invalidRelease("contains an unexpected top-level heading");
-  return {
-    fence,
-    hasSection: /^##(?!#)\s+\S/.test(line),
-    hasContent: Boolean(line.trim()) && !/^#{1,6}\s+/.test(line),
-  };
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function validateReleaseContent(content: string): void {
-  let fence: string | undefined;
+/** Matches Keep a Changelog release headings such as `## [1.0.0] - 2026-10-08`. */
+function releaseHeadingPattern(version: string): RegExp {
+  return new RegExp(`^##\\s+\\[?v?${escapeRegExp(version)}\\]?(?:\\s|$)`);
+}
+
+function findRelease(lines: readonly string[], version: string): { start: number; end: number } {
+  const heading = releaseHeadingPattern(version);
+  let start: number | undefined;
+  let end = lines.length;
+  forEachProseLine(lines, 0, (line, index) => {
+    if (start === undefined) {
+      if (heading.test(line)) start = index;
+      return;
+    }
+    if (/^##?(?!#)\s+/.test(line)) {
+      end = index;
+      return true;
+    }
+  });
+  if (start === undefined) invalidChangelog(`missing release heading for ${version}`);
+  return { start, end };
+}
+
+function validateReleaseContent(lines: readonly string[]): void {
   let hasSection = false;
   let hasContent = false;
-  for (const line of content.split("\n")) {
-    const state = releaseLineState(line, fence);
-    fence = state.fence;
-    hasSection ||= state.hasSection;
-    hasContent ||= state.hasContent;
-  }
-  if (fence) invalidRelease("contains unclosed fenced code block");
-  if (!hasSection) invalidRelease("must contain at least one second-level section");
-  if (!hasContent) invalidRelease("must contain non-empty content");
+  forEachProseLine(
+    lines,
+    0,
+    (line) => {
+      hasSection ||= /^###(?!#)\s+\S/.test(line);
+      hasContent ||= Boolean(line.trim()) && !/^#{1,6}\s+/.test(line);
+    },
+    (line) => {
+      hasContent ||= Boolean(line.trim());
+    },
+  );
+  if (!hasSection) invalidChangelog("release must contain at least one third-level section");
+  if (!hasContent) invalidChangelog("release must contain non-empty content");
 }
 
-export function parseCurrentRelease(releaseSource: string, version: string): string {
-  const lines = releaseSource.replace(/\r\n?/g, "\n").split("\n");
-  if (!releaseSource.trim()) invalidRelease("is empty");
-
-  const expectedHeading = `# v${version}`;
-  const firstLine = lines[0] ?? "";
-  if (firstLine !== expectedHeading) {
-    if (firstLine.startsWith("# v")) {
-      invalidRelease(`version mismatch: expected ${expectedHeading}, found ${firstLine}`);
-    }
-    invalidRelease(`must begin with ${expectedHeading}`);
-  }
-
-  const next = nextTopLevelHeading(lines, 1);
-  if (next && !/^# v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(next.text)) {
-    invalidRelease(`malformed release boundary: ${next.text}`);
-  }
-
-  const content = lines.slice(1, next?.index).join("\n").trim();
-  validateReleaseContent(content);
-  return content;
+/** Promotes release sub-headings by one level so `### Added` renders as a popup section. */
+function promoteHeadings(lines: readonly string[]): string[] {
+  const promoted = [...lines];
+  forEachProseLine(lines, 0, (line, index) => {
+    if (/^#{3,6}\s+/.test(line)) promoted[index] = line.slice(1);
+  });
+  return promoted;
 }
 
-export function currentReleaseAsset(releaseSource: string, version: string): string {
-  const asset: ReleaseAsset = { version, content: parseCurrentRelease(releaseSource, version) };
-  return `${JSON.stringify(asset, null, 2)}\n`;
+export function parseCurrentRelease(changelogSource: string, version: string): string {
+  if (!changelogSource.trim()) invalidChangelog("is empty");
+  const lines = changelogSource.replace(/\r\n?/g, "\n").split("\n");
+  const { start, end } = findRelease(lines, version);
+  const releaseLines = lines.slice(start + 1, end);
+  validateReleaseContent(releaseLines);
+  return promoteHeadings(releaseLines).join("\n").trim();
 }
 
 function releaseUrl(version: string): string {
@@ -162,13 +153,9 @@ export function loadCurrentRelease(packageDirectory = defaultPackageDirectory())
   if (!version) return unavailable();
 
   try {
-    const asset = JSON.parse(readFileSync(join(packageDirectory, RELEASE_ASSET_FILE), "utf8")) as {
-      version?: unknown;
-      content?: unknown;
-    };
-    if (asset.version !== version || typeof asset.content !== "string") return unavailable(version);
-    validateReleaseContent(asset.content);
-    return { available: true, content: asset.content, releaseUrl: releaseUrl(version), version };
+    const source = readFileSync(join(packageDirectory, CHANGELOG_FILE), "utf8");
+    const content = parseCurrentRelease(source, version);
+    return { available: true, content, releaseUrl: releaseUrl(version), version };
   } catch {
     return unavailable(version);
   }
