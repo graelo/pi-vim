@@ -359,9 +359,6 @@ Behavior examples to preserve in tests:
     — precursor substitution architecture; now historical in places because
     regex mode, history, offsets, `:noh`, `n`/`e`, and repeat substitution have
     since shipped.
-- `docs/solutions/ui-bugs/ex-substitution-match-preview-highlighting-2026-06-04.md`
-    — substitution preview/workbench UX that repeat substitution continues to
-    use.
 - `docs/solutions/architecture-patterns/pi-vimmode-runtime-help-docs-drift-guard-2026-06-05.md`
     — runtime help and docs-drift guard pattern for keeping Ex/settings claims
     source-backed.

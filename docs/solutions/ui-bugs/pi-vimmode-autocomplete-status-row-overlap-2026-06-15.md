@@ -154,9 +154,6 @@ openspec validate --specs --strict
 - `docs/solutions/ui-bugs/visual-block-insert-preview-hidden-2026-05-27.md` —
     similar hidden insert-mode UI caused by a `CustomEditor` adapter/render
     ownership gap.
-- `docs/solutions/ui-bugs/ex-substitution-match-preview-highlighting-2026-06-04.md`
-    — related workbench feedback visibility and live-render regression testing
-    pattern.
 - `docs/solutions/design-patterns/pi-vimmode-read-only-help-overlay-ui-2026-06-09.md`
     — related row ownership distinction for overlay/workbench UI, with the
     caveat that host autocomplete rows must be preserved inline.
