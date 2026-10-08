@@ -348,15 +348,15 @@ configured row reservation, and existing Vim UI.
 
 #### Scenario: Workbench row shrinks prompt viewport by default
 
-- **WHEN** a search or Ex workbench row is visible for active input, preview,
-    success, or error messaging and no workbench row reservation is configured
+- **WHEN** a search or Ex workbench row is visible for active input, success,
+    or error messaging and no workbench row reservation is configured
 - **THEN** the prompt editor viewport uses one fewer terminal row so total
     rendering remains bounded
 
 #### Scenario: Workbench row uses configured reserved rows
 
 - **WHEN** `piVimMode.ui.workbench.reservedRows` is configured and a search,
-    Ex, preview, success, or error workbench row is visible
+    Ex, success, or error workbench row is visible
 - **THEN** the prompt editor viewport uses the greater of one active workbench
     row and the configured reserved-row count so total rendering remains bounded
     and stable
@@ -364,7 +364,7 @@ configured row reservation, and existing Vim UI.
 #### Scenario: Reserved idle workbench area is width-safe
 
 - **WHEN** `piVimMode.ui.workbench.reservedRows` is greater than zero and no
-    search, Ex, preview, success, or error workbench row is visible
+    search, Ex, success, or error workbench row is visible
 - **THEN** the editor still reserves the configured blank workbench rows below
     the prompt while every rendered line fits within the provided width
 
@@ -373,52 +373,6 @@ configured row reservation, and existing Vim UI.
 - **WHEN** pending workbench text is longer than the available terminal width
 - **THEN** the workbench row truncates or scrolls the displayed text without
     emitting lines wider than the terminal width
-
-### Requirement: Workbench messages render preview, success, and error states safely
-
-The Vim editor SHALL render workbench feedback for search errors, Ex errors, Ex
-success counts, and substitution match previews without breaking visual
-selection, search highlights, or cursor rendering.
-
-#### Scenario: Substitution match preview is visible
-
-- **WHEN** a substitution preview is active
-- **THEN** matched target text is highlighted and the workbench row shows a
-    readable match count plus guidance that `Enter` applies while `Esc` cancels
-
-#### Scenario: Preview message is replaced by apply result
-
-- **WHEN** a substitution preview is active and the user confirms it with
-    `Enter` or `Return`
-- **THEN** the preview message is replaced by the normal Ex success count
-    message after the substitution applies
-
-#### Scenario: Invalid regex search message is visible
-
-- **WHEN** a pending regex search fails because the pattern is invalid or
-    exceeds bounds
-- **THEN** the workbench row shows a readable error message until the next
-    handled input clears it
-
-#### Scenario: Workbench message clears on next handled input
-
-- **WHEN** a transient workbench error or success message is visible
-- **THEN** the next handled input clears the message and restores the prompt
-    viewport to its normal height unless workbench input is active again
-
-#### Scenario: Visual selection composes with workbench row
-
-- **WHEN** search or Ex workbench input was opened from a visual mode with an
-    active selection
-- **THEN** the prompt still renders the visual selection and the workbench row
-    renders below the prompt box
-
-#### Scenario: Search highlights compose with workbench row
-
-- **WHEN** prompt search highlights are visible and search or Ex workbench
-    input is active
-- **THEN** search highlights remain visible in the prompt render and the
-    workbench row renders below the prompt box
 
 ### Requirement: Workbench UI behavior is documented and validated
 
@@ -430,7 +384,7 @@ rows.
 
 - **WHEN** `npm test` is executed
 - **THEN** render tests cover `/`, `?`, and `:` workbench rows, long pending
-    text, substitution match preview messages/highlights, transient regex
+    text, substitution success counts, transient regex
     errors, default viewport shrink behavior, configured reserved rows, idle
     reserved rows, visual selection composition, search highlight composition,
     and narrow terminal widths
@@ -444,7 +398,7 @@ rows.
 
 - **WHEN** the user opens `docs/features.md`
 - **THEN** it documents where `/`, `?`, `:` workbench input, substitution
-    match previews, counts, and errors appear and how active and configured
+    counts, and errors appear and how active and configured
     reserved workbench rows affect prompt viewport height
 
 ### Requirement: Runtime informational messages are width-safe
@@ -455,7 +409,7 @@ output without overflowing the editor viewport.
 #### Scenario: Diagnostic output opens popup
 
 - **WHEN** a read-only diagnostic command such as `:vimdoctor`, `:keymap`,
-    `:mapcheck`, or `:actions` completes successfully
+    or `:mapcheck` completes successfully
 - **THEN** the diagnostic body is shown in a bounded read-only popup rather
     than appended only as one width-safe row below the prompt box
 
@@ -619,7 +573,7 @@ prompt.
 #### Scenario: Active workbench row still appears with default reservation
 
 - **WHEN** no `piVimMode.ui.workbench.reservedRows` setting is configured and
-    search input, Ex input, preview, success, or error feedback is active
+    search input, Ex input, success, or error feedback is active
 - **THEN** the editor reserves one workbench row for active feedback according
     to existing behavior
 
@@ -667,9 +621,9 @@ bounded overlay owned by the Pi adapter rather than by prompt render rows.
 
 #### Scenario: Read-only output is not appended to editor render rows
 
-- **WHEN** a read-only Ex command such as `:help`, `:keybindings`, `:actions`,
-    `:keymap`, `:mapcheck`, `:messages`, `:vimmode inspect`, or `:vimdoctor`
-    completes successfully on a terminal that can show the overlay
+- **WHEN** a read-only Ex command such as `:help`, `:keybindings`, `:keymap`,
+    `:mapcheck`, `:messages`, `:vimmode inspect`, or `:vimdoctor` completes
+    successfully on a terminal that can show the overlay
 - **THEN** the main editor render output remains focused on the
     prompt/status/workbench surface and the read-only command body appears in a
     centered bounded overlay
@@ -696,3 +650,42 @@ bounded overlay owned by the Pi adapter rather than by prompt render rows.
 - **THEN** the editor provides bounded visible feedback that the popup cannot
     be shown at the current size without silently dropping the command result or
     corrupting prompt editing state
+
+### Requirement: Workbench messages render success and error states safely
+
+The Vim editor SHALL render workbench feedback for search errors, Ex errors, and
+Ex success counts without breaking visual selection, search highlights, or
+cursor rendering.
+
+#### Scenario: Substitution count is visible
+
+- **WHEN** a substitution applies
+- **THEN** the workbench row shows the Ex success count, such as
+    `2 substitutions`
+
+#### Scenario: Invalid regex search message is visible
+
+- **WHEN** a pending regex search fails because the pattern is invalid or
+    exceeds bounds
+- **THEN** the workbench row shows a readable error message until the next
+    handled input clears it
+
+#### Scenario: Workbench message clears on next handled input
+
+- **WHEN** a transient workbench error or success message is visible
+- **THEN** the next handled input clears the message and restores the prompt
+    viewport to its normal height unless workbench input is active again
+
+#### Scenario: Visual selection composes with workbench row
+
+- **WHEN** search or Ex workbench input was opened from a visual mode with an
+    active selection
+- **THEN** the prompt still renders the visual selection and the workbench row
+    renders below the prompt box
+
+#### Scenario: Search highlights compose with workbench row
+
+- **WHEN** prompt search highlights are visible and search or Ex workbench
+    input is active
+- **THEN** search highlights remain visible in the prompt render and the
+    workbench row renders below the prompt box

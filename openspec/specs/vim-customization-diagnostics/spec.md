@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Define the read-only customization diagnostics (`:actions`, `:keymap`,
-`:mapcheck`, `:vimdoctor`, no-op feedback) that explain the effective
-configuration without changing prompt state.
+Define the read-only customization diagnostics (`:keymap`, `:mapcheck`,
+`:vimdoctor`, no-op feedback) that explain the effective configuration without
+changing prompt state.
 
 ## Requirements
 
@@ -41,8 +41,7 @@ editing state.
 
 #### Scenario: Diagnostic command leaves prompt text unchanged
 
-- **WHEN** the editor executes `:vimdoctor`, `:keymap`, `:mapcheck`, or
-    `:actions`
+- **WHEN** the editor executes `:vimdoctor`, `:keymap`, or `:mapcheck`
 - **THEN** prompt text, cursor position, mode, visual selection, search
     highlights, registers, marks, macro slots, and dot-repeat state remain
     unchanged except for the transient diagnostic message
@@ -54,32 +53,6 @@ editing state.
 - **THEN** the command exits Ex mode without editing prompt text and restores
     the original visual mode state according to existing Ex cancellation
     behavior
-
-### Requirement: Action search is discoverable and finite
-
-The Vim editor SHALL expose a searchable list of supported semantic actions
-without implying support for arbitrary Vim commands.
-
-#### Scenario: Actions command lists supported categories
-
-- **WHEN** the editor executes `:actions` without a query
-- **THEN** the editor shows a compact summary of supported action categories
-    such as commands, motions, operators, text objects, macros, marks, and
-    searches
-
-#### Scenario: Actions command searches metadata
-
-- **WHEN** the editor executes `:actions redo` or another query matching an
-    action id, description, or current binding
-- **THEN** the editor shows the best matching supported action and its current
-    binding when one exists
-
-#### Scenario: Actions command rejects unsupported parity claims
-
-- **WHEN** the editor executes `:actions vimscript` or another query that
-    matches no supported finite action
-- **THEN** the editor shows a transient no-match message rather than inventing
-    unsupported Vim behavior
 
 ### Requirement: Map checking explains keys and conflicts
 
@@ -194,14 +167,15 @@ execution.
 #### Scenario: Supported diagnostics are explicit
 
 - **WHEN** the user searches or inspects supported diagnostic commands through
-    runtime help or action diagnostics
-- **THEN** `vimdoctor`, `keymap`, `mapcheck`, `actions`, `vimmode inspect`,
-    and `messages` are presented as finite supported diagnostics when available
+    runtime help or keymap diagnostics
+- **THEN** `vimdoctor`, `keymap`, `mapcheck`, `vimmode inspect`, and
+    `messages` are presented as finite supported diagnostics when available
 
 #### Scenario: Unsupported diagnostic names remain unsupported
 
 - **WHEN** the user executes unsupported diagnostic-like commands such as
-    `:map`, `:actionspalette`, `:vimmode dump`, or `:messages clear`
+    `:map`, `:actions`, `:actionspalette`, `:vimmode dump`, or
+    `:messages clear`
 - **THEN** the editor reports a bounded unsupported-command error and leaves
     prompt editing state unchanged
 
@@ -212,34 +186,6 @@ execution.
 - **THEN** they identify the finite command set and do not imply full Vim
     `:messages`, `:map`, `:verbose`, or Vimscript support
 
-### Requirement: Diagnostic help actions have metadata-only registry entries
-
-The Vim editor SHALL expose finite metadata for diagnostic and runtime-help
-actions without making those actions keybindable or plugin-dispatchable.
-
-#### Scenario: Actions search finds diagnostic metadata
-
-- **WHEN** the editor executes `:actions vimmode.doctor`,
-    `:actions vimmode.actions`, or another supported diagnostic/help action ID
-- **THEN** it shows the matching metadata entry with its canonical `vimmode.*`
-    ID, command name, diagnostic/runtime-help classification, and metadata-only
-    or non-bindable status
-
-#### Scenario: Actions summary separates metadata-only diagnostics
-
-- **WHEN** the editor executes `:actions` without a query
-- **THEN** diagnostic/help metadata entries are summarized separately from
-    bindable actions and are not counted as motions, operators, text objects,
-    macros, marks, searches, or editing commands
-
-#### Scenario: Unsupported diagnostic action remains unsupported
-
-- **WHEN** the editor executes `:actions vimmode.dump`,
-    `:actions actionspalette`, or another unsupported diagnostic-like action
-    query
-- **THEN** it shows a bounded no-match message rather than inventing a
-    command, action, plugin API, or keybinding target
-
 ### Requirement: Diagnostic action metadata preserves diagnostic command boundaries
 
 Diagnostic/help action metadata SHALL describe existing finite diagnostics
@@ -247,16 +193,16 @@ without changing execution or editing side effects.
 
 #### Scenario: Metadata entry points to existing Ex command
 
-- **WHEN** a metadata entry names `vimmode.doctor`, `vimmode.actions`,
-    `vimmode.keymap`, `vimmode.mapcheck`, `vimmode.help`, `vimmode.messages`,
-    or `vimmode.inspect`
+- **WHEN** a metadata entry names `vimmode.doctor`, `vimmode.keymap`,
+    `vimmode.keybindings`, `vimmode.mapcheck`, `vimmode.help`,
+    `vimmode.messages`, or `vimmode.inspect`
 - **THEN** the described command is one of the explicit supported
     diagnostic/runtime-help Ex commands and no additional dispatch path is
     implied
 
 #### Scenario: Metadata lookup is read-only
 
-- **WHEN** the editor executes `:actions vimmode.help` or another metadata
+- **WHEN** the editor executes `:keymap vimmode.help` or another metadata
     lookup from normal or visual Ex mode
 - **THEN** prompt text, cursor position, mode restoration, visual selection,
     search highlights, registers, marks, macro slots, and dot-repeat state
@@ -400,3 +346,23 @@ metadata boundaries as existing customization diagnostics.
     `:mapcheck <key>`
 - **THEN** it preserves the protected shortcut catalog boundary and does not
     present protected Pi shortcuts as available pi-vimmode bindings
+
+### Requirement: Diagnostic help actions have metadata-only entries searchable through keymap
+
+The Vim editor SHALL expose finite metadata for diagnostic and runtime-help
+actions without making those actions keybindable or plugin-dispatchable.
+
+#### Scenario: Keymap search finds diagnostic metadata
+
+- **WHEN** the editor executes `:keymap vimmode.doctor` or another supported
+    diagnostic/help action ID
+- **THEN** it shows the matching metadata entry with its canonical `vimmode.*`
+    ID, command name, diagnostic/runtime-help classification, and metadata-only
+    or non-bindable status
+
+#### Scenario: Unsupported diagnostic action remains unsupported
+
+- **WHEN** the editor executes `:keymap vimmode.dump` or another unsupported
+    diagnostic-like action query
+- **THEN** it shows a bounded no-match message rather than inventing a
+    command, action, plugin API, or keybinding target

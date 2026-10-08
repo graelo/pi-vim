@@ -90,8 +90,8 @@ The project SHALL document runtime customization diagnostics in
 #### Scenario: User reads diagnostic command documentation
 
 - **WHEN** a user opens `docs/features.md`
-- **THEN** the document explains `:vimdoctor`, `:keymap`, `:mapcheck`, and
-    `:actions` with practical examples and explicit limitations
+- **THEN** the document explains `:vimdoctor`, `:keymap`, and `:mapcheck` with
+    practical examples and explicit limitations
 
 #### Scenario: User troubleshoots vim warning status
 
@@ -138,7 +138,7 @@ OpenSpec requirements, and tests before the change is complete.
 
 #### Scenario: Docs mention diagnostic commands
 
-- **WHEN** docs mention `:vimdoctor`, `:keymap`, `:mapcheck`, or `:actions`
+- **WHEN** docs mention `:vimdoctor`, `:keymap`, or `:mapcheck`
 - **THEN** parser, modal, and rendering tests cover the documented command
     behavior
 
@@ -250,8 +250,8 @@ Vim/Neovim parity.
 
 #### Scenario: Quickref identifies metadata-only diagnostic actions
 
-- **WHEN** a user reads quickref entries for `:vimdoctor`, `:actions`,
-    `:keymap`, `:mapcheck`, `:help`, `:messages`, or `:vimmode inspect`
+- **WHEN** a user reads quickref entries for `:vimdoctor`, `:keymap`,
+    `:mapcheck`, `:help`, `:messages`, or `:vimmode inspect`
 - **THEN** the document identifies them as finite read-only
     diagnostic/runtime-help commands and does not present their `vimmode.*`
     metadata IDs as configurable keybinding targets
@@ -310,12 +310,12 @@ output from existing compact runtime feedback and edit-flow messages.
 
 #### Scenario: Docs preserve compact edit feedback expectations
 
-- **WHEN** docs describe `:actions`, `:keymap`, `:mapcheck`, `:help`,
+- **WHEN** docs describe `:keymap`, `:mapcheck`, `:help`,
     `:messages`, `:vimmode inspect`, and `:vimdoctor`
 - **THEN** they identify those valid read-only help/diagnostic outputs as
     popup-backed while preserving compact inline/workbench expectations for
     mutating Ex commands, parser errors, edit-flow success/errors, `:noh`,
-    search input, substitution preview/apply feedback, and
+    search input, substitution feedback, and
     optional no-op feedback
 
 #### Scenario: Docs keep settings reference separate
@@ -334,9 +334,8 @@ user-facing feature docs.
 
 - **WHEN** a user opens `docs/features.md`
 - **THEN** the feature guide lists popup-backed read-only Ex commands
-    including `:help`, `:help <topic>`, `:keybindings`, `:actions <query>`,
-    `:keymap <action>`, `:mapcheck <key>`, `:messages`, `:vimmode inspect`, and
-    `:vimdoctor`
+    including `:help`, `:help <topic>`, `:keybindings`, `:keymap <action>`,
+    `:mapcheck <key>`, `:messages`, `:vimmode inspect`, and `:vimdoctor`
 
 #### Scenario: Docs explain popup controls
 
@@ -495,8 +494,8 @@ preserving public runtime help and discovery behavior.
 #### Scenario: Public runtime discovery behavior is unchanged
 
 - **WHEN** users execute supported read-only discovery commands such as
-    `:help`, `:keybindings`, `:actions`, `:keymap`, `:mapcheck`,
-    `:vimdoctor`, `:messages`, or `:vimmode inspect`
+    `:help`, `:keybindings`, `:keymap`, `:mapcheck`, `:vimdoctor`, `:messages`,
+    or `:vimmode inspect`
 - **THEN** the commands keep their existing bounded prompt-local popup or
     message behavior, finite topic coverage, non-goals, and read-only
     prompt-editing state boundaries

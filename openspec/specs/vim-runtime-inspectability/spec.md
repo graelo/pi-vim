@@ -148,7 +148,7 @@ into a help, diagnostic, or popup log.
 #### Scenario: Popup output is not retained as message history
 
 - **WHEN** the editor executes a read-only popup-backed command such as
-    `:keybindings`, `:help search`, `:actions redo`, `:keymap redo`,
+    `:keybindings`, `:help search`, `:keymap redo`,
     `:mapcheck ctrl+p`, `:vimdoctor`, or `:vimmode inspect` and then executes
     `:messages`
 - **THEN** `:messages` does not include the popup content as a retained
@@ -183,7 +183,7 @@ without dumping raw prompt contents or large internal editor state.
 
 - **WHEN** the current prompt contains arbitrary user text and the editor
     executes a read-only popup-backed command such as `:keybindings`, `:help`,
-    `:actions`, `:keymap`, `:mapcheck`, `:messages`, `:vimdoctor`, or
+    `:keymap`, `:mapcheck`, `:messages`, `:vimdoctor`, or
     `:vimmode inspect`
 - **THEN** the popup output does not include raw prompt text, register
     contents, macro token streams, mark tables, search history contents, or

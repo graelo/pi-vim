@@ -259,7 +259,7 @@ before and during feature-module extraction.
 
 - **WHEN** `npm test` is executed
 - **THEN** tests cover normalized state/effect output for prompt search, Ex
-    command-line entry/cancel/history/preview/apply/error behavior, visual
+    command-line entry/cancel/history/apply/error behavior, visual
     char/line/block operations, macro record/play behavior, register/mark
     interactions, protected Pi delegation, and message/highlight state
 
@@ -267,8 +267,8 @@ before and during feature-module extraction.
 
 - **WHEN** golden modal effect tests assert modal updates
 - **THEN** they compare stable semantic fields such as effect type/order,
-    changed text, cursor target, register type/count, message kind/text, preview
-    range counts, and relevant state flags rather than brittle raw internal
+    changed text, cursor target, register type/count, message kind/text, and
+    relevant state flags rather than brittle raw internal
     dumps
 
 #### Scenario: Adapter tests stay focused after extraction

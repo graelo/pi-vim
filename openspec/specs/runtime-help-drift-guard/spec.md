@@ -18,7 +18,7 @@ parity.
 - **WHEN** the editor executes `:help` with no topic
 - **THEN** the editor shows a compact transient help message that names
     supported entry points such as `:help <topic>`, `:keybindings [query]`,
-    `:messages`, `:actions`, `:keymap`, `:mapcheck`, and `:vimdoctor`
+    `:messages`, `:keymap`, `:mapcheck`, and `:vimdoctor`
 
 #### Scenario: Topic help describes supported behavior and limits
 
@@ -196,7 +196,7 @@ the generic popup.
 #### Scenario: Popup command missing from docs fails validation
 
 - **WHEN** source-backed popup metadata lists a read-only Ex command such as
-    `:help`, `:keybindings`, `:actions`, `:keymap`, `:mapcheck`, `:messages`,
+    `:help`, `:keybindings`, `:keymap`, `:mapcheck`, `:messages`,
     `:vimmode inspect`, or `:vimdoctor` and `docs/features.md` lacks the
     corresponding popup documentation anchor
 - **THEN** the docs drift guard fails with an actionable message identifying
