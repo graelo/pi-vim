@@ -1,59 +1,27 @@
-# vim-customization-diagnostics Specification
+# Spec Delta
 
-## Purpose
+## ADDED Requirements
 
-Define the read-only customization diagnostics (`:actions`, `:keymap`,
-`:mapcheck`, `:vimdoctor`, no-op feedback) that explain the effective
-configuration without changing prompt state.
+### Requirement: Keybinding popup uses customization diagnostics vocabulary
 
-## Requirements
+The keybinding discovery popup SHALL describe bindings using the same finite
+metadata boundaries as existing customization diagnostics.
 
-### Requirement: Runtime customization diagnostics are available
+#### Scenario: Metadata-only diagnostic actions remain non-bindable
 
-The Vim editor SHALL provide runtime diagnostics that explain the current
-customization state without requiring users to inspect settings files or source
-code.
+- **WHEN** the popup explains diagnostic or runtime-help action metadata such
+    as `vimmode.doctor` or `vimmode.help`
+- **THEN** it identifies those IDs as metadata-only or non-bindable rather
+    than presenting them as configurable keybinding targets
 
-#### Scenario: Doctor reports healthy customization state
+#### Scenario: Protected shortcuts remain protected
 
-- **WHEN** the editor executes `:vimdoctor` with no retained settings warnings
-    and no detected keymap conflicts
-- **THEN** the editor shows a transient message indicating customization is
-    healthy
+- **WHEN** the popup mentions protected Pi shortcuts or directs users to
+    `:mapcheck <key>`
+- **THEN** it preserves the protected shortcut catalog boundary and does not
+    present protected Pi shortcuts as available pi-vimmode bindings
 
-#### Scenario: Doctor reports settings warnings
-
-- **WHEN** the editor executes `:vimdoctor` after settings resolution recorded
-    invalid fields, protected keys, or keymap conflicts
-- **THEN** the editor shows a transient message that includes the warning
-    count and the highest-priority actionable warning
-
-#### Scenario: Doctor does not reread settings files
-
-- **WHEN** the editor executes `:vimdoctor`
-- **THEN** diagnostics are based on the options and warnings retained for that
-    editor instance rather than re-reading global or project settings files
-
-### Requirement: Customization commands preserve prompt editing state
-
-Runtime customization diagnostics SHALL be read-only with respect to prompt
-editing state.
-
-#### Scenario: Diagnostic command leaves prompt text unchanged
-
-- **WHEN** the editor executes `:vimdoctor`, `:keymap`, `:mapcheck`, or
-    `:actions`
-- **THEN** prompt text, cursor position, mode, visual selection, search
-    highlights, registers, marks, macro slots, and dot-repeat state remain
-    unchanged except for the transient diagnostic message
-
-#### Scenario: Diagnostic command from visual Ex mode preserves selection
-
-- **WHEN** Ex command-line mode was opened from a visual selection and the
-    user executes a diagnostic command
-- **THEN** the command exits Ex mode without editing prompt text and restores
-    the original visual mode state according to existing Ex cancellation
-    behavior
+## MODIFIED Requirements
 
 ### Requirement: Action search is discoverable and finite
 
@@ -81,59 +49,6 @@ without implying support for arbitrary Vim commands.
 - **THEN** the editor shows a transient no-match message rather than inventing
     unsupported Vim behavior
 
-### Requirement: Map checking explains keys and conflicts
-
-The Vim editor SHALL explain whether a key or key sequence is mapped, unmapped,
-protected, conflicting, or unsupported.
-
-#### Scenario: Mapped key is explained
-
-- **WHEN** the editor executes `:mapcheck ctrl+r` and `ctrl+r` resolves to
-    redo in the current normal-mode keymap
-- **THEN** the editor shows the matched action, action kind, and current binding
-
-#### Scenario: Protected shortcut is explained
-
-- **WHEN** the editor executes `:mapcheck ctrl+p` or another Pi-owned
-    protected shortcut
-- **THEN** the editor shows that the shortcut is protected, names the Pi
-    behavior it preserves when known, and does not treat it as a configurable
-    pi-vimmode binding
-
-#### Scenario: Conflicting configured sequence is explained
-
-- **WHEN** settings contain a keymap conflict that was ignored during
-    resolution and the editor executes `:mapcheck` for the conflicting sequence
-- **THEN** the editor shows that the sequence was rejected or ignored because
-    of the conflict and identifies at least one conflicting action when known
-
-### Requirement: Optional no-op feedback is scoped and quiet by default
-
-The Vim editor SHALL support optional feedback for confusing no-op inputs while
-preserving quiet default modal editing.
-
-#### Scenario: No-op feedback defaults to off
-
-- **WHEN** no no-op feedback setting is enabled and the user presses an
-    unmapped normal-mode key
-- **THEN** the editor preserves existing quiet no-op behavior and does not
-    show a new transient feedback message
-
-#### Scenario: Enabled feedback explains protected delegation
-
-- **WHEN** no-op feedback is enabled and the user presses a protected Pi
-    shortcut in normal mode
-- **THEN** the editor delegates or handles the shortcut according to existing
-    ownership rules and shows a transient explanation when the shortcut is not
-    owned by pi-vimmode
-
-#### Scenario: Enabled feedback avoids message floods
-
-- **WHEN** no-op feedback is enabled and repeated invalid or unmapped inputs
-    occur
-- **THEN** the editor keeps feedback bounded to transient single messages and
-    does not accumulate a multi-line log
-
 ### Requirement: Inspect and message diagnostics are effective-runtime views
 
 Runtime diagnostics SHALL report the effective editor state and configuration
@@ -160,57 +75,6 @@ implementation defaults.
     warnings, or keymap conflicts and the user runs `:vimmode inspect`
 - **THEN** the inspect output includes a bounded warning summary without
     replacing `:vimdoctor` as the detailed customization health command
-
-### Requirement: Inspect and message diagnostics preserve customization state boundaries
-
-Inspectability diagnostics SHALL follow the same read-only state boundaries as
-existing customization diagnostics.
-
-#### Scenario: Inspect does not mutate effective keymaps or options
-
-- **WHEN** the user executes `:vimmode inspect`
-- **THEN** resolved options, effective keymaps, feature enablement, protected
-    shortcut handling, and retained diagnostics remain unchanged
-
-#### Scenario: Messages does not mutate effective keymaps or options
-
-- **WHEN** the user executes `:messages`
-- **THEN** resolved options, effective keymaps, feature enablement, protected
-    shortcut handling, and retained diagnostics remain unchanged
-
-#### Scenario: Diagnostic output remains bounded with large state
-
-- **WHEN** prompt text, registers, search history, Ex history, macro slots,
-    marks, or diagnostics are large
-- **THEN** `:vimmode inspect` and `:messages` truncate or summarize output so
-    the diagnostic feedback remains bounded and width-safe
-
-### Requirement: Diagnostic command registry remains finite
-
-The customization diagnostic surface SHALL add inspectability commands
-explicitly rather than turning diagnostics into arbitrary action or command
-execution.
-
-#### Scenario: Supported diagnostics are explicit
-
-- **WHEN** the user searches or inspects supported diagnostic commands through
-    runtime help or action diagnostics
-- **THEN** `vimdoctor`, `keymap`, `mapcheck`, `actions`, `vimmode inspect`,
-    and `messages` are presented as finite supported diagnostics when available
-
-#### Scenario: Unsupported diagnostic names remain unsupported
-
-- **WHEN** the user executes unsupported diagnostic-like commands such as
-    `:map`, `:actionspalette`, `:vimmode dump`, or `:messages clear`
-- **THEN** the editor reports a bounded unsupported-command error and leaves
-    prompt editing state unchanged
-
-#### Scenario: Diagnostic docs reject broad parity claims
-
-- **WHEN** user-facing docs describe customization and inspectability
-    diagnostics
-- **THEN** they identify the finite command set and do not imply full Vim
-    `:messages`, `:map`, `:verbose`, or Vimscript support
 
 ### Requirement: Diagnostic help actions have metadata-only registry entries
 
@@ -356,47 +220,35 @@ inspect settings files or source code.
 - **THEN** it preserves the protected shortcut vocabulary and does not present
     protected Pi shortcuts as available pi-vimmode bindings
 
-### Requirement: Keybinding detail search is finite and source-backed
+## REMOVED Requirements
 
-The Vim editor SHALL search keybinding catalog metadata across finite supported
-fields without inventing unsupported Vim mapping behavior.
+### Requirement: Customization metadata supports runtime feature discovery
 
-#### Scenario: Detail search finds action by ID or description
+**Reason**: `:features` duplicated `:help`, `:keybindings`, `:actions`, and
+`:mapcheck`, and was removed in 1.0.0.
+**Migration**: Use `:help <topic>` for behavior and limits, `:keybindings` or
+`:actions <query>` for bindings, and `:mapcheck <key>` for key ownership.
 
-- **WHEN** the editor displays `:keybindings redo` or `:keybindings wordForward`
-- **THEN** the popup shows matching action ID, action kind, current key
-    sequence, and source-backed description when a match exists
+### Requirement: Feature discovery reflects effective customization state
 
-#### Scenario: Detail search finds key ownership
+**Reason**: `:features` duplicated `:help`, `:keybindings`, `:actions`, and
+`:mapcheck`, and was removed in 1.0.0.
+**Migration**: Use `:help <topic>` for behavior and limits, `:keybindings` or
+`:actions <query>` for bindings, and `:mapcheck <key>` for key ownership.
 
-- **WHEN** the editor displays `:keybindings ctrl+p` or another key sequence
-    query
-- **THEN** the popup reports whether the key is mapped, unmapped, protected,
-    rejected by retained diagnostics, or otherwise unsupported using the same
-    vocabulary as customization diagnostics
+### Requirement: Diagnostics describe prompt transform action keybindings
 
-#### Scenario: Detail search rejects unsupported parity queries
+**Reason**: Prompt transforms (`:quote`, `:unquote`, `:bulletize`, `:fence`,
+`:indent`, `:dedent`, `:reflow`), their `prompt.transform.*` action keybindings,
+and the recipe/preset bundles built on them were removed in 1.0.0.
+**Migration**: Use Vim line shifts (`>>`, `<<`, visual `>`/`<`) and case
+operators, or edit prompt text directly. `piVimMode.keymap.actions`,
+`piVimMode.keymap.actionPresets`, and `piVimMode.promptTransforms` now warn and
+are ignored.
 
-- **WHEN** the editor displays `:keybindings vimscript`, `:keybindings nmap`,
-    or another query with no finite supported match
-- **THEN** the popup shows a bounded no-match result rather than inventing
-    Vimscript, recursive mapping, or command-palette behavior
+### Requirement: Keybinding popup reuses customization diagnostics vocabulary
 
-### Requirement: Keybinding popup uses customization diagnostics vocabulary
-
-The keybinding discovery popup SHALL describe bindings using the same finite
-metadata boundaries as existing customization diagnostics.
-
-#### Scenario: Metadata-only diagnostic actions remain non-bindable
-
-- **WHEN** the popup explains diagnostic or runtime-help action metadata such
-    as `vimmode.doctor` or `vimmode.help`
-- **THEN** it identifies those IDs as metadata-only or non-bindable rather
-    than presenting them as configurable keybinding targets
-
-#### Scenario: Protected shortcuts remain protected
-
-- **WHEN** the popup mentions protected Pi shortcuts or directs users to
-    `:mapcheck <key>`
-- **THEN** it preserves the protected shortcut catalog boundary and does not
-    present protected Pi shortcuts as available pi-vimmode bindings
+**Reason**: Some scenarios described `:features`, `:changelog`, or prompt
+transform surfaces removed in 1.0.0; the remaining behavior moves unchanged to
+"Keybinding popup uses customization diagnostics vocabulary".
+**Migration**: None; see "Keybinding popup uses customization diagnostics vocabulary".

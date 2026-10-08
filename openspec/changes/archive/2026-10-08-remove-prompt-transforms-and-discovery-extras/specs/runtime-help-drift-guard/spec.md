@@ -1,11 +1,61 @@
-# runtime-help-drift-guard Specification
+# Spec Delta
 
-## Purpose
+## ADDED Requirements
 
-Define the finite, source-backed runtime help and feature discovery commands,
-and the drift guard that ties each entry to its docs anchor, spec, and tests.
+### Requirement: Runtime help topics classify diagnostic action metadata
 
-## Requirements
+The Vim editor SHALL use source-backed diagnostic/help action metadata when
+runtime help describes supported diagnostic surfaces.
+
+#### Scenario: Help topic explains diagnostic action limits
+
+- **WHEN** the editor executes `:help actions`, `:help diagnostics`, or
+    another supported topic covering diagnostic/help metadata
+- **THEN** the help message identifies the finite supported commands and
+    states that diagnostic/help action IDs are metadata-only and not user-plugin
+    or keybinding dispatch targets
+
+### Requirement: Drift guard validates read-only popup documentation
+
+The project SHALL validate that generic read-only popup runtime output,
+keybinding popup output, source-backed metadata, specs, tests, and user-facing
+docs stay aligned.
+
+#### Scenario: Popup docs anchor missing fails validation
+
+- **WHEN** read-only popup source metadata, keybinding popup source metadata,
+    or runtime-help entry references a user-facing docs anchor and
+    `docs/features.md` lacks that anchor
+- **THEN** the docs drift guard fails with an actionable message identifying
+    the missing popup docs anchor
+
+#### Scenario: Popup non-goals stay documented
+
+- **WHEN** user-facing docs describe the read-only Ex popup or keybinding
+    discovery popup
+- **THEN** docs state that the popup is finite and does not provide full Vim
+    help tags, a command palette, runtime `:map`, runtime `:action`, recursive
+    mappings, plugin API, or diagnostic/help action keybinding dispatch
+
+### Requirement: Runtime help names the dedicated keybindings command
+
+Runtime help SHALL identify `:keybindings` as the dedicated source-backed
+keybinding discovery entry point.
+
+#### Scenario: General help lists keybindings entry point
+
+- **WHEN** the editor displays general runtime help
+- **THEN** the output names `:keybindings` as a finite read-only popup command
+    for effective keybinding discovery
+
+#### Scenario: Unsupported mapping queries remain finite
+
+- **WHEN** runtime help receives unsupported mapping-oriented queries such as `vimscript mappings`, `runtime map`, or
+    `nmap`
+- **THEN** it returns finite no-match output and does not imply full Vim
+    mapping support
+
+## MODIFIED Requirements
 
 ### Requirement: Runtime help is finite and source-backed
 
@@ -35,37 +85,6 @@ parity.
 - **THEN** the editor shows a transient no-match message and does not fall
     back to Vim help tags, Vimscript documentation, or external files
 
-### Requirement: Runtime messages are inspectable
-
-The Vim editor SHALL allow users to inspect recent runtime messages without
-adding a pager or persistent log.
-
-#### Scenario: Messages command reports recent message state
-
-- **WHEN** the editor has emitted one or more transient runtime messages and
-    then executes `:messages`
-- **THEN** the editor shows a compact transient summary containing the
-    retained message count and the most recent retained message
-
-#### Scenario: Messages command handles empty history
-
-- **WHEN** the editor executes `:messages` before any runtime messages have
-    been retained
-- **THEN** the editor shows a compact transient message indicating that no
-    runtime messages are retained
-
-#### Scenario: Messages history is bounded
-
-- **WHEN** the editor emits more runtime messages than the retained history cap
-- **THEN** older messages are discarded and `:messages` reports only bounded
-    recent message state
-
-#### Scenario: Messages introspection does not pollute history
-
-- **WHEN** the editor executes `:messages` repeatedly
-- **THEN** the `:messages` output itself is not appended to the retained
-    message history
-
 ### Requirement: Runtime help commands preserve prompt editing state
 
 Runtime help SHALL be read-only with respect to prompt editing state.
@@ -86,31 +105,6 @@ Runtime help SHALL be read-only with respect to prompt editing state.
 - **THEN** the command exits Ex mode without editing prompt text and restores
     the original visual mode state according to existing Ex cancellation
     behavior
-
-### Requirement: Docs drift guard validates runtime help contracts
-
-The project SHALL include development-time validation that fails when
-user-facing docs, source-backed runtime help metadata, durable specs, or test
-anchors contradict each other for supported pi-vimmode behavior.
-
-#### Scenario: Supported command missing from docs fails validation
-
-- **WHEN** source-backed help metadata lists a supported runtime command and
-    `docs/features.md` lacks its required docs anchor
-- **THEN** the docs drift guard fails in the normal validation path
-
-#### Scenario: Stale unsupported claim fails validation
-
-- **WHEN** user-facing docs claim `:noh`, `:nohlsearch`, or another
-    source-supported command is unsupported
-- **THEN** the docs drift guard fails with an actionable message identifying
-    the contradictory claim
-
-#### Scenario: Missing spec or test anchor fails validation
-
-- **WHEN** a source-backed feature registry entry lacks a required OpenSpec
-    spec anchor or test anchor without an explicit approved exception
-- **THEN** the docs drift guard fails before the change is considered complete
 
 ### Requirement: Drift guard validates diagnostic action metadata
 
@@ -299,55 +293,89 @@ test-support metadata table.
 - **THEN** user-facing runtime help behavior remains finite, source-backed,
     and unchanged except for validation source ownership
 
-### Requirement: Runtime help topics classify diagnostic action metadata
+## REMOVED Requirements
 
-The Vim editor SHALL use source-backed diagnostic/help action metadata when
-runtime help describes supported diagnostic surfaces.
+### Requirement: Feature matrix is discoverable and searchable
 
-#### Scenario: Help topic explains diagnostic action limits
+**Reason**: `:features` duplicated `:help`, `:keybindings`, `:actions`, and
+`:mapcheck`, and was removed in 1.0.0.
+**Migration**: Use `:help <topic>` for behavior and limits, `:keybindings` or
+`:actions <query>` for bindings, and `:mapcheck <key>` for key ownership.
 
-- **WHEN** the editor executes `:help actions`, `:help diagnostics`, or
-    another supported topic covering diagnostic/help metadata
-- **THEN** the help message identifies the finite supported commands and
-    states that diagnostic/help action IDs are metadata-only and not user-plugin
-    or keybinding dispatch targets
+### Requirement: Drift guard validates prompt transform action registry claims
 
-### Requirement: Drift guard validates read-only popup documentation
+**Reason**: Prompt transforms (`:quote`, `:unquote`, `:bulletize`, `:fence`,
+`:indent`, `:dedent`, `:reflow`), their `prompt.transform.*` action keybindings,
+and the recipe/preset bundles built on them were removed in 1.0.0.
+**Migration**: Use Vim line shifts (`>>`, `<<`, visual `>`/`<`) and case
+operators, or edit prompt text directly. `piVimMode.keymap.actions`,
+`piVimMode.keymap.actionPresets`, and `piVimMode.promptTransforms` now warn and
+are ignored.
 
-The project SHALL validate that generic read-only popup runtime output,
-keybinding popup output, source-backed metadata, specs, tests, and user-facing
-docs stay aligned.
+### Requirement: Runtime help classifies diagnostic action metadata
 
-#### Scenario: Popup docs anchor missing fails validation
+**Reason**: Some scenarios described `:features`, `:changelog`, or prompt
+transform surfaces removed in 1.0.0; the remaining behavior moves unchanged to
+"Runtime help topics classify diagnostic action metadata".
+**Migration**: None; see "Runtime help topics classify diagnostic action metadata".
 
-- **WHEN** read-only popup source metadata, keybinding popup source metadata,
-    or runtime-help entry references a user-facing docs anchor and
-    `docs/features.md` lacks that anchor
-- **THEN** the docs drift guard fails with an actionable message identifying
-    the missing popup docs anchor
+### Requirement: Runtime help discovers action keybinding recipes
 
-#### Scenario: Popup non-goals stay documented
+**Reason**: Prompt transforms (`:quote`, `:unquote`, `:bulletize`, `:fence`,
+`:indent`, `:dedent`, `:reflow`), their `prompt.transform.*` action keybindings,
+and the recipe/preset bundles built on them were removed in 1.0.0.
+**Migration**: Use Vim line shifts (`>>`, `<<`, visual `>`/`<`) and case
+operators, or edit prompt text directly. `piVimMode.keymap.actions`,
+`piVimMode.keymap.actionPresets`, and `piVimMode.promptTransforms` now warn and
+are ignored.
 
-- **WHEN** user-facing docs describe the read-only Ex popup or keybinding
-    discovery popup
-- **THEN** docs state that the popup is finite and does not provide full Vim
-    help tags, a command palette, runtime `:map`, runtime `:action`, recursive
-    mappings, plugin API, or diagnostic/help action keybinding dispatch
+### Requirement: Drift guard validates action keybinding recipes
 
-### Requirement: Runtime help names the dedicated keybindings command
+**Reason**: Prompt transforms (`:quote`, `:unquote`, `:bulletize`, `:fence`,
+`:indent`, `:dedent`, `:reflow`), their `prompt.transform.*` action keybindings,
+and the recipe/preset bundles built on them were removed in 1.0.0.
+**Migration**: Use Vim line shifts (`>>`, `<<`, visual `>`/`<`) and case
+operators, or edit prompt text directly. `piVimMode.keymap.actions`,
+`piVimMode.keymap.actionPresets`, and `piVimMode.promptTransforms` now warn and
+are ignored.
 
-Runtime help SHALL identify `:keybindings` as the dedicated source-backed
-keybinding discovery entry point.
+### Requirement: Runtime help discovers action keybinding presets
 
-#### Scenario: General help lists keybindings entry point
+**Reason**: Prompt transforms (`:quote`, `:unquote`, `:bulletize`, `:fence`,
+`:indent`, `:dedent`, `:reflow`), their `prompt.transform.*` action keybindings,
+and the recipe/preset bundles built on them were removed in 1.0.0.
+**Migration**: Use Vim line shifts (`>>`, `<<`, visual `>`/`<`) and case
+operators, or edit prompt text directly. `piVimMode.keymap.actions`,
+`piVimMode.keymap.actionPresets`, and `piVimMode.promptTransforms` now warn and
+are ignored.
 
-- **WHEN** the editor displays general runtime help
-- **THEN** the output names `:keybindings` as a finite read-only popup command
-    for effective keybinding discovery
+### Requirement: Drift guard validates action keybinding presets
 
-#### Scenario: Unsupported mapping queries remain finite
+**Reason**: Prompt transforms (`:quote`, `:unquote`, `:bulletize`, `:fence`,
+`:indent`, `:dedent`, `:reflow`), their `prompt.transform.*` action keybindings,
+and the recipe/preset bundles built on them were removed in 1.0.0.
+**Migration**: Use Vim line shifts (`>>`, `<<`, visual `>`/`<`) and case
+operators, or edit prompt text directly. `piVimMode.keymap.actions`,
+`piVimMode.keymap.actionPresets`, and `piVimMode.promptTransforms` now warn and
+are ignored.
 
-- **WHEN** runtime help receives unsupported mapping-oriented queries such as
-    `vimscript mappings`, `runtime map`, or `nmap`
-- **THEN** it returns finite no-match output and does not imply full Vim
-    mapping support
+### Requirement: Runtime feature discovery can show keybinding popup
+
+**Reason**: `:features` duplicated `:help`, `:keybindings`, `:actions`, and
+`:mapcheck`, and was removed in 1.0.0.
+**Migration**: Use `:help <topic>` for behavior and limits, `:keybindings` or
+`:actions <query>` for bindings, and `:mapcheck <key>` for key ownership.
+
+### Requirement: Drift guard validates keybinding popup documentation
+
+**Reason**: Some scenarios described `:features`, `:changelog`, or prompt
+transform surfaces removed in 1.0.0; the remaining behavior moves unchanged to
+"Drift guard validates read-only popup documentation".
+**Migration**: None; see "Drift guard validates read-only popup documentation".
+
+### Requirement: Runtime discovery includes dedicated keybindings command
+
+**Reason**: Some scenarios described `:features`, `:changelog`, or prompt
+transform surfaces removed in 1.0.0; the remaining behavior moves unchanged to
+"Runtime help names the dedicated keybindings command".
+**Migration**: None; see "Runtime help names the dedicated keybindings command".

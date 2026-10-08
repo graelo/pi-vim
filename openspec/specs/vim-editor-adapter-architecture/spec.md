@@ -427,20 +427,19 @@ allowlist proves that no modal or adapter-owned side effect is required.
 ### Requirement: Resolved editor options preserve clone isolation
 
 The Vim editor SHALL resolve configuration into option objects that do not share
-mutable keymap, prompt transform, or UI arrays and nested option objects with
+mutable keymap or UI arrays and nested option objects with
 default options or caller-provided partial configuration.
 
 #### Scenario: Default option resolution returns isolated mutable fields
 
 - **WHEN** editor options are resolved with no `piVimMode` settings
-- **THEN** mutating resolved keymap sequences, prompt transform command
-    sequences, UI status items, or UI labels does not mutate
-    `DEFAULT_VIM_OPTIONS`
+- **THEN** mutating resolved keymap sequences, UI status items, or UI labels
+    does not mutate `DEFAULT_VIM_OPTIONS`
 
 #### Scenario: Configured option resolution returns isolated mutable fields
 
-- **WHEN** editor options are resolved from valid partial `piVimMode.keymap`,
-    `piVimMode.promptTransforms`, or `piVimMode.ui` settings
+- **WHEN** editor options are resolved from valid partial `piVimMode.keymap`
+    or `piVimMode.ui` settings
 - **THEN** mutating resolved nested arrays or objects does not mutate the
     caller-provided settings object and does not change sibling resolved
     defaults

@@ -667,7 +667,7 @@ bounded overlay owned by the Pi adapter rather than by prompt render rows.
 
 #### Scenario: Read-only output is not appended to editor render rows
 
-- **WHEN** a read-only Ex command such as `:help`, `:features`, `:actions`,
+- **WHEN** a read-only Ex command such as `:help`, `:keybindings`, `:actions`,
     `:keymap`, `:mapcheck`, `:messages`, `:vimmode inspect`, or `:vimdoctor`
     completes successfully on a terminal that can show the overlay
 - **THEN** the main editor render output remains focused on the

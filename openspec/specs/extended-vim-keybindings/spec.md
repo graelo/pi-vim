@@ -525,14 +525,14 @@ in normal mode.
 
 - **WHEN** the editor is in normal mode and the user presses `3>>`
 - **THEN** the current line and the next two prompt lines, when present, are
-    indented using the same two-space transform as `:indent`
+    indented by two spaces
 
 #### Scenario: Counted dedent shifts available lines
 
 - **WHEN** the editor is in normal mode and the user presses `2<<` near the
     end of the prompt
 - **THEN** the current line and the next available prompt line are dedented
-    using the same transform as `:dedent`, clamped to the prompt length
+    by at most one indentation step, clamped to the prompt length
 
 #### Scenario: Dot repeat repeats normal line shift
 
@@ -558,15 +558,15 @@ the active visual selection.
 
 - **WHEN** the editor is in visual character mode with a selection that
     touches one or more prompt lines and the user presses `>`
-- **THEN** every touched line is indented using the same two-space transform
-    as `:indent`, the selection clears, and the editor returns to normal mode
+- **THEN** every touched line is indented by two spaces, the selection clears,
+    and the editor returns to normal mode
 
 #### Scenario: Visual line selection dedents selected lines
 
 - **WHEN** the editor is in visual line mode with one or more lines selected
     and the user presses `<`
-- **THEN** every selected line is dedented using the same transform as
-    `:dedent`, the selection clears, and the editor returns to normal mode
+- **THEN** every selected line is dedented by at most one indentation step,
+    the selection clears, and the editor returns to normal mode
 
 #### Scenario: Visual block selection shifts touched lines
 
@@ -579,8 +579,8 @@ the active visual selection.
 
 - **WHEN** the editor is in visual mode with one or more lines selected and
     the user presses `2>`
-- **THEN** every touched line is indented by two shift levels using the same
-    two-space transform as `:indent` applied twice
+- **THEN** every touched line is indented by two shift levels of two spaces
+    each
 
 #### Scenario: Visual shift does not write registers
 

@@ -3,7 +3,7 @@
 ## Purpose
 
 Define the side-effect-free range algebra that resolves finite prompt-local line
-references into typed ranges for Ex commands and transforms.
+references into typed ranges for Ex commands.
 
 ## Requirements
 
@@ -51,8 +51,8 @@ of requiring callers to compose raw offsets, line clamps, or selection bounds.
 
 #### Scenario: Return line range for Ex line commands
 
-- **WHEN** an Ex delete, yank, put, substitution, join, copy, move, or
-    transform command resolves a valid line address or range
+- **WHEN** an Ex delete, yank, put, substitution, join, copy, or move command
+    resolves a valid line address or range
 - **THEN** range algebra returns a typed inclusive line range using zero-based
     internal line indexes
 

@@ -2,9 +2,8 @@
 
 ## Purpose
 
-Define prompt-native structures (Markdown blocks, lists, tags, error blocks),
-the text objects and Ex transforms that operate on them, and their action
-keybindings.
+Define prompt-native structures (Markdown blocks, lists, tags, error blocks)
+and the text objects that operate on them.
 
 ## Requirements
 
@@ -119,79 +118,16 @@ and yank operators using the existing inner and around text-object flow.
 - **THEN** the corresponding prompt-native text object acts as a safe no-op
     without changing prompt text, cursor, registers, or mode
 
-### Requirement: Ex transforms reshape prompt ranges safely
-
-The Vim editor SHALL provide Ex transform commands for current-line,
-explicit-line-range, and visual-line-range prompt editing.
-
-#### Scenario: Quote visual range
-
-- **WHEN** the editor has a captured visual range and the user executes
-    `:'<,'>quote`
-- **THEN** each selected line is prefixed with Markdown quote syntax `>` and
-    the editor returns to normal mode with the transformed text
-
-#### Scenario: Unquote visual range
-
-- **WHEN** the editor has a captured visual range containing Markdown quote
-    prefixes and the user executes `:'<,'>unquote`
-- **THEN** one leading Markdown quote marker is removed from each selected
-    quoted line without removing other content
-
-#### Scenario: Bulletize explicit range
-
-- **WHEN** the user executes `:2,4bulletize`
-- **THEN** each nonblank line in lines 2 through 4 is converted to a Markdown
-    bullet line while preserving relative indentation
-
-#### Scenario: Wrap range in code fence
-
-- **WHEN** the user executes `:'<,'>fence ts` with a captured visual range
-- **THEN** the selected lines are wrapped in a Markdown code fence whose
-    opening fence is ` ```ts ` and whose closing fence is ` ``` `
-
-#### Scenario: Indent and dedent range
-
-- **WHEN** the user executes `:indent` or `:dedent` for the current line or a
-    supported range
-- **THEN** `:indent` adds one configured indent unit to each targeted line and
-    `:dedent` removes at most one indent unit from each targeted line without
-    deleting non-whitespace content
-
-#### Scenario: Reflow prose range
-
-- **WHEN** the user executes `:reflow 72` for a prose range
-- **THEN** prose paragraphs in the targeted range are rewrapped so nonblank
-    prose lines do not exceed 72 columns when possible, while fenced code and
-    pasted error blocks inside the range are preserved
-
-#### Scenario: Transform with invalid arguments is safe
-
-- **WHEN** the user executes a prompt transform with invalid arguments such as
-    a nonnumeric reflow width
-- **THEN** the editor reports an Ex error, leaves prompt text unchanged, and
-    remains usable
-
-#### Scenario: Transform commands are configurable
-
-- **WHEN** settings disable `piVimMode.promptTransforms.enabled`, disable an
-    individual transform action, or configure
-    `piVimMode.promptTransforms.commands.*`
-- **THEN** the Ex parser honors enabled command names only, rejects disabled
-    transform commands as unsupported, and preserves existing default names for
-    unspecified actions
-
 ### Requirement: Prompt-native structure editing is documented and validated
 
 The change SHALL include automated validation and user-facing documentation for
-prompt-native structures and transforms.
+prompt-native structures.
 
 #### Scenario: Automated validation runs
 
 - **WHEN** `npm test` is executed
-- **THEN** tests cover structure range resolution, operator text objects, Ex
-    transform parsing, transform edit results, safe no-op behavior, and existing
-    Vim behavior
+- **THEN** tests cover structure range resolution, operator text objects, safe
+    no-op behavior, and existing Vim behavior
 
 #### Scenario: Typecheck runs
 
@@ -201,74 +137,5 @@ prompt-native structures and transforms.
 #### Scenario: Feature guide documents prompt-native editing
 
 - **WHEN** the user opens `docs/features.md`
-- **THEN** it documents prompt-native text objects, Ex transform commands,
-    examples, limitations, and validation commands
-
-### Requirement: Prompt transforms can be invoked by action keybindings
-
-The Vim editor SHALL allow existing prompt transform behavior to be invoked by
-accepted action keybindings in supported modal contexts.
-
-#### Scenario: Normal current-line transform executes
-
-- **WHEN** `prompt.transform.quote` is bound to `g>` and the editor is in
-    normal mode
-- **THEN** pressing `g>` quotes the current prompt line using existing prompt
-    transform behavior
-
-#### Scenario: Counted line-range transform executes
-
-- **WHEN** `prompt.transform.bulletize` is bound to `g*` and the user presses
-    `3g*` in normal mode
-- **THEN** the current line and next two prompt lines are bulletized
-
-#### Scenario: Fence action uses configured language arg
-
-- **WHEN** `prompt.transform.fence` is bound to `gT` with `{ "language": "ts" }`
-- **THEN** pressing `gT` wraps the target range in a code fence whose opening
-    fence includes `ts`
-
-#### Scenario: Reflow action uses configured width arg
-
-- **WHEN** `prompt.transform.reflow` is bound to `gq` with `{ "width": 72 }`
-- **THEN** pressing `gq` reflows the target prose using width 72 according to
-    existing reflow rules
-
-#### Scenario: Visual character action transforms touched lines
-
-- **WHEN** the editor is in characterwise visual mode and the user invokes a
-    keybound prompt transform action
-- **THEN** the action transforms all prompt lines touched by the visual
-    selection
-
-#### Scenario: Visual-line action transforms selected lines
-
-- **WHEN** the editor is in visual-line mode and the user invokes a keybound
-    prompt transform action
-- **THEN** the action transforms the selected prompt lines
-
-#### Scenario: Visual-block action transforms touched lines
-
-- **WHEN** the editor is in visual-block mode and the user invokes a keybound
-    prompt transform action
-- **THEN** the action transforms the touched prompt lines linewise rather than
-    transforming only rectangular cells
-
-#### Scenario: Visual action ignores count
-
-- **WHEN** the editor is in any visual mode, a visual selection is active, and
-    the user invokes a keybound prompt transform action with a numeric count
-- **THEN** the action transforms the selected touched lines once and ignores
-    the count
-
-#### Scenario: Visual action exits visual mode after recognized action
-
-- **WHEN** the editor is in any visual mode and a keybound prompt transform
-    action is recognized, whether or not it changes prompt text
-- **THEN** the editor returns to normal mode and clears the visual selection
-
-#### Scenario: Unsupported action target is safe
-
-- **WHEN** an action is invoked in a mode or target context it does not support
-- **THEN** prompt text remains unchanged and feedback is emitted only
-    according to resolved feedback settings
+- **THEN** it documents prompt-native text objects, examples, limitations, and
+    validation commands
