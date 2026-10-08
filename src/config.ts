@@ -152,6 +152,7 @@ const ACTION_BINDING_MODES: readonly VimActionBindingMode[] = [
   "visualBlock",
 ];
 const NOOP_FEEDBACK_VALUES = new Set<VimFeedbackOptions["noop"]>(["off", "status"]);
+const UI_STATUS_POSITIONS = new Set(["left", "right"]);
 const WORKBENCH_RESERVED_ROWS_MAX = 5;
 
 function freezeArrayRecord<T extends Record<string, readonly string[]>>(
@@ -572,6 +573,39 @@ function normalizeVimKeySequence(value: unknown): string | undefined {
   return /<leader>/i.test(value)
     ? normalizeLeaderKeySequence(value)
     : normalizeModifiedKeySequence(value);
+}
+
+function booleanField(value: unknown, label: string, warnings: string[]): boolean | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === "boolean") return value;
+  warnings.push(`${label} must be a boolean`);
+  return undefined;
+}
+
+function enumField<T extends string>(
+  value: unknown,
+  allowed: ReadonlySet<string>,
+  warning: string,
+  warnings: string[],
+): T | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === "string" && allowed.has(value)) return value as T;
+  warnings.push(warning);
+  return undefined;
+}
+
+function intField(
+  value: unknown,
+  warning: string,
+  warnings: string[],
+  min: number,
+  max = Number.POSITIVE_INFINITY,
+): number | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === "number" && Number.isInteger(value) && value >= min && value <= max)
+    return value;
+  warnings.push(warning);
+  return undefined;
 }
 
 function parseStringArray(
@@ -1023,12 +1057,19 @@ function parseUiStatus(
     return undefined;
   }
   const status: Partial<ResolvedVimUi["status"]> = {};
-  if (typeof value.enabled === "boolean") status.enabled = value.enabled;
-  else if (value.enabled !== undefined)
-    warnings.push(`${sourceLabel}: piVim.ui.status.enabled must be a boolean`);
-  if (value.position === "left" || value.position === "right") status.position = value.position;
-  else if (value.position !== undefined)
-    warnings.push(`${sourceLabel}: piVim.ui.status.position must be "left" or "right"`);
+  const statusEnabled = booleanField(
+    value.enabled,
+    `${sourceLabel}: piVim.ui.status.enabled`,
+    warnings,
+  );
+  if (statusEnabled !== undefined) status.enabled = statusEnabled;
+  const position = enumField<"left" | "right">(
+    value.position,
+    UI_STATUS_POSITIONS,
+    `${sourceLabel}: piVim.ui.status.position must be "left" or "right"`,
+    warnings,
+  );
+  if (position) status.position = position;
   if (value.items !== undefined) {
     const items = parseActionStringArray<VimStatusItem>(
       value.items,
@@ -1052,9 +1093,12 @@ function parseUiMode(
     return undefined;
   }
   const mode: NonNullable<PartialUiOptions["mode"]> = {};
-  if (typeof value.enabled === "boolean") mode.enabled = value.enabled;
-  else if (value.enabled !== undefined)
-    warnings.push(`${sourceLabel}: piVim.ui.mode.enabled must be a boolean`);
+  const modeEnabled = booleanField(
+    value.enabled,
+    `${sourceLabel}: piVim.ui.mode.enabled`,
+    warnings,
+  );
+  if (modeEnabled !== undefined) mode.enabled = modeEnabled;
   mode.labels = parseModeLabelMap(value.labels, sourceLabel, "labels", warnings);
   mode.narrowLabels = parseModeLabelMap(value.narrowLabels, sourceLabel, "narrowLabels", warnings);
   return mode;
@@ -1071,19 +1115,19 @@ function parseUiSelection(
     return undefined;
   }
   const selection: Partial<ResolvedVimUi["selection"]> = {};
-  if (typeof value.enabled === "boolean") selection.enabled = value.enabled;
-  else if (value.enabled !== undefined)
-    warnings.push(`${sourceLabel}: piVim.ui.selection.enabled must be a boolean`);
-  if (
-    typeof value.previewMaxChars === "number" &&
-    Number.isInteger(value.previewMaxChars) &&
-    value.previewMaxChars >= 0
-  )
-    selection.previewMaxChars = value.previewMaxChars;
-  else if (value.previewMaxChars !== undefined)
-    warnings.push(
-      `${sourceLabel}: piVim.ui.selection.previewMaxChars must be a non-negative integer`,
-    );
+  const selectionEnabled = booleanField(
+    value.enabled,
+    `${sourceLabel}: piVim.ui.selection.enabled`,
+    warnings,
+  );
+  if (selectionEnabled !== undefined) selection.enabled = selectionEnabled;
+  const previewMaxChars = intField(
+    value.previewMaxChars,
+    `${sourceLabel}: piVim.ui.selection.previewMaxChars must be a non-negative integer`,
+    warnings,
+    0,
+  );
+  if (previewMaxChars !== undefined) selection.previewMaxChars = previewMaxChars;
   return selection;
 }
 
@@ -1098,9 +1142,12 @@ function parseUiCursorPosition(
     return undefined;
   }
   const cursorPosition: Partial<ResolvedVimUi["cursorPosition"]> = {};
-  if (typeof value.enabled === "boolean") cursorPosition.enabled = value.enabled;
-  else if (value.enabled !== undefined)
-    warnings.push(`${sourceLabel}: piVim.ui.cursorPosition.enabled must be a boolean`);
+  const cursorPositionEnabled = booleanField(
+    value.enabled,
+    `${sourceLabel}: piVim.ui.cursorPosition.enabled`,
+    warnings,
+  );
+  if (cursorPositionEnabled !== undefined) cursorPosition.enabled = cursorPositionEnabled;
   if (value.base === 0 || value.base === 1) cursorPosition.base = value.base;
   else if (value.base !== undefined)
     warnings.push(`${sourceLabel}: piVim.ui.cursorPosition.base must be 0 or 1`);
@@ -1128,17 +1175,14 @@ function parseUiWorkbench(
     return undefined;
   }
   const workbench: Partial<ResolvedVimUi["workbench"]> = {};
-  if (
-    typeof value.reservedRows === "number" &&
-    Number.isInteger(value.reservedRows) &&
-    value.reservedRows >= 0 &&
-    value.reservedRows <= WORKBENCH_RESERVED_ROWS_MAX
-  )
-    workbench.reservedRows = value.reservedRows;
-  else if (value.reservedRows !== undefined)
-    warnings.push(
-      `${sourceLabel}: piVim.ui.workbench.reservedRows must be an integer between 0 and ${WORKBENCH_RESERVED_ROWS_MAX}`,
-    );
+  const reservedRows = intField(
+    value.reservedRows,
+    `${sourceLabel}: piVim.ui.workbench.reservedRows must be an integer between 0 and ${WORKBENCH_RESERVED_ROWS_MAX}`,
+    warnings,
+    0,
+    WORKBENCH_RESERVED_ROWS_MAX,
+  );
+  if (reservedRows !== undefined) workbench.reservedRows = reservedRows;
   return workbench;
 }
 
@@ -1186,24 +1230,21 @@ function parseMacros(
     return { warnings };
   }
 
-  if (typeof value.enabled === "boolean") partial.enabled = value.enabled;
-  else if (value.enabled !== undefined)
-    warnings.push(`${sourceLabel}: piVim.macros.enabled must be a boolean`);
+  const enabled = booleanField(value.enabled, `${sourceLabel}: piVim.macros.enabled`, warnings);
+  if (enabled !== undefined) partial.enabled = enabled;
 
   if (value.slots !== undefined) {
     const slots = parseLowercaseSlots(value.slots, `${sourceLabel}: piVim.macros.slots`, warnings);
     if (slots) partial.slots = slots;
   }
 
-  if (
-    typeof value.maxReplaySteps === "number" &&
-    Number.isInteger(value.maxReplaySteps) &&
-    value.maxReplaySteps > 0
-  ) {
-    partial.maxReplaySteps = value.maxReplaySteps;
-  } else if (value.maxReplaySteps !== undefined) {
-    warnings.push(`${sourceLabel}: piVim.macros.maxReplaySteps must be a positive integer`);
-  }
+  const maxReplaySteps = intField(
+    value.maxReplaySteps,
+    `${sourceLabel}: piVim.macros.maxReplaySteps must be a positive integer`,
+    warnings,
+    1,
+  );
+  if (maxReplaySteps !== undefined) partial.maxReplaySteps = maxReplaySteps;
 
   return Object.keys(partial).length > 0 ? { partial, warnings } : { warnings };
 }
@@ -1226,20 +1267,17 @@ function parseSearch(
     "clearOnCancel",
     "clearOnInsert",
   ] as const) {
-    if (typeof value[field] === "boolean") partial[field] = value[field];
-    else if (value[field] !== undefined)
-      warnings.push(`${sourceLabel}: piVim.search.${field} must be a boolean`);
+    const enabled = booleanField(value[field], `${sourceLabel}: piVim.search.${field}`, warnings);
+    if (enabled !== undefined) partial[field] = enabled;
   }
 
-  if (
-    typeof value.maxHighlights === "number" &&
-    Number.isInteger(value.maxHighlights) &&
-    value.maxHighlights >= 0
-  ) {
-    partial.maxHighlights = value.maxHighlights;
-  } else if (value.maxHighlights !== undefined) {
-    warnings.push(`${sourceLabel}: piVim.search.maxHighlights must be a non-negative integer`);
-  }
+  const maxHighlights = intField(
+    value.maxHighlights,
+    `${sourceLabel}: piVim.search.maxHighlights must be a non-negative integer`,
+    warnings,
+    0,
+  );
+  if (maxHighlights !== undefined) partial.maxHighlights = maxHighlights;
 
   return Object.keys(partial).length > 0 ? { partial, warnings } : { warnings };
 }
@@ -1256,15 +1294,13 @@ function parseFeedback(
     return { warnings };
   }
 
-  if (value.noop === undefined) return { warnings };
-  if (
-    typeof value.noop === "string" &&
-    NOOP_FEEDBACK_VALUES.has(value.noop as VimFeedbackOptions["noop"])
-  ) {
-    partial.noop = value.noop as VimFeedbackOptions["noop"];
-  } else {
-    warnings.push(`${sourceLabel}: piVim.feedback.noop must be off or status`);
-  }
+  const noop = enumField<VimFeedbackOptions["noop"]>(
+    value.noop,
+    NOOP_FEEDBACK_VALUES,
+    `${sourceLabel}: piVim.feedback.noop must be off or status`,
+    warnings,
+  );
+  if (noop) partial.noop = noop;
 
   return Object.keys(partial).length > 0 ? { partial, warnings } : { warnings };
 }
@@ -1284,9 +1320,12 @@ function parseExCommand(
     return { warnings };
   }
   const partial: PartialExCommandOptions = {};
-  if (typeof value.autocomplete === "boolean") partial.autocomplete = value.autocomplete;
-  else if (value.autocomplete !== undefined)
-    warnings.push(`${sourceLabel}: piVim.exCommand.autocomplete must be a boolean`);
+  const autocomplete = booleanField(
+    value.autocomplete,
+    `${sourceLabel}: piVim.exCommand.autocomplete`,
+    warnings,
+  );
+  if (autocomplete !== undefined) partial.autocomplete = autocomplete;
   return Object.keys(partial).length > 0 ? { partial, warnings } : { warnings };
 }
 
@@ -1326,9 +1365,8 @@ function parseMarks(
     return { warnings };
   }
 
-  if (typeof value.enabled === "boolean") partial.enabled = value.enabled;
-  else if (value.enabled !== undefined)
-    warnings.push(`${sourceLabel}: piVim.marks.enabled must be a boolean`);
+  const enabled = booleanField(value.enabled, `${sourceLabel}: piVim.marks.enabled`, warnings);
+  if (enabled !== undefined) partial.enabled = enabled;
 
   if (value.slots !== undefined) {
     const slots = parseLowercaseSlots(value.slots, `${sourceLabel}: piVim.marks.slots`, warnings);
@@ -1350,9 +1388,12 @@ function parsePromptStructures(
     return { warnings };
   }
 
-  if (typeof value.enabled === "boolean") partial.enabled = value.enabled;
-  else if (value.enabled !== undefined)
-    warnings.push(`${sourceLabel}: piVim.promptStructures.enabled must be a boolean`);
+  const enabled = booleanField(
+    value.enabled,
+    `${sourceLabel}: piVim.promptStructures.enabled`,
+    warnings,
+  );
+  if (enabled !== undefined) partial.enabled = enabled;
 
   const targets = parseBooleanMap<PromptStructureTarget>(
     value.targets,
@@ -1377,11 +1418,13 @@ function parseCursorStyles(
   }
   const cursor: Partial<CursorStyles> = {};
   for (const mode of VIM_MODES) {
-    const style = value[mode];
-    if (style === undefined) continue;
-    if (typeof style === "string" && CURSOR_STYLES.has(style as CursorStyle))
-      cursor[mode] = style as CursorStyle;
-    else warnings.push(`${sourceLabel}: unsupported piVim.cursor.${mode}`);
+    const style = enumField<CursorStyle>(
+      value[mode],
+      CURSOR_STYLES,
+      `${sourceLabel}: unsupported piVim.cursor.${mode}`,
+      warnings,
+    );
+    if (style) cursor[mode] = style;
   }
   return cursor;
 }
@@ -1403,14 +1446,21 @@ function parsePiVim(
   else if (value.leader !== undefined)
     warnings.push(`${sourceLabel}: piVim.leader must be one printable character or null`);
 
-  if (typeof value.preset === "string" && VIM_PRESET_SET.has(value.preset as VimPreset))
-    partial.preset = value.preset as VimPreset;
-  else if (value.preset !== undefined) warnings.push(`${sourceLabel}: unsupported piVim.preset`);
+  const preset = enumField<VimPreset>(
+    value.preset,
+    VIM_PRESET_SET,
+    `${sourceLabel}: unsupported piVim.preset`,
+    warnings,
+  );
+  if (preset) partial.preset = preset;
 
-  if (typeof value.startMode === "string" && START_MODES.has(value.startMode as StartupMode))
-    partial.startMode = value.startMode as StartupMode;
-  else if (value.startMode !== undefined)
-    warnings.push(`${sourceLabel}: unsupported piVim.startMode`);
+  const startMode = enumField<StartupMode>(
+    value.startMode,
+    START_MODES,
+    `${sourceLabel}: unsupported piVim.startMode`,
+    warnings,
+  );
+  if (startMode) partial.startMode = startMode;
 
   const cursor = parseCursorStyles(value.cursor, sourceLabel, warnings);
   if (cursor) partial.cursor = cursor;
