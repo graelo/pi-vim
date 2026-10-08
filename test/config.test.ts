@@ -1322,3 +1322,53 @@ test("invalid allow-list entries warn while valid protected entries and sibling 
     expect.arrayContaining([expect.stringContaining("protected key ctrl+p")]),
   );
 });
+
+test("surround bindings extend operators without strict-prefix conflicts", () => {
+  const result = resolveVimOptions({});
+  expect(result.warnings).toEqual([]);
+  expect(result.options.keymap?.operators.surround).toEqual(["ys"]);
+  expect(result.options.keymap?.commands.deleteSurround).toEqual(["ds"]);
+  expect(result.options.keymap?.commands.changeSurround).toEqual(["cs"]);
+  expect(result.options.keymap?.commands.surroundSelection).toEqual(["S"]);
+  expect(result.options.keymap?.commands.substituteLine).toEqual(["S"]);
+  expect(result.plan.scopes.normal.exact.ys?.id).toBe("operator.surround");
+  expect(result.plan.scopes.normal.exact.y?.id).toBe("operator.yank");
+  expect(result.plan.scopes.normal.exact.S?.id).toBe("command.substituteLine");
+  expect(result.plan.scopes.visual.exact.S?.id).toBe("command.surroundSelection");
+});
+
+test("configured surround operator outside an operator prefix is accepted", () => {
+  const result = resolveVimOptions({ piVim: { keymap: { operators: { surround: ["gs"] } } } });
+  expect(result.warnings).toEqual([]);
+  expect(result.options.keymap?.operators.surround).toEqual(["gs"]);
+});
+
+test("explicit surround bindings keep the operators they extend", () => {
+  const result = resolveVimOptions({
+    piVim: { keymap: { commands: { deleteSurround: ["ds"], changeSurround: ["cs"] } } },
+  });
+  expect(result.warnings).toEqual([]);
+  expect(result.options.keymap?.operators.delete).toEqual(["d"]);
+  expect(result.options.keymap?.operators.change).toEqual(["c"]);
+});
+
+test("binding that extends an operator with one of its targets is not an extension", () => {
+  const result = resolveVimOptions({ piVim: { keymap: { commands: { deleteSurround: ["dw"] } } } });
+  // Existing explicit-precedence rules apply: the configured sequence replaces the default `d`.
+  expect(result.options.keymap?.commands.deleteSurround).toEqual(["dw"]);
+  expect(result.options.keymap?.operators.delete).toEqual([]);
+});
+
+test("same-layer binding that extends an operator with one of its targets is rejected", () => {
+  const result = resolveVimOptions({
+    piVim: { keymap: { operators: { delete: ["d"] }, commands: { deleteSurround: ["dw"] } } },
+  });
+  expect(result.warnings.some((warning) => warning.includes("deleteSurround.dw"))).toBe(true);
+});
+
+test("non-operator strict prefixes are still rejected", () => {
+  const result = resolveVimOptions({
+    piVim: { keymap: { commands: { deleteChar: ["x"], deleteSurround: ["xy"] } } },
+  });
+  expect(result.warnings.some((warning) => warning.includes("strict-prefix conflict"))).toBe(true);
+});

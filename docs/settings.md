@@ -403,12 +403,14 @@ Rules:
 | `piVim.keymap.operators.lowercase`  | `["gu"]` | Prefix for lowercase operator. Supports finite motions, text objects, and doubled line form.         |
 | `piVim.keymap.operators.uppercase`  | `["gU"]` | Prefix for uppercase operator. Supports finite motions, text objects, and doubled line form.         |
 | `piVim.keymap.operators.toggleCase` | `["g~"]` | Prefix for range toggle-case operator. Supports finite motions, text objects, and doubled line form. |
+| `piVim.keymap.operators.surround` | `["ys"]` | Normal-mode surround operator: target, then a surround character. Line form `yss`. Supports motions, text objects, and `f`/`t`/`F`/`T` targets. |
 | `piVim.keymap.operators.indent`     | `[">"]`  | Line-only shift operator. Doubled operator indents addressed line(s) by two spaces.                  |
 | `piVim.keymap.operators.dedent`     | `["<"]`  | Line-only shift operator. Doubled operator dedents addressed line(s).                                |
 
 `lowercase`, `uppercase`, and `toggleCase` do not write registers and do not
-enter insert mode. Their doubled line forms are `gugu`, `gUgU`, and `g~g~` by
-default; configured equivalents repeat the configured operator sequence. Mark,
+enter insert mode. Their line forms are `gugu`/`guu`, `gUgU`/`gUU`, and
+`g~g~`/`g~~` by default: the operator sequence repeated, or followed by its own
+last key. Mark,
 prompt-search, and character-search targets are unsupported safe no-ops for case
 operators.
 
@@ -490,6 +492,9 @@ mark-target shift ranges are unsupported safe no-ops.
 | `piVim.keymap.commands.undo`                    | `["u"]`      | Delegate to Pi native undo.                                                                                                                                              |
 | `piVim.keymap.commands.redo`                    | `["ctrl+r"]` | Redo the latest prompt text/cursor state undone by normal-mode undo.                                                                                                     |
 | `piVim.keymap.commands.showKeybindings`         | `[]`         | Optional normal-mode shortcut that opens the same bounded read-only popup as `:keybindings`.                                                                             |
+| `piVim.keymap.commands.deleteSurround`          | `["ds"]`     | Delete the nearest surrounding pair; reads a target character. A count selects an outer bracket pair.                                                                    |
+| `piVim.keymap.commands.changeSurround`          | `["cs"]`     | Change the nearest surrounding pair; reads a target character, then a replacement character.                                                                             |
+| `piVim.keymap.commands.surroundSelection`       | `["S"]`      | Visual modes only: surround the selection; reads a surround character. Normal-mode `S` stays `substituteLine`.                                                          |
 
 `halfPageDown` and `halfPageUp` are prompt-local cursor motions in normal and
 visual modes. Their default `ctrl+d` / `ctrl+u` keys are only allowed for these
@@ -590,6 +595,7 @@ left, down, up, right, wordForward, wordBackward, wordEnd, wordForwardBig, wordB
 | `piVim.keymap.operatorMotions.lowercase`  | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after lowercase operator.                                      |
 | `piVim.keymap.operatorMotions.uppercase`  | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after uppercase operator.                                      |
 | `piVim.keymap.operatorMotions.toggleCase` | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after range toggle-case operator.                              |
+| `piVim.keymap.operatorMotions.surround` | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after the surround operator. |
 
 WORD and previous-end actions can be customized and used in `operatorMotions`
 like other finite motions. This example makes `dgw` and `dg-` valid delete
@@ -608,14 +614,14 @@ targets:
 
 Character-search commands are configured under `piVim.keymap.commands`, not
 `operatorMotions`; they are current-line operator targets for motion-capable
-`delete`, `change`, and `yank` when their `findCharForward`, `findCharBackward`,
-`tillCharForward`, `tillCharBackward`, `repeatCharSearch`, or
-`repeatCharSearchReverse` command bindings resolve. Case operators intentionally
-do not accept character-search, prompt-search, or mark targets.
-`operatorMotions` applies only to motion-capable `delete`, `change`, `yank`,
-`lowercase`, `uppercase`, and `toggleCase`; `operatorMotions.indent` and
-`operatorMotions.dedent` are rejected with warnings because shift operators are
-line-only.
+`delete`, `change`, `yank`, and `surround` (`f`/`t`/`F`/`T` only) when their
+`findCharForward`, `findCharBackward`, `tillCharForward`, `tillCharBackward`,
+`repeatCharSearch`, or `repeatCharSearchReverse` command bindings resolve. Case
+operators intentionally do not accept character-search, prompt-search, or mark
+targets. `operatorMotions` applies only to motion-capable `delete`, `change`,
+`yank`, `lowercase`, `uppercase`, `toggleCase`, and `surround`;
+`operatorMotions.indent` and `operatorMotions.dedent` are rejected with warnings
+because shift operators are line-only.
 
 Motion configuration boundaries: no subword/camelCase navigation, display-line
 motions, recursive mappings, Vimscript, `.vimrc`, or full Vim/Neovim parity are
@@ -696,6 +702,14 @@ and visual `]` / `[` shifts selected lines.
 - Duplicate bindings across the resolved classic keymap warn.
 - A shorter classic binding shadowed by a longer binding prefix warns, e.g.
     `g` and `gg`.
+- Exception: a binding may extend an operator with keys that are not a target
+    of that operator, e.g. `ys` after `y`, `ds` after `d`, `cs` after `c`. Both
+    stay usable, and an explicit binding of one does not remove the other. An
+    extension whose next key is a motion, text-object kind, count,
+    character-search, search, mark, or line-form key (such as `dw`) is not an
+    extension and follows the rules above.
+- Duplicate bindings only conflict within the same mode: visual `S`
+    (`surroundSelection`) and normal `S` (`substituteLine`) coexist.
 
 ## Macro behavior settings
 
@@ -961,7 +975,10 @@ omits comments so it can be copied.
         "repeatChange": ["."],
         "reselectVisual": ["gv"],
         "undo": ["u"],
-        "redo": ["ctrl+r"]
+        "redo": ["ctrl+r"],
+        "deleteSurround": ["ds"],
+        "changeSurround": ["cs"],
+        "surroundSelection": ["S"]
       },
       "macros": {
         "record": ["q"],

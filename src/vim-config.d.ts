@@ -23,6 +23,7 @@ export type VimOperatorAction =
   | "lowercase"
   | "uppercase"
   | "toggleCase"
+  | "surround"
   | "indent"
   | "dedent";
 export type VimMotionOperatorAction =
@@ -31,7 +32,8 @@ export type VimMotionOperatorAction =
   | "yank"
   | "lowercase"
   | "uppercase"
-  | "toggleCase";
+  | "toggleCase"
+  | "surround";
 export type VimMotionAction =
   | "left"
   | "down"
@@ -97,7 +99,10 @@ export type VimCommandAction =
   | "redo"
   | "showKeybindings"
   | "reselectVisual"
-  | "easymotion";
+  | "easymotion"
+  | "deleteSurround"
+  | "changeSurround"
+  | "surroundSelection";
 export type VimMacroAction = "record" | "play";
 export type VimMarkAction = "set" | "jumpExact" | "jumpLine";
 export type VimInsertAction =

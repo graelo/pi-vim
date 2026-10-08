@@ -150,7 +150,7 @@ in [`docs/settings.md`](settings.md).
 <a id="config-property-keymap-operatorMotions"></a>
 
 - Accepted shape: `partial record of operator names to motion-name arrays`
-- Built-in default: `{"change": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "delete": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "lowercase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "toggleCase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "uppercase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "yank": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"]}`
+- Built-in default: `{"change": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "delete": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "lowercase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "surround": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "toggleCase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "uppercase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "yank": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"]}`
 - Assignment semantics: replaces operator-motion allow-list
 - JSON crosswalk: `piVim.keymap.operatorMotions`
 - Compatibility aliases: none
@@ -419,6 +419,15 @@ in [`docs/settings.md`](settings.md).
 
 ### `vim.action.command`
 
+#### `command.changeSurround`
+
+<a id="config-action-command-changeSurround"></a>
+
+- Canonical factory: `vim.action.command.changeSurround()`
+- Supported mapping scopes: `normal`
+- Default keys: `cs`
+- Compatibility aliases: none
+
 #### `command.changeToLineEnd`
 
 <a id="config-action-command-changeToLineEnd"></a>
@@ -453,6 +462,15 @@ in [`docs/settings.md`](settings.md).
 - Canonical factory: `vim.action.command.deleteCharBefore()`
 - Supported mapping scopes: `normal`
 - Default keys: `X`
+- Compatibility aliases: none
+
+#### `command.deleteSurround`
+
+<a id="config-action-command-deleteSurround"></a>
+
+- Canonical factory: `vim.action.command.deleteSurround()`
+- Supported mapping scopes: `normal`
+- Default keys: `ds`
 - Compatibility aliases: none
 
 #### `command.deleteToLineEnd`
@@ -722,6 +740,15 @@ in [`docs/settings.md`](settings.md).
 
 - Canonical factory: `vim.action.command.substituteLine()`
 - Supported mapping scopes: `normal`
+- Default keys: `S`
+- Compatibility aliases: none
+
+#### `command.surroundSelection`
+
+<a id="config-action-command-surroundSelection"></a>
+
+- Canonical factory: `vim.action.command.surroundSelection()`
+- Supported mapping scopes: `visual`, `visualLine`, `visualBlock`
 - Default keys: `S`
 - Compatibility aliases: none
 
@@ -1194,6 +1221,15 @@ in [`docs/settings.md`](settings.md).
 - Canonical factory: `vim.action.operator.lowercase()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
 - Default keys: `gu`
+- Compatibility aliases: none
+
+#### `operator.surround`
+
+<a id="config-action-operator-surround"></a>
+
+- Canonical factory: `vim.action.operator.surround()`
+- Supported mapping scopes: `normal`
+- Default keys: `ys`
 - Compatibility aliases: none
 
 #### `operator.toggleCase`

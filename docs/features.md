@@ -313,6 +313,7 @@ Supported operators:
 - `gu` lowercase
 - `gU` uppercase
 - `g~` toggle case
+- `ys` surround with a pair (see [Surround](#surround))
 - `>` indent line-only shift
 - `<` dedent line-only shift
 
@@ -347,6 +348,7 @@ yG        yank through buffer end
 guw       lowercase to next word start
 gUiw      uppercase inner word
 g~g~      toggle current line case
+guu       lowercase current line (also gUU, g~~)
 2guw      lowercase two word motions
 d%        delete through matching pair
 d}        delete through next paragraph start, including trailing blank separator
@@ -380,7 +382,7 @@ Operator targets are smaller than Vim's full grammar. Character-search operator
 targets are current-line only and use configured semantic `findCharForward`,
 `findCharBackward`, `tillCharForward`, `tillCharBackward`, `repeatCharSearch`,
 and `repeatCharSearchReverse` bindings. Case operators support finite motions,
-text objects, and doubled line forms only; mark, prompt-search, and
+text objects, and line forms (`gugu` or `guu`) only; mark, prompt-search, and
 character-search case targets are unsupported safe no-ops. `Ctrl-D` and `Ctrl-U`
 are motions, not operator targets; `d<C-d>` and `y<C-u>` are unsupported safe
 no-ops. Shift operators are line-only in normal mode: arbitrary `>{motion}`,
@@ -390,7 +392,7 @@ indents selected/touched lines by two levels.
 
 ## Text objects
 
-Text objects work after `d`, `c`, or `y`.
+Text objects work after `d`, `c`, `y`, the case operators, and `ys`.
 
 | Object                    | Meaning                                     |
 | ------------------------- | ------------------------------------------- |
@@ -437,6 +439,75 @@ Limitations:
     self-closing tags.
 - Error block detection is heuristic and stops at blank or unrelated prose
     lines.
+
+## Surround
+
+Add, delete, and change the pair around text, with the keys and pair rules of
+[vim-surround](https://github.com/tpope/vim-surround).
+
+| Keys                 | Action                                                     |
+| -------------------- | ---------------------------------------------------------- |
+| `ys{target}{char}`   | surround a motion, text object, or `f`/`t`/`F`/`T` target  |
+| `yss{char}`          | surround the line from its first non-blank character       |
+| `ds{char}`           | delete the nearest surrounding pair                        |
+| `cs{old}{new}`       | change the nearest surrounding pair                        |
+| `S{char}` in visual  | surround a characterwise or linewise selection             |
+
+Examples:
+
+```text
+ysiw)     hello        →  (hello)
+ysiw(     hello        →  ( hello )
+ysw"      hello world  →  "hello" world
+yst,]     ab, c        →  [ab], c
+yss)      fix it       →  (fix it)
+ysip}     paragraph    →  { and } on their own lines around it
+ds)       f(a, b)      →  fa, b
+ds(       ( a )        →  a
+cs"'      "hi"         →  'hi'
+cs]{      [x]          →  { x }
+2ds)      (a (b))      →  a (b), with the cursor on b
+```
+
+Surround characters:
+
+- `(`, `{`, `[` add the pair with one space inside each end; `)`, `}`, `]`,
+    `>` add it without spaces. `b`, `B`, `r`, `a` are aliases for `)`, `}`, `]`,
+    `>`.
+- Quotes and other ASCII punctuation (`"`, `'`, `` ` ``, `*`, `_`, ...) add the
+    same character on both ends.
+- Letters, digits, whitespace, and `<` are rejected; the surround is cancelled
+    without editing. Esc also cancels.
+
+`ds` and `cs` targets:
+
+- Bracket targets (`(`, `)`, `b`, `{`, `}`, `B`, `[`, `]`, `r`, `<`, `>`, `a`)
+    find the nearest enclosing pair, across lines and nested pairs. An opening
+    character also removes the whitespace just inside the pair. A count selects
+    an outer pair.
+- Quote and punctuation targets pair occurrences on the cursor line from the
+    start of the line, as Vim does for quotes: the pair the cursor is on or
+    inside, otherwise the next pair after it.
+
+Behavior:
+
+- Charwise targets leave trailing whitespace outside the pair (`ysw` wraps the
+    word, not the space after it). Linewise targets (`j`, `k`, `gg`, `G`, `ip`,
+    `ap`, and visual line mode) put the pair on their own lines without
+    reindenting.
+- `2yss)` wraps from the current line through the next one, inline.
+- The cursor lands on the opening character. Each surround is one undo step,
+    and normal-mode surrounds repeat with `.`. Surround never writes registers.
+- The pending status shows the keys typed so far (`ysiw`, `cs"`).
+- Keys are configurable: `piVim.keymap.operators.surround` (default `ys`),
+    `piVim.keymap.commands.deleteSurround` (`ds`), `changeSurround` (`cs`), and
+    `surroundSelection` (`S`, visual modes only; normal `S` still substitutes
+    the line). Rebinding the operator moves its line form too: with `gs`, use
+    `gss`.
+
+Not supported: HTML/XML tags (`t` or `<` as surround character, `dst`, `cst`),
+vim-surround's newline variants (`yS`, `ySS`, `gS`) and insert-mode `<C-g>s`,
+function-call surrounds, and visual block surround (a safe no-op).
 
 ## EasyMotion
 

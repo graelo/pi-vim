@@ -994,3 +994,140 @@ test("reselectVisual default binding does not conflict with existing g-prefix mo
   const pendingGV = resolveNormalCommand("v", pendingG.type === "pending" ? pendingG.pending : "");
   expect(pendingGV).toEqual({ type: "command", command: "reselectVisual" });
 });
+
+function resolveKeys(
+  keys: readonly string[],
+  keymap = DEFAULT_VIM_KEYMAP,
+  mode: "normal" | "visual" = "normal",
+) {
+  let pending: string | undefined;
+  let result = resolveNormalCommand(keys[0]!, pending, keymap, mode);
+  for (const key of keys.slice(1)) {
+    if (result.type !== "pending") return result;
+    pending = result.pending;
+    result = resolveNormalCommand(key, pending, keymap, mode);
+  }
+  return result;
+}
+
+test("surround bindings extend their operators", () => {
+  expect(resolveKeys(["y", "s", "i", "w"])).toEqual({
+    type: "operatorTextObject",
+    operator: "surround",
+    textObject: { kind: "inner", target: "word" },
+    count: undefined,
+  });
+  expect(resolveKeys(["y", "s", "w"])).toEqual({
+    type: "operatorMotion",
+    operator: "surround",
+    motion: "wordForward",
+    count: undefined,
+  });
+  expect(resolveKeys(["d", "s"])).toEqual({ type: "command", command: "deleteSurround" });
+  expect(resolveKeys(["c", "s"])).toEqual({ type: "command", command: "changeSurround" });
+  expect(resolveKeys(["2", "d", "s"])).toEqual({
+    type: "command",
+    command: "deleteSurround",
+    count: 2,
+  });
+});
+
+test("operators keep their meaning next to surround extensions", () => {
+  expect(resolveKeys(["y", "i", "w"])).toMatchObject({
+    type: "operatorTextObject",
+    operator: "yank",
+  });
+  expect(resolveKeys(["y", "y"])).toEqual({
+    type: "lineCommand",
+    operator: "yank",
+    count: undefined,
+  });
+  expect(resolveKeys(["d", "w"])).toMatchObject({ type: "operatorMotion", operator: "delete" });
+  expect(resolveKeys(["d", "d"])).toEqual({
+    type: "lineCommand",
+    operator: "delete",
+    count: undefined,
+  });
+  expect(resolveKeys(["c", "i", "w"])).toMatchObject({
+    type: "operatorTextObject",
+    operator: "change",
+  });
+  expect(resolveKeys(["c", "c"])).toEqual({
+    type: "lineCommand",
+    operator: "change",
+    count: undefined,
+  });
+  expect(resolveKeys(["d", "2", "s"])).toEqual({ type: "invalid" });
+});
+
+test("multi-key operators accept the last-key line form", () => {
+  expect(resolveKeys(["g", "u", "u"])).toEqual({
+    type: "lineCommand",
+    operator: "lowercase",
+    count: undefined,
+  });
+  expect(resolveKeys(["g", "U", "U"])).toEqual({
+    type: "lineCommand",
+    operator: "uppercase",
+    count: undefined,
+  });
+  expect(resolveKeys(["g", "~", "~"])).toEqual({
+    type: "lineCommand",
+    operator: "toggleCase",
+    count: undefined,
+  });
+  expect(resolveKeys(["g", "u", "g", "u"])).toEqual({
+    type: "lineCommand",
+    operator: "lowercase",
+    count: undefined,
+  });
+  expect(resolveKeys(["y", "s", "s"])).toEqual({
+    type: "lineCommand",
+    operator: "surround",
+    count: undefined,
+  });
+  expect(resolveKeys(["3", "y", "s", "s"])).toEqual({
+    type: "lineCommand",
+    operator: "surround",
+    count: 3,
+  });
+
+  const keymap = resolveVimOptions({ piVim: { keymap: { operators: { surround: ["gs"] } } } })
+    .options.keymap!;
+  expect(resolveKeys(["g", "s", "s"], keymap)).toEqual({
+    type: "lineCommand",
+    operator: "surround",
+    count: undefined,
+  });
+  expect(resolveKeys(["g", "s", "i", "w"], keymap)).toMatchObject({
+    type: "operatorTextObject",
+    operator: "surround",
+  });
+});
+
+test("surround accepts character-search targets but not search or repeat", () => {
+  expect(resolveKeys(["y", "s", "f", ","])).toEqual({
+    type: "operatorCharSearch",
+    operator: "surround",
+    command: "findCharForward",
+    char: ",",
+    count: undefined,
+  });
+  expect(resolveKeys(["y", "s", "t", ","])).toMatchObject({ command: "tillCharForward" });
+  expect(resolveKeys(["y", "s", "2", "w"])).toEqual({
+    type: "operatorMotion",
+    operator: "surround",
+    motion: "wordForward",
+    count: 2,
+  });
+  expect(resolveKeys(["y", "s", "/"])).toEqual({ type: "invalid" });
+  expect(resolveKeys(["y", "s", ";"])).toEqual({ type: "invalid" });
+});
+
+test("visual S resolves to surround selection and normal S stays substitute line", () => {
+  expect(resolveKeys(["S"])).toEqual({ type: "command", command: "substituteLine" });
+  expect(resolveKeys(["S"], DEFAULT_VIM_KEYMAP, "visual")).toEqual({
+    type: "command",
+    command: "surroundSelection",
+  });
+});

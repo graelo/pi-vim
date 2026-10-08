@@ -10,6 +10,15 @@ Hard fork of [pekochan069/pi-vimmode](https://github.com/pekochan069/pi-vimmode)
 at v0.9.0, published as `@graelo/pi-vim`. Apart from the changes below,
 editor behavior is unchanged from 0.9.0.
 
+### Added
+
+- Surround, following vim-surround: `ys{motion}{char}`, `yss{char}`,
+  `ds{char}`, `cs{old}{new}`, and visual `S{char}`. Supports counts, `.`
+  repeat, and the vim-surround pair rules (`(` adds spaces, `)` and `b` do
+  not). Keys are configurable under `piVim.keymap.operators.surround` and
+  `piVim.keymap.commands`. See the Surround section of `docs/features.md`.
+- `guu`, `gUU`, and `g~~` line forms, next to `gugu`, `gUgU`, and `g~g~`.
+
 ### Changed
 
 - Published as `@graelo/pi-vim`. Install with

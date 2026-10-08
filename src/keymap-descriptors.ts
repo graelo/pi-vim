@@ -31,6 +31,7 @@ export const KEYMAP_OPERATOR_DESCRIPTORS = {
   lowercase: { defaults: ["gu"], motionOperator: true },
   uppercase: { defaults: ["gU"], motionOperator: true },
   toggleCase: { defaults: ["g~"], motionOperator: true },
+  surround: { defaults: ["ys"], motionOperator: true },
   indent: { defaults: [">"] },
   dedent: { defaults: ["<"] },
 } as const satisfies Record<VimOperatorAction, OperatorDescriptor>;
@@ -147,6 +148,9 @@ export const KEYMAP_COMMAND_DESCRIPTORS = {
   showKeybindings: { defaults: [] },
   reselectVisual: { defaults: ["gv"] },
   easymotion: { defaults: [] },
+  deleteSurround: { defaults: ["ds"] },
+  changeSurround: { defaults: ["cs"] },
+  surroundSelection: { defaults: ["S"] },
 } as const satisfies Record<VimCommandAction, CommandDescriptor>;
 
 export function deriveActionKeys<T extends Record<string, KeymapDescriptor>>(

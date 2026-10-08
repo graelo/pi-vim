@@ -24,6 +24,7 @@ const expectedOperators = [
   "lowercase",
   "uppercase",
   "toggleCase",
+  "surround",
   "indent",
   "dedent",
 ];
@@ -34,6 +35,7 @@ const expectedMotionOperators = [
   "lowercase",
   "uppercase",
   "toggleCase",
+  "surround",
 ];
 const expectedMotions = [
   "left",
@@ -102,6 +104,9 @@ const expectedCommands = [
   "showKeybindings",
   "reselectVisual",
   "easymotion",
+  "deleteSurround",
+  "changeSurround",
+  "surroundSelection",
 ];
 const expectedTextObjectTargets = [
   "word",

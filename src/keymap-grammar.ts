@@ -62,3 +62,49 @@ export function grammarConflictForActionKey(
   });
   return prefix ? `prefix-shadow conflict with ${prefix.label}` : undefined;
 }
+
+const OPERATOR_TARGET_COMMANDS = [
+  "findCharForward",
+  "findCharBackward",
+  "tillCharForward",
+  "tillCharBackward",
+  "repeatCharSearch",
+  "repeatCharSearchReverse",
+  "startSearch",
+  "startSearchBackward",
+] as const satisfies readonly VimCommandAction[];
+
+function sequencesOverlap(left: string, right: string): boolean {
+  return left.startsWith(right) || right.startsWith(left);
+}
+
+/**
+ * Whether `sequence` extends the bound operator sequence `operatorSequence`
+ * with keys that are not a target of that operator (motion, text-object kind,
+ * character search, search, mark jump, count, or line form). Such bindings,
+ * like `ys` after `y`, coexist with the operator instead of conflicting.
+ */
+export function isOperatorExtension(
+  keymap: ResolvedVimKeymap,
+  operatorSequence: string,
+  sequence: string,
+): boolean {
+  if (sequence.length <= operatorSequence.length || !sequence.startsWith(operatorSequence))
+    return false;
+  const operator = (
+    Object.entries(keymap.operators) as [VimOperatorAction, readonly string[]][]
+  ).find(([, sequences]) => sequences.includes(operatorSequence))?.[0];
+  if (!operator) return false;
+  const rest = sequence.slice(operatorSequence.length);
+  if (/^[1-9]/.test(rest)) return false;
+  const targets = [
+    ...Object.values(keymap.motions).flat(),
+    ...Object.values(keymap.textObjects.kinds).flat(),
+    ...keymap.marks.jumpExact,
+    ...keymap.marks.jumpLine,
+    ...OPERATOR_TARGET_COMMANDS.flatMap((command) => keymap.commands[command]),
+    ...keymap.operators[operator],
+    operatorSequence.slice(-1),
+  ];
+  return !targets.some((target) => target.length > 0 && sequencesOverlap(rest, target));
+}

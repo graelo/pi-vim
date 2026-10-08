@@ -54,13 +54,17 @@ surround operator accepts, with the same default allow-list as `yank`.
 
 ### Requirement: Bindings may extend an operator sequence
 
-A binding whose key sequence starts with a complete bound operator sequence in
-the same mode SHALL NOT be rejected as a strict-prefix conflict with that
-operator, provided the remaining keys are not a motion, text-object kind,
-character-search, search, mark, or line-form target of that operator. When the
-remaining keys are such a target, the extending binding SHALL be rejected with
-a warning and the operator grammar SHALL keep its meaning. Other strict-prefix
-conflicts SHALL still be rejected.
+A binding that starts with a bound operator sequence and continues with keys
+that are not a target of that operator SHALL coexist with the operator: it is
+neither rejected as a strict-prefix conflict nor removed by an explicit binding
+of the operator, and vice versa. Other bindings keep the existing conflict and
+precedence rules.
+
+#### Scenario: Count and target keys are not extensions
+
+- **WHEN** a binding continues an operator sequence with a count, motion,
+    text-object kind, character-search, search, mark, or line-form key
+- **THEN** it is not treated as an operator extension
 
 #### Scenario: Default extensions coexist with their operators
 
@@ -68,11 +72,17 @@ conflicts SHALL still be rejected.
 - **THEN** `ys`, `ds`, and `cs` resolve to surround actions while `yiw`, `yy`,
     `dw`, `dd`, `ciw`, and `cc` keep their existing meaning
 
-#### Scenario: Extension that shadows an operator target is rejected
+#### Scenario: Explicit extension keeps its operator
 
-- **WHEN** a command is bound to `dw`
-- **THEN** that binding is rejected with a warning and `dw` still deletes a
-    word
+- **WHEN** settings explicitly bind `deleteSurround` to `ds`
+- **THEN** the `d` operator stays bound and no warning is recorded
+
+#### Scenario: Binding that shadows an operator target is not an extension
+
+- **WHEN** settings bind a command to `dw` in the same layer as the `d`
+    operator
+- **THEN** the command is rejected with a strict-prefix conflict warning and
+    `dw` still deletes a word
 
 #### Scenario: Non-operator strict prefixes are still rejected
 

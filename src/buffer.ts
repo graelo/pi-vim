@@ -2547,3 +2547,187 @@ export function transformCaseTextObject(
   if (!range) return { text, cursor: normalizeBufferPosition(text, cursor), changed: false };
   return transformCaseVisualRange(text, range.start, range.end, "char", action);
 }
+
+/** Offset range `[start, end)` that includes both delimiters of a pair. */
+export type DelimitedOffsetRange = { start: number; end: number };
+
+/**
+ * Nearest pair of `open`/`close` enclosing the cursor, nesting-aware and
+ * across lines. A cursor on either delimiter belongs to that pair. `count`
+ * selects the `count`th enclosing pair, innermost first.
+ */
+export function enclosingBracketRange(
+  text: string,
+  cursor: Position,
+  open: string,
+  close: string,
+  count = 1,
+): DelimitedOffsetRange | undefined {
+  let current = positionToOffset(text, cursor);
+  if (text[current] === close && current > 0) current--;
+  let range: DelimitedOffsetRange | undefined;
+  for (let index = 0; index < Math.max(1, count); index++) {
+    const start = bracketStartOffset(text, current, open, close);
+    const end = start === undefined ? undefined : bracketEndOffset(text, start, open, close);
+    if (start === undefined || end === undefined) return undefined;
+    range = { start, end };
+    current = start - 1;
+  }
+  return range;
+}
+
+/**
+ * Pair of `char` on the cursor line, as Vim pairs quotes: occurrences pair up
+ * from the start of the line, a cursor on or between a pair selects it, and
+ * otherwise the next pair after the cursor is used.
+ */
+export function enclosingCharRange(
+  text: string,
+  cursor: Position,
+  char: string,
+): DelimitedOffsetRange | undefined {
+  const bounds = lineBoundsForPosition(text, cursor);
+  const col = positionToOffset(text, cursor) - bounds.start;
+  const columns: number[] = [];
+  for (let index = 0; index < bounds.line.length; index++)
+    if (bounds.line[index] === char) columns.push(index);
+  for (let index = 0; index + 1 < columns.length; index += 2) {
+    const open = columns[index]!;
+    const close = columns[index + 1]!;
+    if (col <= close) return { start: bounds.start + open, end: bounds.start + close + 1 };
+  }
+  return undefined;
+}
+
+export type SurroundTargetSpec =
+  | { type: "motion"; motion: VimMotion; count?: number }
+  | { type: "textObject"; textObject: VimTextObject }
+  | {
+      type: "charSearch";
+      kind: CharSearchKind;
+      char: string;
+      count?: number;
+      searchCursorOffset?: number;
+    }
+  | { type: "line"; count?: number };
+
+/** Text addressed by a surround target; linewise ranges cover whole lines. */
+export type SurroundRange = { start: number; end: number; linewise: boolean };
+
+function trimTrailingWhitespace(text: string, start: number, end: number): number {
+  let trimmed = end;
+  while (trimmed > start && isWhitespace(text[trimmed - 1])) trimmed--;
+  return trimmed;
+}
+
+function linewiseSurroundRange(
+  text: string,
+  startLine: number,
+  endLine: number,
+  trimBlankLines = true,
+): SurroundRange {
+  const lines = splitText(text);
+  const starts = lineStartOffsets(lines);
+  let last = endLine;
+  while (trimBlankLines && last > startLine && (lines[last] ?? "").trim() === "") last--;
+  return {
+    start: starts[startLine] ?? 0,
+    end: (starts[last] ?? 0) + (lines[last]?.length ?? 0),
+    linewise: true,
+  };
+}
+
+function lineFormSurroundRange(
+  text: string,
+  cursor: Position,
+  count: number,
+): SurroundRange | undefined {
+  const lines = splitText(text);
+  const pos = clampPosition(lines, cursor);
+  const starts = lineStartOffsets(lines);
+  const lastLine = Math.min(lines.length - 1, pos.line + Math.max(1, count) - 1);
+  const start = (starts[pos.line] ?? 0) + firstNonBlankColumn(lines[pos.line] ?? "");
+  const end = trimTrailingWhitespace(
+    text,
+    start,
+    (starts[lastLine] ?? 0) + (lines[lastLine]?.length ?? 0),
+  );
+  return end > start ? { start, end, linewise: false } : undefined;
+}
+
+function charwiseSurroundRange(
+  text: string,
+  range: { start: number; end: number } | undefined,
+): SurroundRange | undefined {
+  if (!range) return undefined;
+  const end = trimTrailingWhitespace(text, range.start, range.end);
+  return end > range.start ? { start: range.start, end, linewise: false } : undefined;
+}
+
+function textObjectSurroundRange(
+  text: string,
+  cursor: Position,
+  textObject: VimTextObject,
+  promptStructures?: ResolvedVimPromptStructures,
+): SurroundRange | undefined {
+  const range = textObjectRange(text, cursor, textObject, promptStructures);
+  if (!range) return undefined;
+  if (textObject.target === "paragraph")
+    return linewiseSurroundRange(text, range.start.line, range.end.line);
+  return charwiseSurroundRange(text, {
+    start: positionToOffset(text, range.start),
+    end: positionToOffset(text, range.end) + 1,
+  });
+}
+
+/**
+ * Range a surround target addresses. Charwise ranges exclude trailing
+ * whitespace; `j`, `k`, `gg`, `G`, and the paragraph text object are linewise.
+ */
+export function surroundRangeFor(
+  text: string,
+  cursor: Position,
+  target: SurroundTargetSpec,
+  promptStructures?: ResolvedVimPromptStructures,
+): SurroundRange | undefined {
+  if (target.type === "line") return lineFormSurroundRange(text, cursor, target.count ?? 1);
+  if (target.type === "textObject")
+    return textObjectSurroundRange(text, cursor, target.textObject, promptStructures);
+  if (target.type === "charSearch") {
+    return charwiseSurroundRange(
+      text,
+      charSearchOperatorOffsetRange(
+        text,
+        cursor,
+        target.kind,
+        target.char,
+        target.count ?? 1,
+        target.searchCursorOffset ?? 0,
+      ),
+    );
+  }
+  const lineRange = motionLineRange(text, cursor, target.motion, target.count ?? 1);
+  if (lineRange) return linewiseSurroundRange(text, lineRange.startLine, lineRange.endLine);
+  return charwiseSurroundRange(
+    text,
+    motionOffsetRange(text, cursor, target.motion, target.count ?? 1),
+  );
+}
+
+/** Range of a characterwise or linewise visual selection, for visual surround. */
+export function visualSurroundRange(
+  text: string,
+  anchor: Position,
+  cursor: Position,
+  linewise: boolean,
+): SurroundRange | undefined {
+  if (linewise) {
+    const range = normalizeLineRange(splitText(text), anchor, cursor);
+    return linewiseSurroundRange(text, range.startLine, range.endLine, false);
+  }
+  const range = normalizeRange(splitText(text), anchor, cursor);
+  return charwiseSurroundRange(text, {
+    start: positionToOffset(text, range.start),
+    end: Math.min(text.length, positionToOffset(text, range.end) + 1),
+  });
+}

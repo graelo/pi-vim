@@ -39,6 +39,7 @@ import {
   isKeyUnmapped,
   isMacroControlKey,
   operatorActionForSequence,
+  pendingDisplay,
   resolveMacroCommand,
   resolveNormalCommand,
   scopedKeymapSequenceFor,
@@ -53,7 +54,7 @@ import {
   type VimConfigPlan,
 } from "../config.ts";
 import { protectedShortcutForKey } from "../customization.ts";
-import { appendMappingToken } from "../mapping-scopes.ts";
+import { appendMappingToken, displayMappingSequence } from "../mapping-scopes.ts";
 import { scrollHelpPopup } from "../read-only-popup.ts";
 import {
   clearCommandPending,
@@ -108,6 +109,11 @@ import {
   startSearchUpdate,
 } from "./search.ts";
 import { transitionMode } from "./state.ts";
+import {
+  handlePendingSurroundInput,
+  startSurroundUpdate,
+  startVisualSurroundUpdate,
+} from "./surround.ts";
 import { captureBeforeVisualExit } from "./visual.ts";
 import {
   applyVisualOperator,
@@ -643,6 +649,49 @@ function applyNormalRemainingResolution(
   return invalidate(withNoopFeedback(state, options, `unmapped key: ${key}`));
 }
 
+/** Start waiting for surround characters when `result` is a surround target or command. */
+function surroundStartUpdate(
+  state: ModalState,
+  result: SemanticCommandResult,
+  keys: string,
+): ModalUpdate | undefined {
+  if (result.type === "command" && result.command === "deleteSurround")
+    return startSurroundUpdate(state, { kind: "delete", count: result.count, keys });
+  if (result.type === "command" && result.command === "changeSurround")
+    return startSurroundUpdate(state, { kind: "change", count: result.count, keys });
+  if (!("operator" in result) || result.operator !== "surround") return undefined;
+  if (result.type === "lineCommand")
+    return startSurroundUpdate(state, {
+      kind: "add",
+      target: { type: "line", count: result.count },
+      keys,
+    });
+  if (result.type === "operatorMotion")
+    return startSurroundUpdate(state, {
+      kind: "add",
+      target: { type: "motion", motion: result.motion, count: result.count },
+      keys,
+    });
+  if (result.type === "operatorTextObject")
+    return startSurroundUpdate(state, {
+      kind: "add",
+      target: { type: "textObject", textObject: result.textObject },
+      keys,
+    });
+  if (result.type === "operatorCharSearch")
+    return startSurroundUpdate(state, {
+      kind: "add",
+      target: {
+        type: "charSearch",
+        command: result.command,
+        char: result.char,
+        count: result.count,
+      },
+      keys,
+    });
+  return undefined;
+}
+
 function applyNormalResolution(
   state: ModalState,
   snapshot: EditorSnapshot,
@@ -650,7 +699,10 @@ function applyNormalResolution(
   keymap: ResolvedVimKeymap,
   key: string,
   result: SemanticCommandResult,
+  typed = key,
 ): ModalUpdate {
+  const surround = surroundStartUpdate(state, result, displayMappingSequence(typed));
+  if (surround) return surround;
   if (result.type === "pending") return applyNormalPendingResolution(state, keymap, result);
   if (result.type === "motion")
     return state.pendingRegister
@@ -841,6 +893,7 @@ function handleNormalInput(
     keymap,
     key,
     resolveNormalCommand(key, state.pending, keymap, "normal"),
+    `${pendingDisplay(state.pending) ?? ""}${key}`,
   );
 }
 
@@ -873,6 +926,7 @@ function applyVisualCommand(
 ): ModalUpdate {
   const registerAware = command === "deleteChar" || command === "pasteAfter";
   if (state.pendingRegister && !registerAware) return invalidate(clearPending(state));
+  if (command === "surroundSelection") return startVisualSurroundUpdate(state, snapshot, options);
   const modeCommand = applyVisualModeCommand(state, snapshot, options, command);
   if (modeCommand) return modeCommand;
   if (state.mode === "visualBlock" && command === "insertLineStart")
@@ -1140,6 +1194,8 @@ function routeModalInput(
     return handlePendingExInput(routedState, snapshot, options, data, diagnostics);
   if (routedState.pendingSearch)
     return handlePendingSearchInput(routedState, snapshot, options, data);
+  if (routedState.pendingSurround)
+    return handlePendingSurroundInput(routedState, snapshot, options, data);
   if (routedState.mode === "insert") return handleInsertInput(routedState, snapshot, options, data);
   if (
     routedState.mode === "visual" ||
@@ -1159,7 +1215,8 @@ export function modalPendingDisplay(state: ModalState): string | undefined {
   return (
     exDisplay(state.pendingEx) ??
     pendingSearchDisplay(state.pendingSearch) ??
-    pendingMarkDisplay(state.pendingMark)
+    pendingMarkDisplay(state.pendingMark) ??
+    state.pendingSurround?.keys
   );
 }
 

@@ -120,7 +120,32 @@ export type ExMessage = {
   text: string;
 };
 
+/** What a normal-mode surround addresses; `line` is the `yss` form. */
+export type SurroundTarget =
+  | { type: "motion"; motion: VimMotionAction; count?: number }
+  | { type: "textObject"; textObject: VimTextObject }
+  | {
+      type: "charSearch";
+      command: Extract<
+        VimCommandAction,
+        "findCharForward" | "findCharBackward" | "tillCharForward" | "tillCharBackward"
+      >;
+      char: string;
+      count?: number;
+    }
+  | { type: "line"; count?: number };
+
+/** Surround waiting for its character(s); `keys` is shown as the pending status. */
+export type PendingSurround =
+  | { kind: "add"; target: SurroundTarget; keys: string }
+  | { kind: "addSelection"; start: number; end: number; linewise: boolean; keys: string }
+  | { kind: "delete"; count?: number; keys: string }
+  | { kind: "change"; count?: number; from?: string; keys: string };
+
 export type RepeatableChange =
+  | { type: "surround"; target: SurroundTarget; char: string }
+  | { type: "deleteSurround"; char: string; count?: number }
+  | { type: "changeSurround"; from: string; to: string; count?: number }
   | { type: "command"; command: VimCommandAction; count?: number; char?: string }
   | { type: "lineCommand"; operator: VimOperatorAction; count?: number }
   | {
@@ -161,6 +186,7 @@ export type ModalState = {
   pendingRegister?: PendingRegisterTarget;
   marks?: MarkStore;
   pendingMark?: PendingMarkTarget;
+  pendingSurround?: PendingSurround;
   pendingWorkbench?: PendingWorkbench;
   pendingSearch?: PendingSearchTarget;
   pendingEx?: PendingExCommand;

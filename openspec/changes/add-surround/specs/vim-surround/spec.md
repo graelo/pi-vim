@@ -28,9 +28,9 @@ target, trailing whitespace in the addressed text SHALL stay outside the pair.
 
 #### Scenario: Wrap up to a character-search target
 
-- **WHEN** the prompt is `call a, b`, the cursor is on `a`, and the user types
+- **WHEN** the prompt is `call ab, c`, the cursor is on `a`, and the user types
     `yst,]`
-- **THEN** the prompt becomes `call [a], b`
+- **THEN** the prompt becomes `call [ab], c`
 
 #### Scenario: Wrap with a prompt-native text object
 
@@ -178,15 +178,20 @@ was.
 
 - **WHEN** the prompt is `say "hi" now` with the cursor on `h` and the user
     types `ds"`
-- **THEN** the prompt becomes `say hi now`, and the quotes removed are those
-    the matching inner quote text object would select on the cursor line
+- **THEN** the prompt becomes `say hi now`
 
-#### Scenario: Delete punctuation on the line
+#### Scenario: Quote and punctuation pairs follow Vim quote pairing
 
-- **WHEN** the prompt is `a *b* c` with the cursor on `b` and the user types
-    `ds*`
-- **THEN** the prompt becomes `a b c`, using the nearest `*` at or before the
-    cursor and the nearest `*` after it on the cursor line
+- **WHEN** the target is a quote or other punctuation character
+- **THEN** occurrences of that character on the cursor line pair up from the
+    start of the line, the pair the cursor is on or between is used, and
+    otherwise the next pair after the cursor is used
+
+#### Scenario: Cursor on the opening quote
+
+- **WHEN** the prompt is `"hi"` with the cursor on the first `"` and the user
+    types `cs"'`
+- **THEN** the prompt becomes `'hi'`
 
 #### Scenario: Missing pair is a safe no-op
 

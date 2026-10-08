@@ -24,7 +24,11 @@ import {
   KEYMAP_MOTION_DESCRIPTORS,
   KEYMAP_OPERATOR_DESCRIPTORS,
 } from "./keymap-descriptors.ts";
-import { grammarEntriesForKeymap, type KeymapGrammarEntry } from "./keymap-grammar.ts";
+import {
+  grammarEntriesForKeymap,
+  isOperatorExtension,
+  type KeymapGrammarEntry,
+} from "./keymap-grammar.ts";
 import {
   displayMappingSequence,
   MAPPING_TOKEN_SEPARATOR,
@@ -108,8 +112,12 @@ type Binding =
   | { sequence: string; kind: "motion"; motion: VimMotionAction }
   | { sequence: string; kind: "command"; command: VimCommandAction };
 
+type ScopedBinding = { binding: Binding; scopes: readonly VimMappingScope[] };
+
 type CompiledKeymap = {
   exactBindings: Map<string, Binding>;
+  /** Every built-in binding per sequence with its scopes, for mode-aware lookups. */
+  scopedExactBindings: Map<string, ScopedBinding[]>;
   motions: { exact: Map<string, VimMotionAction> };
   textObjects: {
     kinds: Map<string, VimTextObjectKind>;
@@ -349,6 +357,7 @@ function compiledKeymapFor(keymap: ResolvedVimKeymap): CompiledKeymap {
 
 function compileKeymap(keymap: ResolvedVimKeymap): CompiledKeymap {
   const exactBindings = new Map<string, Binding>();
+  const scopedExactBindings = new Map<string, ScopedBinding[]>();
   const motionExact = new Map<string, VimMotionAction>();
   const textObjectKinds = new Map<string, VimTextObjectKind>();
   const textObjectTargets = new Map<string, VimTextObjectTarget>();
@@ -362,25 +371,19 @@ function compileKeymap(keymap: ResolvedVimKeymap): CompiledKeymap {
   >();
   const repeatCharSearchLongerPrefixes = new Set<string>();
 
+  const addBinding = (entry: KeymapGrammarEntry, binding: Binding) => {
+    setFirstBinding(exactBindings, binding);
+    const list = scopedExactBindings.get(binding.sequence) ?? [];
+    list.push({ binding, scopes: grammarEntryScopes(entry) });
+    scopedExactBindings.set(binding.sequence, list);
+  };
   for (const entry of grammarEntriesForKeymap(keymap)) {
     if (entry.family === "operator") {
-      setFirstBinding(exactBindings, {
-        sequence: entry.sequence,
-        kind: "operator",
-        operator: entry.id,
-      });
+      addBinding(entry, { sequence: entry.sequence, kind: "operator", operator: entry.id });
     } else if (entry.family === "motion") {
-      setFirstBinding(exactBindings, {
-        sequence: entry.sequence,
-        kind: "motion",
-        motion: entry.id,
-      });
+      addBinding(entry, { sequence: entry.sequence, kind: "motion", motion: entry.id });
     } else if (entry.family === "command") {
-      setFirstBinding(exactBindings, {
-        sequence: entry.sequence,
-        kind: "command",
-        command: entry.id,
-      });
+      addBinding(entry, { sequence: entry.sequence, kind: "command", command: entry.id });
     } else if (entry.family === "textObjectKind") {
       setFirstValue(textObjectKinds, entry.sequence, entry.id);
     } else if (entry.family === "textObjectTarget") {
@@ -426,6 +429,7 @@ function compileKeymap(keymap: ResolvedVimKeymap): CompiledKeymap {
 
   return {
     exactBindings,
+    scopedExactBindings,
     motions: { exact: motionExact },
     textObjects: { kinds: textObjectKinds, targets: textObjectTargets },
     commands: {
@@ -511,7 +515,11 @@ function exactBinding(
   const scoped = scopedBinding(sequence, keymap, mode);
   if (scoped) return scoped;
   if (isKeyUnmapped(keymap, sequence, mode)) return undefined;
-  return compiledKeymapFor(keymap).exactBindings.get(sequence);
+  const compiled = compiledKeymapFor(keymap);
+  if (!mode || mode === "operatorPending") return compiled.exactBindings.get(sequence);
+  return compiled.scopedExactBindings
+    .get(sequence)
+    ?.find((candidate) => candidate.scopes.includes(mode))?.binding;
 }
 
 function hasLongerPrefix(
@@ -944,6 +952,41 @@ function supportsSearchTargets(operator: VimMotionOperatorAction): boolean {
   return operator === "delete" || operator === "change" || operator === "yank";
 }
 
+/** Surround accepts `f`/`t`/`F`/`T` targets but not prompt search or `;`/`,` repeats. */
+function supportsCharSearchTargets(operator: VimMotionOperatorAction): boolean {
+  return supportsSearchTargets(operator) || operator === "surround";
+}
+
+function lastMappingToken(sequence: string): string | undefined {
+  if (sequence.includes(MAPPING_TOKEN_SEPARATOR))
+    return sequence.split(MAPPING_TOKEN_SEPARATOR).at(-1);
+  const prefixes = mappingSequencePrefixes(sequence);
+  return prefixes.length > 0 ? sequence.slice(prefixes.at(-1)!.length) : undefined;
+}
+
+/** `guu`-style line form: a multi-key operator followed by its own last key. */
+function isLastKeyLineForm(operatorSequence: string, key: string): boolean {
+  return lastMappingToken(operatorSequence) === key;
+}
+
+/** Resolve bindings such as `ys` or `ds` that extend a pending operator sequence. */
+function resolveOperatorExtension(
+  operatorSequence: string,
+  key: string,
+  keymap: ResolvedVimKeymap,
+): SemanticCommandResult | undefined {
+  const sequence = appendMappingSequence(operatorSequence, key, keymap, "normal");
+  if (!isOperatorExtension(keymap, operatorSequence, sequence)) return undefined;
+  if (hasLongerPrefix(sequence, keymap, "normal")) return { type: "pending", pending: sequence };
+  const binding = exactBinding(sequence, keymap, "normal");
+  if (binding?.kind === "operator") return { type: "pending", pending: sequence };
+  if (binding?.kind === "motion") return { type: "motion", motion: binding.motion };
+  if (binding?.kind !== "command") return undefined;
+  return CHAR_ARGUMENT_COMMANDS.has(binding.command)
+    ? { type: "pending", pending: encodeCharCommandPending(binding.command) }
+    : { type: "command", command: binding.command };
+}
+
 function resolveOperatorMotionPending(
   pending: EncodedOperatorMotionPending,
   key: string,
@@ -1221,6 +1264,7 @@ function resolveOperatorSearchTarget(
   key: string,
   keymap: ResolvedVimKeymap,
   count?: number,
+  charSearchOnly = false,
 ): SemanticCommandResult | undefined {
   if (/^[1-9]$/.test(key)) {
     return {
@@ -1247,6 +1291,7 @@ function resolveOperatorSearchTarget(
       pending: encodeOperatorCharSearchPending(operatorSequence, key, count),
     };
   }
+  if (charSearchOnly) return undefined;
   const repeatCharSearchCommand = repeatCharSearchCommandForBinding(key, keymap);
   if (repeatCharSearchCommand) {
     return {
@@ -1279,19 +1324,25 @@ function resolveAfterOperator(
   const operator = operatorActionForSequence(operatorSequence, keymap);
   if (!operator) return { type: "invalid" };
 
+  if (count === undefined) {
+    const extension = resolveOperatorExtension(operatorSequence, key, keymap);
+    if (extension) return extension;
+  }
   if (operatorSequenceMatches(key, keymap, operator))
     return { type: "lineCommand", operator, count };
   if (hasOperatorPrefix(key, keymap, operator)) {
     return { type: "pending", pending: encodeOperatorLinePending(operatorSequence, key, count) };
   }
+  if (isLastKeyLineForm(operatorSequence, key)) return { type: "lineCommand", operator, count };
   if (!isMotionOperator(operator)) return { type: "invalid" };
-  if (supportsSearchTargets(operator)) {
+  if (supportsCharSearchTargets(operator)) {
     const searchResult = resolveOperatorSearchTarget(
       operatorSequence,
       operator,
       key,
       keymap,
       count,
+      !supportsSearchTargets(operator),
     );
     if (searchResult) return searchResult;
   }

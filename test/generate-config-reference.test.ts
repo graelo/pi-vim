@@ -24,7 +24,7 @@ describe("generated config reference", () => {
     expect(first).toBe(guide);
     validateLocalLinks(first);
     expect(first.match(/<a id="config-property-/g)).toHaveLength(35);
-    expect(first.match(/<a id="config-action-/g)).toHaveLength(102);
+    expect(first.match(/<a id="config-action-/g)).toHaveLength(106);
     expect(first).not.toContain("pi-vim.keybindings");
     expect(first).toContain("- Default keys: `` ` ``");
   });

@@ -112,6 +112,9 @@ const COMMAND_DESCRIPTIONS: Record<VimCommandAction, string> = {
   showKeybindings: "show keybindings popup",
   reselectVisual: "reselect last visual selection",
   easymotion: "jump to character on current file (EasyMotion)",
+  deleteSurround: "delete surrounding pair",
+  changeSurround: "change surrounding pair",
+  surroundSelection: "surround visual selection",
 };
 
 const MOTION_DESCRIPTIONS: Record<VimMotionAction, string> = {
@@ -155,6 +158,7 @@ const OPERATOR_DESCRIPTIONS: Record<VimOperatorAction, string> = {
   lowercase: "lowercase by motion or text object",
   uppercase: "uppercase by motion or text object",
   toggleCase: "toggle case by motion or text object",
+  surround: "surround motion or text object with a pair",
   indent: "indent selected/current lines",
   dedent: "dedent selected/current lines",
 };

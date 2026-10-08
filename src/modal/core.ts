@@ -201,6 +201,7 @@ export function clearCommandPending(state: ModalState): ModalState {
     pending: _pending,
     pendingMacro: _pendingMacro,
     pendingMark: _pendingMark,
+    pendingSurround: _pendingSurround,
     pendingSearch: _pendingSearch,
     pendingEx: _pendingEx,
     pendingInsertEscape: _pendingInsertEscape,

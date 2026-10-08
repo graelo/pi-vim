@@ -63,6 +63,7 @@ import {
   grammarBindingsForKeymap,
   grammarConflictForActionKey,
   grammarEntriesForKeymap,
+  isOperatorExtension,
 } from "./keymap-grammar.ts";
 import {
   displayMappingSequence,
@@ -1502,11 +1503,15 @@ function configuredTopLevelKeymapSequences(partial: PartialKeymapOptions): Set<s
 
 function removeTopLevelKeymapSequences(target: ResolvedVimKeymap, sequences: Set<string>): void {
   if (sequences.size === 0) return;
+  const conflicts = (binding: string, sequence: string): boolean =>
+    mappingSequencesOverlap(binding, sequence) &&
+    !isOperatorExtension(target, binding, sequence) &&
+    !isOperatorExtension(target, sequence, binding);
   const remove = <K extends string>(record: Record<K, readonly string[]>): Record<K, string[]> => {
     const next = {} as Record<K, string[]>;
     for (const action of Object.keys(record) as K[]) {
       next[action] = record[action].filter(
-        (binding) => ![...sequences].some((sequence) => mappingSequencesOverlap(binding, sequence)),
+        (binding) => ![...sequences].some((sequence) => conflicts(binding, sequence)),
       );
     }
     return next;
@@ -2087,16 +2092,32 @@ function rejectShowKeybindingsConflicts(keymap: ResolvedVimKeymap): string[] {
   return warnings;
 }
 
-function duplicateBindingWarnings(bindings: readonly GrammarBinding[]): string[] {
+type ScopedGrammarBinding = GrammarBinding & { scopes: readonly VimMappingScope[] };
+
+function scopedGrammarBindings(keymap: ResolvedVimKeymap): ScopedGrammarBinding[] {
+  return grammarEntriesForKeymap(keymap).map((entry) => ({
+    sequence: entry.sequence,
+    label: entry.label,
+    scopes: mappingScopesForKeymapEntry(entry.family, entry.id),
+  }));
+}
+
+function scopesIntersect(left: ScopedGrammarBinding, right: ScopedGrammarBinding): boolean {
+  return left.scopes.some((scope) => right.scopes.includes(scope));
+}
+
+function duplicateBindingWarnings(bindings: readonly ScopedGrammarBinding[]): string[] {
   const warnings: string[] = [];
-  const seen = new Map<string, string>();
+  const seen = new Map<string, ScopedGrammarBinding[]>();
   for (const binding of bindings) {
-    const previous = seen.get(binding.sequence);
-    if (previous && previous !== binding.label)
+    const previous = (seen.get(binding.sequence) ?? []).find(
+      (candidate) => candidate.label !== binding.label && scopesIntersect(candidate, binding),
+    );
+    if (previous)
       warnings.push(
-        `resolved settings: duplicate piVim.keymap binding ${binding.sequence} for ${previous} and ${binding.label}`,
+        `resolved settings: duplicate piVim.keymap binding ${binding.sequence} for ${previous.label} and ${binding.label}`,
       );
-    else seen.set(binding.sequence, binding.label);
+    else seen.set(binding.sequence, [...(seen.get(binding.sequence) ?? []), binding]);
   }
   return warnings;
 }
@@ -2120,7 +2141,10 @@ function textObjectConflictWarnings(
   return warnings;
 }
 
-function shadowedBindingWarnings(bindings: readonly GrammarBinding[]): string[] {
+function shadowedBindingWarnings(
+  keymap: ResolvedVimKeymap,
+  bindings: readonly ScopedGrammarBinding[],
+): string[] {
   const warnings: string[] = [];
   for (const first of bindings)
     for (const second of bindings) {
@@ -2128,7 +2152,10 @@ function shadowedBindingWarnings(bindings: readonly GrammarBinding[]): string[] 
       if (
         isAtomicMappingSequence(first.sequence) ||
         isAtomicMappingSequence(second.sequence) ||
-        !second.sequence.startsWith(first.sequence)
+        !second.sequence.startsWith(first.sequence) ||
+        !scopesIntersect(first, second) ||
+        (first.label.startsWith("operators.") &&
+          isOperatorExtension(keymap, first.sequence, second.sequence))
       )
         continue;
       warnings.push(
@@ -2139,7 +2166,7 @@ function shadowedBindingWarnings(bindings: readonly GrammarBinding[]): string[] 
 }
 
 function detectKeymapConflicts(keymap: ResolvedVimKeymap): string[] {
-  const bindings = grammarBindingsForKeymap(keymap).filter(
+  const bindings = scopedGrammarBindings(keymap).filter(
     (binding) => !binding.label.startsWith("textObjects."),
   );
   const primary = bindings.filter((binding) =>
@@ -2159,7 +2186,7 @@ function detectKeymapConflicts(keymap: ResolvedVimKeymap): string[] {
       DEFAULT_VIM_KEYMAP.textObjects.targets,
       primary,
     ),
-    ...shadowedBindingWarnings(bindings),
+    ...shadowedBindingWarnings(keymap, bindings),
   ];
 }
 
@@ -2512,14 +2539,6 @@ function hasStrictPrefixConflict(left: string, right: string): boolean {
   return left !== right && mappingSequencesOverlap(left, right);
 }
 
-function strictPrefixConflict<T>(
-  accepted: readonly T[],
-  sequence: string,
-  getSequence: (candidate: T) => string,
-): T | undefined {
-  return accepted.find((candidate) => hasStrictPrefixConflict(getSequence(candidate), sequence));
-}
-
 type ResolvedVimRemap = ResolvedVimKeymap["remaps"]["accepted"][number];
 type ScopedPlanSource = ResolvedVimRemap | ResolvedVimKeymap["scoped"][number];
 type VimPlanCandidate = {
@@ -2542,7 +2561,21 @@ function retainAcceptedScopes<T extends ScopedPlanSource>(
   });
 }
 
+function extendsPlanOperator(
+  keymap: ResolvedVimKeymap,
+  left: { sequence: string; binding: VimPlanBinding },
+  right: { sequence: string; binding: VimPlanBinding },
+): boolean {
+  const [shorter, longer] =
+    left.sequence.length < right.sequence.length ? [left, right] : [right, left];
+  return (
+    shorter.binding.id.startsWith("operator.") &&
+    isOperatorExtension(keymap, shorter.sequence, longer.sequence)
+  );
+}
+
 function compilePlanScope(
+  keymap: ResolvedVimKeymap,
   scope: VimMappingScope,
   candidates: readonly VimPlanCandidate[],
   warnings: string[],
@@ -2551,10 +2584,10 @@ function compilePlanScope(
   const exact = Object.create(null) as Record<string, VimPlanBinding>;
   const exactCandidates = Object.create(null) as Record<string, VimPlanCandidate>;
   for (const candidate of candidates) {
-    const strictPrefix = strictPrefixConflict(
-      Object.keys(exact),
-      candidate.sequence,
-      (sequence) => sequence,
+    const strictPrefix = Object.keys(exact).find(
+      (sequence) =>
+        hasStrictPrefixConflict(sequence, candidate.sequence) &&
+        !extendsPlanOperator(keymap, { sequence, binding: exact[sequence]! }, candidate),
     );
     if (strictPrefix) {
       const warning = `resolved settings: rejected ${candidate.binding.id}.${candidate.sequence} in ${scope}: strict-prefix conflict with ${exact[strictPrefix]!.id}.${strictPrefix}`;
@@ -2611,12 +2644,14 @@ function addPlanGrammarCandidates(
   for (const [action, sequences] of Object.entries(keymap.insert))
     for (const sequence of sequences)
       addPlanCandidate(keymap, candidates, ["insert"], sequence, { kind: "insert", id: action });
-  for (const [action, sequences] of Object.entries(keymap.commands))
+  for (const [action, sequences] of Object.entries(keymap.commands)) {
+    if (!mappingScopesForKeymapEntry("command", action).includes("normal")) continue;
     for (const sequence of sequences)
       addPlanCandidate(keymap, candidates, ["normal"], sequence, {
         kind: "command",
         id: `command.${action}`,
       });
+  }
 }
 
 function addPlanScopedCandidates(
@@ -2654,6 +2689,7 @@ function populatePlanCandidates(
 }
 
 function compilePlanScopes(
+  keymap: ResolvedVimKeymap,
   candidates: Record<VimMappingScope, VimPlanCandidate[]>,
   warnings: readonly string[],
 ): {
@@ -2670,7 +2706,7 @@ function compilePlanScopes(
   const scopes = Object.fromEntries(
     VIM_MAPPING_SCOPES.map((scope) => [
       scope,
-      compilePlanScope(scope, candidates[scope], compileWarnings, acceptedScopes),
+      compilePlanScope(keymap, scope, candidates[scope], compileWarnings, acceptedScopes),
     ]),
   ) as Record<VimMappingScope, VimScopeLookup>;
   return { scopes, warnings: compileWarnings, acceptedScopes };
@@ -2690,7 +2726,11 @@ export function createVimConfigPlan(
     VIM_MAPPING_SCOPES.map((scope) => [scope, [] as VimPlanCandidate[]]),
   ) as Record<VimMappingScope, VimPlanCandidate[]>;
   populatePlanCandidates(planOptions.keymap ?? DEFAULT_VIM_KEYMAP, candidates);
-  const compiled = compilePlanScopes(candidates, warnings);
+  const compiled = compilePlanScopes(
+    planOptions.keymap ?? DEFAULT_VIM_KEYMAP,
+    candidates,
+    warnings,
+  );
   if (planOptions.keymap) {
     planOptions.keymap.remaps.accepted = retainAcceptedScopes(
       planOptions.keymap.remaps.accepted,

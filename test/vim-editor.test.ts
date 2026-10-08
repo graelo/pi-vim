@@ -197,7 +197,6 @@ function runEx(editor: VimEditor, command: string) {
   editor.handleInput(":");
   for (const char of command) editor.handleInput(char);
   editor.handleInput("\r");
-  if (/^\s*(?:%|\d|\.|\$|'|<|>|,)*s(?:ubstitute)?\b/.test(command)) editor.handleInput("\r");
 }
 
 function expectEditorState(
@@ -2526,4 +2525,56 @@ test("missing shutdown callback does not throw", () => {
   editor.setText("hello");
   runEx(editor, "q");
   expect(editor.getText()).toBe("hello");
+});
+
+test("live editor surrounds, deletes, and changes pairs", () => {
+  const { editor } = createEditor(normalOpts);
+  editor.setText("say hello world");
+  typeKeys(editor, ["0", "w", ..."ysiw)"]);
+  expectEditorState(editor, { text: "say (hello) world", cursor: { line: 0, col: 4 } });
+
+  editor.handleInput("u");
+  expectEditorState(editor, { text: "say hello world", mode: "normal" });
+
+  editor.setText("  fix it");
+  typeKeys(editor, ["0", ...'yss"']);
+  expectEditorState(editor, { text: '  "fix it"' });
+
+  editor.setText("f( a )");
+  typeKeys(editor, ["0", "f", "a", ..."ds("]);
+  expectEditorState(editor, { text: "fa" });
+
+  editor.setText("[x]");
+  typeKeys(editor, ["0", "l", ..."cs])"]);
+  expectEditorState(editor, { text: "(x)", mode: "normal" });
+});
+
+test("live editor shows pending surround keys and repeats with dot", () => {
+  const { editor } = createEditor(normalOpts);
+  editor.setText("one two");
+  typeKeys(editor, ["0", ..."ysiw"]);
+  expectEditorState(editor, { pending: "ysiw", text: "one two" });
+  editor.handleInput("'");
+  expectEditorState(editor, { text: "'one' two" });
+  typeKeys(editor, ["W", "."]);
+  expectEditorState(editor, { text: "'one' 'two'" });
+});
+
+test("live editor visual S surrounds the selection", () => {
+  const { editor } = createEditor(normalOpts);
+  editor.setText("say hello");
+  typeKeys(editor, ["0", "w", "v", "e", "S", "'"]);
+  expectEditorState(editor, { text: "say 'hello'", mode: "normal" });
+});
+
+test("live editor keeps a configured surround operator", () => {
+  const options = resolveVimOptions({
+    piVim: { keymap: { operators: { surround: ["gs"] } } },
+  }).options;
+  const { editor } = createEditor({ ...options, startMode: "normal" });
+  editor.setText("word");
+  typeKeys(editor, ["0", ..."gsiw]"]);
+  expectEditorState(editor, { text: "[word]" });
+  typeKeys(editor, ["0", ..."gss)"]);
+  expectEditorState(editor, { text: "([word])" });
 });

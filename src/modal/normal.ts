@@ -76,6 +76,7 @@ import {
 import { startExCommandUpdate } from "./ex-command-line.ts";
 import { clearRegisterTarget, clipboardTargetToRead, registerToRead } from "./registers.ts";
 import { repeatSearch, searchWordUnderCursor, startSearchUpdate } from "./search.ts";
+import { repeatSurroundChange } from "./surround.ts";
 import { reselectVisualUpdate } from "./visual.ts";
 
 export function normalDispatchSummary(state: ModalState): string {
@@ -910,6 +911,12 @@ export function repeatChange(
 ): ModalUpdate {
   const change = state.lastRepeatableChange;
   if (!change) return invalidate(clearCommandPending(state));
+  if (
+    change.type === "surround" ||
+    change.type === "deleteSurround" ||
+    change.type === "changeSurround"
+  )
+    return repeatSurroundChange(state, snapshot, options, change);
   if (change.type === "command") {
     return applyCommand(state, snapshot, options, change.command, change.count, change.char, false);
   }

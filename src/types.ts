@@ -27,7 +27,8 @@ export type VimMotionOperatorAction =
   | "yank"
   | "lowercase"
   | "uppercase"
-  | "toggleCase";
+  | "toggleCase"
+  | "surround";
 export type VimOperatorAction = VimMotionOperatorAction | "indent" | "dedent";
 
 export type VimMotionAction =
@@ -96,7 +97,10 @@ export type VimCommandAction =
   | "redo"
   | "showKeybindings"
   | "reselectVisual"
-  | "easymotion";
+  | "easymotion"
+  | "deleteSurround"
+  | "changeSurround"
+  | "surroundSelection";
 
 export type VimTextObjectKind = "inner" | "around";
 
