@@ -27,7 +27,9 @@ tags:
 
 ## Problem
 
-Visual Block `I`/`A` insert accepted typed characters, but users could not see what they were typing. The collected text appeared only after `Esc`, so insert mode looked broken even though the final block edit could still apply.
+Visual Block `I`/`A` insert accepted typed characters, but users could not see
+what they were typing. The collected text appeared only after `Esc`, so insert
+mode looked broken even though the final block edit could still apply.
 
 ## Symptoms
 
@@ -38,7 +40,8 @@ Visual Block `I`/`A` insert accepted typed characters, but users could not see w
 
 ## What Didn't Work
 
-- Keeping typed text only in `ModalState.blockInsert.text` and invalidating render.
+- Keeping typed text only in `ModalState.blockInsert.text` and invalidating
+    render.
 
 ```ts
 return invalidate({
@@ -47,19 +50,27 @@ return invalidate({
 });
 ```
 
-This re-rendered the `CustomEditor` buffer, but the buffer had not changed. The renderer did not know how to display side-channel block-insert text from modal state.
+This re-rendered the `CustomEditor` buffer, but the buffer had not changed. The
+renderer did not know how to display side-channel block-insert text from modal
+state.
 
 - Applying all selected-line insertion only on `Esc`.
 
-That produced the final edit, but it gave no live feedback. For an insert-like mode, at least one line must behave like normal insert mode while the session is active.
+That produced the final edit, but it gave no live feedback. For an insert-like
+mode, at least one line must behave like normal insert mode while the session is
+active.
 
 ## Solution
 
-Use one selected line as the live preview line. Delegate printable input and backspace to the underlying editor for that line, while the modal state records the same text for the eventual block edit.
+Use one selected line as the live preview line. Delegate printable input and
+backspace to the underlying editor for that line, while the modal state records
+the same text for the eventual block edit.
 
 ### Track preview line and restore cursor before typing
 
-`startBlockInsert()` records `previewLine`, calculates the insert column from the visual block, and asks the adapter to move the cursor there before entering insert behavior.
+`startBlockInsert()` records `previewLine`, calculates the insert column from
+the visual block, and asks the adapter to move the cursor there before entering
+insert behavior.
 
 ```ts
 const previewLine = Math.min(state.visualAnchor.line, snapshot.cursor.line);
@@ -89,7 +100,8 @@ return withEffects(
 
 ### Delegate visible input to the editor
 
-Printable input updates modal state and delegates the same byte to `CustomEditor`, so the preview line changes immediately.
+Printable input updates modal state and delegates the same byte to
+`CustomEditor`, so the preview line changes immediately.
 
 ```ts
 const key = keySequence(data);
@@ -104,7 +116,8 @@ return withEffects(
 );
 ```
 
-Backspace mirrors the same rule: update collected text, then delegate backspace so the preview line stays accurate.
+Backspace mirrors the same rule: update collected text, then delegate backspace
+so the preview line stays accurate.
 
 ```ts
 if (matchesKey(data, "backspace")) {
@@ -122,7 +135,8 @@ if (matchesKey(data, "backspace")) {
 
 ### Skip the preview line during final block application
 
-On `Esc`, apply the collected text to the rest of the visual block, but skip the line that already received delegated editor input.
+On `Esc`, apply the collected text to the rest of the visual block, but skip the
+line that already received delegated editor input.
 
 ```ts
 const result = insertBlockText(
@@ -148,25 +162,42 @@ for (let lineIndex = range.startLine; lineIndex <= range.endLine; lineIndex++) {
 
 ## Why This Works
 
-`CustomEditor` already renders normal insert-mode edits. Delegating input lets the editor mutate and display the preview line immediately instead of requiring a custom renderer for in-progress block-insert text.
+`CustomEditor` already renders normal insert-mode edits. Delegating input lets
+the editor mutate and display the preview line immediately instead of requiring
+a custom renderer for in-progress block-insert text.
 
-The modal layer still owns Vim semantics: it remembers the block anchor, active cursor, placement, preview line, and collected text. On `Esc`, the buffer helper applies the same text to every selected line except the preview line, preventing duplicate insertion.
+The modal layer still owns Vim semantics: it remembers the block anchor, active
+cursor, placement, preview line, and collected text. On `Esc`, the buffer helper
+applies the same text to every selected line except the preview line, preventing
+duplicate insertion.
 
-This relies on the adapter taking a fresh editor snapshot after delegated preview input, so the `Esc` edit sees the preview-line mutation before applying the remaining block lines.
+This relies on the adapter taking a fresh editor snapshot after delegated
+preview input, so the `Esc` edit sees the preview-line mutation before applying
+the remaining block lines.
 
 ## Prevention
 
-- Insert-like modal flows should delegate visible text input to the editor unless rendering explicitly handles the in-progress text.
-- If one selected line is used as live preview, final multi-line application must skip that preview line.
+- Insert-like modal flows should delegate visible text input to the editor
+    unless rendering explicitly handles the in-progress text.
+- If one selected line is used as live preview, final multi-line application
+    must skip that preview line.
 - Add both state-machine and integration tests for visual commands:
-  - `test/modal.test.ts` should assert `restoreCursor`, `delegate`, and final edit effects.
-  - `test/vim-editor.test.ts` should assert text appears immediately after typing in Visual Block insert.
+  - `test/modal.test.ts` should assert `restoreCursor`, `delegate`, and final
+    edit effects.
+  - `test/vim-editor.test.ts` should assert text appears immediately after
+    typing in Visual Block insert.
   - `test/buffer.test.ts` should cover start/end column block insertion.
-- When adding a visual-mode command, verify mode, text, cursor, register, and live rendering behavior where applicable.
+- When adding a visual-mode command, verify mode, text, cursor, register, and
+    live rendering behavior where applicable.
 
 ## Related Issues
 
-- [Visual-line paste swallowed by modal handler](../logic-errors/visual-line-paste-swallowed-by-modal-handler-2026-05-27.md) — related visual-mode command routing bug.
-- [Finite Vim keybinding parser with pure buffer helpers](../architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md) — adapter boundary and modal-engine architecture used by this fix.
-- [Prompt buffer operation API for Vim editor adapters](../architecture-patterns/pi-vimmode-prompt-buffer-operation-api-2026-05-27.md) — rationale for keeping rectangular insertion as a buffer operation.
-- GitHub issue search for `pi-vimmode visual block insert`, `pi-vimmode visual block`, and `CustomEditor Vim editor delegate` returned no related issues.
+- [Visual-line paste swallowed by modal handler](../logic-errors/visual-line-paste-swallowed-by-modal-handler-2026-05-27.md)
+    — related visual-mode command routing bug.
+- [Finite Vim keybinding parser with pure buffer helpers](../architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md)
+    — adapter boundary and modal-engine architecture used by this fix.
+- [Prompt buffer operation API for Vim editor adapters](../architecture-patterns/pi-vimmode-prompt-buffer-operation-api-2026-05-27.md)
+    — rationale for keeping rectangular insertion as a buffer operation.
+- GitHub issue search for `pi-vimmode visual block insert`,
+    `pi-vimmode visual block`, and `CustomEditor Vim editor delegate` returned
+    no related issues.

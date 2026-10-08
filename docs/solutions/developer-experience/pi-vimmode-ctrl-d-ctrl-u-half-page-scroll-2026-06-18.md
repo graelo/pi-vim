@@ -21,9 +21,13 @@ tags: [pi-vimmode, keybindings, scrolling, protected-keys, modal, typescript]
 
 ## Context
 
-pi-vimmode needed Vim-style half-page scroll keys: `Ctrl-D` for down and `Ctrl-U` for up. The catch: these keys are also meaningful to Pi or terminal editing, so treating them as globally Vim-owned would break insert-mode behavior.
+pi-vimmode needed Vim-style half-page scroll keys: `Ctrl-D` for down and
+`Ctrl-U` for up. The catch: these keys are also meaningful to Pi or terminal
+editing, so treating them as globally Vim-owned would break insert-mode
+behavior.
 
-The feature was implemented as semantic motions, not raw key branches. Normal and visual modes own the scroll behavior. Insert mode still delegates to Pi.
+The feature was implemented as semantic motions, not raw key branches. Normal
+and visual modes own the scroll behavior. Insert mode still delegates to Pi.
 
 ## Guidance
 
@@ -45,15 +49,18 @@ allowProtectedKey: (key) =>
     (action === "halfPageUp" && key === "ctrl+u")),
 ```
 
-Operator motions deliberately exclude scroll. Scroll sizing uses the live terminal row count from the snapshot and clamps through `moveByPromptLines`.
+Operator motions deliberately exclude scroll. Scroll sizing uses the live
+terminal row count from the snapshot and clamps through `moveByPromptLines`.
 
 ## Why This Matters
 
-Control keys need mode-aware ownership. A global protected-shortcut rule is easy to write, but it steals behavior from insert mode and Pi-owned contexts.
+Control keys need mode-aware ownership. A global protected-shortcut rule is easy
+to write, but it steals behavior from insert mode and Pi-owned contexts.
 
 Keeping `Ctrl-D` / `Ctrl-U` as semantic motions also keeps the system coherent:
 
-- keymap customization, diagnostics, and runtime discovery all describe the same action IDs
+- keymap customization, diagnostics, and runtime discovery all describe the
+    same action IDs
 - counts work through the existing parser (`2<C-d>`)
 - visual mode preserves anchor behavior through existing motion update code
 - operator-pending mode rejects unsupported `d<C-d>` / `y<C-u>` safely
@@ -67,7 +74,8 @@ Use this pattern when a new Vim binding:
 - is valid only in specific Vim modes
 - should be configurable by semantic action name
 - needs viewport context but should not couple buffer code to the editor
-- should be discoverable through `:mapcheck`, keybinding catalogs, and settings docs
+- should be discoverable through `:mapcheck`, keybinding catalogs, and
+    settings docs
 
 ## Examples
 
@@ -82,11 +90,16 @@ v Ctrl-D   extend visual selection down while preserving the anchor
 i Ctrl-D   delegate to Pi/insert-mode behavior, not Vim scroll
 ```
 
-Regression checks cover buffer clamping, parsing/counts, protected-key validation, modal ownership, and runtime catalog diagnostics.
+Regression checks cover buffer clamping, parsing/counts, protected-key
+validation, modal ownership, and runtime catalog diagnostics.
 
 ## Related
 
-- `docs/solutions/logic-errors/pi-vimmode-config-keymap-precedence-2026-06-17.md` — related keymap precedence and clone drift guardrails
-- `docs/solutions/architecture-patterns/pi-vimmode-typed-action-registry-keybindings-2026-06-09.md` — semantic action registry and protected shortcut guidance
-- `docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md` — finite parser and buffer-helper boundary
-- `docs/solutions/logic-errors/pi-vimmode-customization-diagnostics-edge-cases-2026-06-04.md` — key normalization and runtime diagnostics
+- `docs/solutions/logic-errors/pi-vimmode-config-keymap-precedence-2026-06-17.md`
+    — related keymap precedence and clone drift guardrails
+- `docs/solutions/architecture-patterns/pi-vimmode-typed-action-registry-keybindings-2026-06-09.md`
+    — semantic action registry and protected shortcut guidance
+- `docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md`
+    — finite parser and buffer-helper boundary
+- `docs/solutions/logic-errors/pi-vimmode-customization-diagnostics-edge-cases-2026-06-04.md`
+    — key normalization and runtime diagnostics

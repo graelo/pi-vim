@@ -66,4 +66,5 @@ be inferred safely from the public two-method API.
 - Never scan Symbol properties on foreign functions.
 - Restore only state still owned by this extension.
 - Test replacement, reinstallation, and foreign takeover paths.
-- Run `bun test`, `bun run check-types`, and `bun run lint` after lifecycle changes.
+- Run `npm test`, `npm run check`, and `npm run lint` after lifecycle
+    changes.

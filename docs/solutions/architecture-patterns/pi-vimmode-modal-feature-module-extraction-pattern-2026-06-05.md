@@ -31,33 +31,65 @@ tags:
 
 ## Context
 
-`src/modal/engine.ts` had become the modal behavior hotspot. It coordinated prompt search, Ex command-line flow, visual operations, macros, registers, marks, message history, render/workbench state, normal dispatch, and adapter effects in long handlers. That made changes hard to review: search work required reading visual and macro branches, Ex changes touched render and register paths, and future work risked creating import cycles or hidden adapter coupling.
+`src/modal/engine.ts` had become the modal behavior hotspot. It coordinated
+prompt search, Ex command-line flow, visual operations, macros, registers,
+marks, message history, render/workbench state, normal dispatch, and adapter
+effects in long handlers. That made changes hard to review: search work required
+reading visual and macro branches, Ex changes touched render and register paths,
+and future work risked creating import cycles or hidden adapter coupling.
 
-The architecture runway sprint solved this by extracting feature-family modules while preserving the existing `ModalEffect` boundary. The change stayed behavior-preserving: no new settings, dependencies, public keybindings, or broad Vim parity claims.
+The architecture runway sprint solved this by extracting feature-family modules
+while preserving the existing `ModalEffect` boundary. The change stayed
+behavior-preserving: no new settings, dependencies, public keybindings, or broad
+Vim parity claims.
 
-Session history search found no directly relevant prior sessions for this exact modal-engine extraction; related context came from current OpenSpec artifacts and existing solution docs.
+Session history search found no directly relevant prior sessions for this exact
+modal-engine extraction; related context came from current OpenSpec artifacts
+and existing solution docs.
 
 ## Guidance
 
-Use the pattern: **extract feature modules behind the existing effect boundary, keep the engine as the router/coordinator**.
+Use the pattern: **extract feature modules behind the existing effect boundary,
+keep the engine as the router/coordinator**.
 
 Final module shape:
 
-- `src/modal/core.ts` owns shared helpers and effect constructors such as `withEffects`, `invalidate`, `delegate`, `modeUpdate`, `clearPending`, and `editState`.
-- `src/modal/search.ts` owns prompt search lifecycle: starting `/` or `?`, pending search input, search history, repeat search, and search highlight state.
-- `src/modal/ex-command-line.ts` owns Ex command-line entry, visual-source capture, command editing, preview/application, diagnostics, and source-mode restoration.
-- `src/modal/visual.ts` owns visual character/line/block operations plus visual-block insert state.
-- `src/modal/macros.ts` owns macro recording, replay guards, recorded input filtering, and play effects.
-- `src/modal/normal.ts` owns normal-mode dispatch helpers, operator motion/text-object application, line commands, repeatable edit state, and movement updates.
-- `src/modal/engine.ts` stays as top-level input routing and cross-feature coordination.
+- `src/modal/core.ts` owns shared helpers and effect constructors such as
+    `withEffects`, `invalidate`, `delegate`, `modeUpdate`, `clearPending`, and
+    `editState`.
+- `src/modal/search.ts` owns prompt search lifecycle: starting `/` or `?`,
+    pending search input, search history, repeat search, and search highlight
+    state.
+- `src/modal/ex-command-line.ts` owns Ex command-line entry, visual-source
+    capture, command editing, preview/application, diagnostics, and source-mode
+    restoration.
+- `src/modal/visual.ts` owns visual character/line/block operations plus
+    visual-block insert state.
+- `src/modal/macros.ts` owns macro recording, replay guards, recorded input
+    filtering, and play effects.
+- `src/modal/normal.ts` owns normal-mode dispatch helpers, operator
+    motion/text-object application, line commands, repeatable edit state, and
+    movement updates.
+- `src/modal/engine.ts` stays as top-level input routing and cross-feature
+    coordination.
 
-The architectural boundary remains `ModalUpdate` / `ModalEffect`. Feature modules accept modal state, editor snapshots, options, parsed commands, and diagnostics as inputs. They return modal updates. They do not import Pi adapter APIs, call lifecycle code, mutate terminal state, read settings files, or render TUI output directly.
+The architectural boundary remains `ModalUpdate` / `ModalEffect`. Feature
+modules accept modal state, editor snapshots, options, parsed commands, and
+diagnostics as inputs. They return modal updates. They do not import Pi adapter
+APIs, call lifecycle code, mutate terminal state, read settings files, or render
+TUI output directly.
 
-Keep shared helpers in a small core module rather than letting feature modules import each other casually. That avoids cycles while giving search, Ex, visual, macro, and normal modules common state/effect constructors.
+Keep shared helpers in a small core module rather than letting feature modules
+import each other casually. That avoids cycles while giving search, Ex, visual,
+macro, and normal modules common state/effect constructors.
 
 ## Why This Matters
 
-Modal editors accumulate behavioral coupling quickly. A single key can affect prompt text, cursor placement, registers, visual state, search highlights, dot-repeat, macro recording, transient messages, and Pi shortcut delegation. If all of that lives in one long handler, each new feature increases review cost and regression risk.
+Modal editors accumulate behavioral coupling quickly. A single key can affect
+prompt text, cursor placement, registers, visual state, search highlights,
+dot-repeat, macro recording, transient messages, and Pi shortcut delegation. If
+all of that lives in one long handler, each new feature increases review cost
+and regression risk.
 
 The extracted shape keeps concerns reviewable:
 
@@ -65,18 +97,23 @@ The extracted shape keeps concerns reviewable:
 - adapter side effects remain explicit through `ModalEffect`;
 - Pi/TUI runtime calls stay at the adapter/router boundary;
 - inspect/messages diagnostics stay bounded and prompt-local;
-- future Ex/search/visual work can extend focused modules instead of adding branches to one monolith.
+- future Ex/search/visual work can extend focused modules instead of adding
+    branches to one monolith.
 
-Golden modal effect tests make the refactor safe. They lock existing semantic state/effect behavior before code moves, then continue proving the extracted modules preserve behavior.
+Golden modal effect tests make the refactor safe. They lock existing semantic
+state/effect behavior before code moves, then continue proving the extracted
+modules preserve behavior.
 
 ## When to Apply
 
 - A modal engine or handler owns several unrelated feature families.
-- Feature changes require reading branches for search, Ex, visual mode, macros, registers, marks, and render state together.
+- Feature changes require reading branches for search, Ex, visual mode,
+    macros, registers, marks, and render state together.
 - An effect/update boundary already exists and can be preserved.
 - Runtime adapter APIs must stay out of pure modal logic.
 - Refactor must preserve behavior while adding inspectability or diagnostics.
-- Golden tests can assert state/effect contracts independently of full adapter rendering.
+- Golden tests can assert state/effect contracts independently of full adapter
+    rendering.
 
 ## Examples
 
@@ -123,7 +160,10 @@ export function handleModalInput(...): ModalUpdate {
 }
 ```
 
-Use golden tests around behavior that is easy to break during extraction. `test/modal-effects.test.ts` feeds modal key sequences into the engine, applies edit/restore effects to a local text/cursor model, and asserts normalized state/effect output for:
+Use golden tests around behavior that is easy to break during extraction.
+`test/modal-effects.test.ts` feeds modal key sequences into the engine, applies
+edit/restore effects to a local text/cursor model, and asserts normalized
+state/effect output for:
 
 - prompt search completion, highlights, and repeat;
 - Ex substitution preview/apply;
@@ -133,18 +173,31 @@ Use golden tests around behavior that is easy to break during extraction. `test/
 
 Validation evidence from the completed sprint:
 
-- `bun run format:check`
-- `bun run lint`
-- `bun run check-types`
-- `bun test` — 355 tests passing
-- `openspec validate architecture-runway-sprint-with-inspectability --type change --strict`
+- `npm run lint`
+- `npm run check`
+- `npm test` — 355 tests passing
+- `openspec validate <change> --type change --strict` for
+  `architecture-runway-sprint-with-inspectability`
 - `openspec validate --specs --strict`
-- `openspec status --change "architecture-runway-sprint-with-inspectability"` — apply-ready
+- `openspec status --change "architecture-runway-sprint-with-inspectability"`
+    — apply-ready
 
 ## Related
 
-- `docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md` — predecessor modal/buffer/adapter split. Some responsibility wording may need refresh now that `engine.ts` is a coordinator rather than owner of all modal semantics.
-- `docs/solutions/architecture-patterns/pi-vimmode-finite-ex-line-commands-architecture-2026-06-01.md` — related finite Ex architecture. Its guidance around keeping Ex side effects in `src/modal/engine.ts` should now point to `src/modal/ex-command-line.ts` plus the engine/router boundary.
-- `docs/solutions/architecture-patterns/pi-vimmode-ex-command-line-substitution-architecture-2026-05-28.md` — earlier Ex command-line pattern. New extraction gives Ex lifecycle a focused module.
-- `docs/solutions/architecture-patterns/pi-vimmode-prompt-buffer-operation-api-2026-05-27.md` — boundary rule for keeping text surgery in buffer helpers and modal code at the Vim-intent level.
-- `docs/solutions/design-patterns/pi-vimmode-search-highlighting-render-precedence-2026-05-28.md` — search/render precedence still applies; search lifecycle now lives in `src/modal/search.ts`.
+- `docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md`
+    — predecessor modal/buffer/adapter split. Some responsibility wording may
+    need refresh now that `engine.ts` is a coordinator rather than owner of all
+    modal semantics.
+- `docs/solutions/architecture-patterns/pi-vimmode-finite-ex-line-commands-architecture-2026-06-01.md`
+    — related finite Ex architecture. Its guidance around keeping Ex side
+    effects in `src/modal/engine.ts` should now point to
+    `src/modal/ex-command-line.ts` plus the engine/router boundary.
+- `docs/solutions/architecture-patterns/pi-vimmode-ex-command-line-substitution-architecture-2026-05-28.md`
+    — earlier Ex command-line pattern. New extraction gives Ex lifecycle a
+    focused module.
+- `docs/solutions/architecture-patterns/pi-vimmode-prompt-buffer-operation-api-2026-05-27.md`
+    — boundary rule for keeping text surgery in buffer helpers and modal code at
+    the Vim-intent level.
+- `docs/solutions/design-patterns/pi-vimmode-search-highlighting-render-precedence-2026-05-28.md`
+    — search/render precedence still applies; search lifecycle now lives in
+    `src/modal/search.ts`.

@@ -30,19 +30,31 @@ tags:
 
 ## Context
 
-`pi-vimmode` had grown several popup-backed read-only surfaces: `:help`, `:features`, `:keybindings`, `:actions`, `:keymap`, `:mapcheck`, `:vimdoctor`, `:messages`, and `:vimmode inspect`. They all used the same bounded popup shape and scroll behavior, but the generic popup contract still lived in `src/keybinding-discovery-popup.ts` beside keybinding-specific content builders.
+`pi-vimmode` had grown several popup-backed read-only surfaces: `:help`,
+`:features`, `:keybindings`, `:actions`, `:keymap`, `:mapcheck`, `:vimdoctor`,
+`:messages`, and `:vimmode inspect`. They all used the same bounded popup shape
+and scroll behavior, but the generic popup contract still lived in
+`src/keybinding-discovery-popup.ts` beside keybinding-specific content builders.
 
-That ownership was too shallow. `src/keybinding-discovery-popup.ts` imported inspectability helpers from `src/modal/inspect.ts`, `src/modal/inspect.ts` imported modal types, and `src/modal/types.ts` imported `ReadOnlyPopup` back from keybinding-discovery content. Graphify reported this as:
+That ownership was too shallow. `src/keybinding-discovery-popup.ts` imported
+inspectability helpers from `src/modal/inspect.ts`, `src/modal/inspect.ts`
+imported modal types, and `src/modal/types.ts` imported `ReadOnlyPopup` back
+from keybinding-discovery content. Graphify reported this as:
 
 ```txt
 src/keybinding-discovery-popup.ts -> src/modal/inspect.ts -> src/modal/types.ts -> src/keybinding-discovery-popup.ts
 ```
 
-The fix was not to move more content into the modal layer. The useful seam was smaller: extract the read-only popup data model and pure helpers into a feature-independent module, then leave command/content builders where they already belonged.
+The fix was not to move more content into the modal layer. The useful seam was
+smaller: extract the read-only popup data model and pure helpers into a
+feature-independent module, then leave command/content builders where they
+already belonged.
 
 ## Guidance
 
-Create a shared seam when a UI model becomes generic across several feature producers. The seam should own only the data shape and pure mechanics; feature modules should still own their source-backed content.
+Create a shared seam when a UI model becomes generic across several feature
+producers. The seam should own only the data shape and pure mechanics; feature
+modules should still own their source-backed content.
 
 For read-only popups, the seam became `src/read-only-popup.ts`:
 
@@ -132,7 +144,8 @@ export {
 } from "./read-only-popup.ts";
 ```
 
-Add a narrow import-boundary test instead of a new dependency-cruiser-style tool:
+Add a narrow import-boundary test instead of a new dependency-cruiser-style
+tool:
 
 ```ts
 const consumers = [
@@ -142,17 +155,21 @@ const consumers = [
 ];
 
 for (const path of consumers) {
-  expect(await Bun.file(path).text()).not.toMatch(/keybinding-discovery-popup\.ts/);
+  expect(await readFile(path, "utf8")).not.toMatch(/keybinding-discovery-popup\.ts/);
 }
 
-expect(await Bun.file("src/read-only-popup.ts").text()).not.toMatch(
+expect(await readFile("src/read-only-popup.ts", "utf8")).not.toMatch(
   /modal\/inspect|modal\/types|keybinding-discovery-popup|runtime-help|customization/,
 );
 ```
 
 ## Why This Matters
 
-Feature-specific modules make poor homes for generic contracts. Once modal types, overlay components, adapter effects, runtime help, diagnostics, message history, and inspectability all depend on the same popup shape, importing that shape through keybinding discovery creates misleading ownership and import-cycle risk.
+Feature-specific modules make poor homes for generic contracts. Once modal
+types, overlay components, adapter effects, runtime help, diagnostics, message
+history, and inspectability all depend on the same popup shape, importing that
+shape through keybinding discovery creates misleading ownership and import-cycle
+risk.
 
 The shared seam keeps ownership clear:
 
@@ -164,15 +181,21 @@ This preserves prompt-safe popup behavior while removing the cycle.
 
 ## When to Apply
 
-- A type or helper is used by multiple feature families but lives inside one feature module.
-- Graph or source inspection shows a feature-content module participating in modal/type import cycles.
-- A renderer or adapter imports content builders just to get a shared data shape.
-- Behavior must stay unchanged, so compatibility exports are cheaper than broad renames.
-- The desired guard is an import-direction invariant, not a full dependency analysis framework.
+- A type or helper is used by multiple feature families but lives inside one
+    feature module.
+- Graph or source inspection shows a feature-content module participating in
+    modal/type import cycles.
+- A renderer or adapter imports content builders just to get a shared data
+    shape.
+- Behavior must stay unchanged, so compatibility exports are cheaper than
+    broad renames.
+- The desired guard is an import-direction invariant, not a full dependency
+    analysis framework.
 
 ## Examples
 
-Before extraction, modal types depended on keybinding-discovery content just to name popup state:
+Before extraction, modal types depended on keybinding-discovery content just to
+name popup state:
 
 ```ts
 // src/modal/types.ts
@@ -186,7 +209,8 @@ After extraction, modal types depend on the generic seam:
 import type { ReadOnlyPopup } from "../read-only-popup.ts";
 ```
 
-Before extraction, `keybinding-discovery-popup.ts` mixed generic mechanics with feature content:
+Before extraction, `keybinding-discovery-popup.ts` mixed generic mechanics with
+feature content:
 
 ```ts
 export type ReadOnlyPopup = { /* generic popup state */ };
@@ -205,10 +229,9 @@ src/keybinding-discovery-popup.ts   source-backed popup content builders
 Validation should include both behavior and structure:
 
 ```bash
-bun test
-bun run check-types
-bun run lint
-bun run format:check
+npm test
+npm run check
+npm run lint
 openspec validate <change-id> --strict
 openspec validate --specs --strict
 graphify update .
@@ -223,7 +246,12 @@ After the change, `graphify-out/GRAPH_REPORT.md` reported:
 
 ## Related
 
-- `docs/solutions/design-patterns/pi-vimmode-read-only-help-overlay-ui-2026-06-09.md` — real Pi TUI overlay pattern that this seam now supports.
-- `docs/solutions/architecture-patterns/pi-vimmode-modal-feature-module-extraction-pattern-2026-06-05.md` — broader modal extraction pattern and `ModalEffect` boundary.
-- `docs/solutions/architecture-patterns/pi-vimmode-runtime-help-docs-drift-guard-2026-06-05.md` — source-backed runtime help/docs/spec/test guardrails.
-- `docs/solutions/design-patterns/pi-vimmode-actionable-keybinding-catalog-2026-06-10.md` — keybinding popup content producer that should not own generic popup mechanics.
+- `docs/solutions/design-patterns/pi-vimmode-read-only-help-overlay-ui-2026-06-09.md`
+    — real Pi TUI overlay pattern that this seam now supports.
+- `docs/solutions/architecture-patterns/pi-vimmode-modal-feature-module-extraction-pattern-2026-06-05.md`
+    — broader modal extraction pattern and `ModalEffect` boundary.
+- `docs/solutions/architecture-patterns/pi-vimmode-runtime-help-docs-drift-guard-2026-06-05.md`
+    — source-backed runtime help/docs/spec/test guardrails.
+- `docs/solutions/design-patterns/pi-vimmode-actionable-keybinding-catalog-2026-06-10.md`
+    — keybinding popup content producer that should not own generic popup
+    mechanics.
