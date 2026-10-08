@@ -140,10 +140,6 @@ test("canFastDelegateInsertInput allows only plain insert text with no side stat
     { mode: "insert", pendingMacro: "record" },
     { mode: "insert", pendingRegister: "awaitingSlot" },
     { mode: "insert", pendingMark: { kind: "set" } },
-    {
-      mode: "insert",
-      pendingWorkbench: { kind: "search", prefix: "/", text: "", direction: "forward" },
-    },
     { mode: "insert", pendingSearch: { query: "", direction: "forward" } },
     { mode: "insert", pendingEx: { command: "", sourceMode: "normal" } },
     { mode: "insert", pendingInsertEscape: "f" },

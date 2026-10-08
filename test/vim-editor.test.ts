@@ -399,7 +399,6 @@ test("reconfigure preserves durable state and clears transient grammar", () => {
     pendingEx: { command: "stale", sourceMode: "visual" },
     pendingInsertEscape: "j",
     pendingInsertEscapeInputs: ["j"],
-    pendingWorkbench: { kind: "ex", prefix: ":", text: "stale", sourceMode: "visual" },
     pendingEasymotion: {
       kind: "highlight",
       targets: [{ label: "a", line: 0, character: 0 }],
@@ -447,7 +446,6 @@ test("reconfigure preserves durable state and clears transient grammar", () => {
     "pendingEx",
     "pendingInsertEscape",
     "pendingInsertEscapeInputs",
-    "pendingWorkbench",
     "pendingEasymotion",
   ] as const) {
     expect(internal.modalState[field]).toBeUndefined();

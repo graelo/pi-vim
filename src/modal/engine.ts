@@ -239,7 +239,6 @@ export function canFastDelegateInsertInput(
     !state.pendingMacro &&
     !state.pendingRegister &&
     !state.pendingMark &&
-    !state.pendingWorkbench &&
     !state.pendingSearch &&
     !state.pendingEx &&
     !state.exMessage &&

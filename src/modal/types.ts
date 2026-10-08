@@ -16,7 +16,6 @@ import type {
   VimRegister,
   VimTextObject,
 } from "../types.ts";
-import type { PendingWorkbench } from "./workbench.ts";
 
 export type ModalOptions = ResolvedVimEditorOptions;
 
@@ -187,7 +186,6 @@ export type ModalState = {
   marks?: MarkStore;
   pendingMark?: PendingMarkTarget;
   pendingSurround?: PendingSurround;
-  pendingWorkbench?: PendingWorkbench;
   pendingSearch?: PendingSearchTarget;
   pendingEx?: PendingExCommand;
   pendingInsertEscape?: string;
