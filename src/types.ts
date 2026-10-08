@@ -113,6 +113,7 @@ export type PromptStructureTarget =
 
 export type VimTextObjectTarget =
   | "word"
+  | "bigWord"
   | "singleQuote"
   | "doubleQuote"
   | "paren"

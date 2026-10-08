@@ -183,9 +183,10 @@ was.
 #### Scenario: Quote and punctuation pairs follow Vim quote pairing
 
 - **WHEN** the target is a quote or other punctuation character
-- **THEN** occurrences of that character on the cursor line pair up from the
-    start of the line, the pair the cursor is on or between is used, and
-    otherwise the next pair after the cursor is used
+- **THEN** the pair is found as Vim's quote text objects find it: with the
+    cursor on that character, occurrences pair up from the start of the line;
+    otherwise the nearest occurrence before the cursor opens the pair, or the
+    first pair after the cursor is used when there is none before
 
 #### Scenario: Cursor on the opening quote
 

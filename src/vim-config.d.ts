@@ -119,6 +119,7 @@ export type VimInsertAction =
 export type VimTextObjectKind = "inner" | "around";
 export type VimTextObjectTarget =
   | "word"
+  | "bigWord"
   | "singleQuote"
   | "doubleQuote"
   | "paren"

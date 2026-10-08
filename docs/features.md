@@ -108,7 +108,8 @@ help pager, or broad quickref parity.
 
 ### Escape and reset behavior
 
-- Insert + inactive autocomplete: `Esc` enters normal mode.
+- Insert + inactive autocomplete: `Esc` enters normal mode and, as in Vim,
+    moves the cursor one character left unless it is at the start of the line.
 - Insert + active autocomplete: `Esc` delegates to Pi so autocomplete can close.
 - Optional `piVim.keymap.escape` aliases such as `<D-j>` or `<C-j>` enter
     normal mode from insert mode when autocomplete is inactive, cancel visual
@@ -375,8 +376,8 @@ also record dot-repeat. Case operators edit text only: they do not write unnamed
 or named registers and do not enter insert mode. Successful `d`/`c`/`y`
 character-search targets update `;` and `,` repeat state, and pending operators
 can use that state with `d;`, `c,`, and matching configured repeat keys. Missing
-targets and adjacent `t`/`T` empty ranges are safe no-ops that clear the pending
-operator without changing text, cursor, registers, or repeat state.
+targets and an adjacent `T` (an empty range) are safe no-ops that clear the
+pending operator without changing text, cursor, registers, or repeat state.
 
 Operator targets are smaller than Vim's full grammar. Character-search operator
 targets are current-line only and use configured semantic `findCharForward`,
@@ -396,7 +397,8 @@ Text objects work after `d`, `c`, `y`, the case operators, and `ys`.
 
 | Object                    | Meaning                                     |
 | ------------------------- | ------------------------------------------- |
-| `iw` / `aw`               | inner/around whitespace-delimited word      |
+| `iw` / `aw`               | inner/around word (Vim word classes)        |
+| `iW` / `aW`               | inner/around whitespace-delimited WORD      |
 | `i'` / `a'`               | inside/around single quotes on current line |
 | `i"` / `a"`               | inside/around double quotes on current line |
 | `i(` / `a(` / `i)` / `a)` | inside/around parentheses                   |
@@ -408,6 +410,15 @@ Text objects work after `d`, `c`, `y`, the case operators, and `ys`.
 | `it` / `at`               | inner/around XML-ish tag                    |
 | `ie` / `ae`               | inner/around pasted error block             |
 | `ip` / `ap`               | inner/around blank-line paragraph           |
+
+Word objects follow Vim: `iw` selects a run of keyword characters (`A-Z`,
+`a-z`, `0-9`, `_`), a run of other non-blank characters, or a run of blanks;
+`iW` splits on blanks only. `aw`/`aW` add trailing blanks, or leading blanks
+when there are none trailing. Quote objects pair quotes as Vim does: on a quote,
+quotes pair up from the start of the line; otherwise the nearest quote before
+the cursor opens the string, or the first string after the cursor is used.
+Backslash-escaped quotes are skipped, and `a"`/`a'` add surrounding blanks like
+`aw`. Bracket objects also work with the cursor on either bracket.
 
 Examples:
 
@@ -485,9 +496,8 @@ Surround characters:
     find the nearest enclosing pair, across lines and nested pairs. An opening
     character also removes the whitespace just inside the pair. A count selects
     an outer pair.
-- Quote and punctuation targets pair occurrences on the cursor line from the
-    start of the line, as Vim does for quotes: the pair the cursor is on or
-    inside, otherwise the next pair after it.
+- Quote and punctuation targets find their pair on the cursor line the same
+    way as the quote text objects (see Text objects).
 
 Behavior:
 
@@ -537,10 +547,11 @@ f_  -> first underscore
 T_  -> character after previous underscore
 ```
 
-Search misses are safe no-ops. After operators, `f`/`F` include the matched
-character in the operated range; `t`/`T` exclude it. Counts target later/earlier
-matches, e.g. `d2f,` deletes through the second next comma. Adjacent `t`/`T`
-matches are treated as empty operator ranges and no-op safely.
+Search misses are safe no-ops. Operator ranges follow Vim: `f` and `t` are
+inclusive of the cursor character, `F` and `T` exclude it. `f`/`F` include the
+matched character; `t`/`T` exclude it. So `dt,` right before a comma deletes the
+character under the cursor, and `dF:` keeps it. Counts target later/earlier
+matches, e.g. `d2f,` deletes through the second next comma.
 
 <!-- runtime-help:search -->
 
@@ -1017,6 +1028,8 @@ Examples:
 "ap    paste register a
 "Ayy   append current line to register a
 "bdw   delete word into register b
+"adiw  delete inner word into register a
+"a2yy  yank two lines into register a
 "_dd   delete current line without clobbering unnamed register
 "+yy   yank current line to unnamed register, + mirror, and host clipboard
 "*dw   delete word to unnamed register, * mirror, and host clipboard

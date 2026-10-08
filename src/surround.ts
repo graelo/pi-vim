@@ -3,7 +3,7 @@ import type { EditResult, Position } from "./types.ts";
 import {
   type DelimitedOffsetRange,
   enclosingBracketRange,
-  enclosingCharRange,
+  quotePairRange,
   type SurroundRange,
 } from "./buffer.ts";
 
@@ -91,7 +91,7 @@ function targetRange(
 ): DelimitedOffsetRange | undefined {
   if (target.kind === "bracket")
     return enclosingBracketRange(text, cursor, target.open, target.close, count);
-  return enclosingCharRange(text, cursor, target.char);
+  return quotePairRange(text, cursor, target.char);
 }
 
 function innerText(text: string, range: DelimitedOffsetRange, target: SurroundDeleteTarget) {

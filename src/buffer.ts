@@ -1753,17 +1753,16 @@ function charSearchOperatorOffsetRange(
   );
   if (found === undefined) return undefined;
 
-  if (kind === "tillForward" && found === pos.col + 1) return undefined;
-  if (kind === "tillBackward" && found === pos.col - 1) return undefined;
-  const cursorColEnd = Math.min(pos.col + 1, bounds.line.length);
+  // Vim: `f`/`t` are inclusive (`dt,` before an adjacent `,` removes the cursor
+  // character); `F`/`T` are exclusive and keep it.
   const range =
     kind === "findForward"
       ? { start: pos.col, end: found + 1 }
       : kind === "tillForward"
         ? { start: pos.col, end: found }
         : kind === "findBackward"
-          ? { start: found, end: cursorColEnd }
-          : { start: found + 1, end: cursorColEnd };
+          ? { start: found, end: pos.col }
+          : { start: found + 1, end: pos.col };
   if (range.end <= range.start) return undefined;
   return { start: bounds.start + range.start, end: bounds.start + range.end, cursor: pos };
 }
@@ -2259,39 +2258,6 @@ export function pasteRegisterBefore(
   };
 }
 
-function wordRangeAtOffset(
-  text: string,
-  offset: number,
-): { start: number; end: number } | undefined {
-  const clamped = Math.max(0, Math.min(offset, text.length));
-  let index = clamped;
-  if (index >= text.length) index = text.length - 1;
-  if (index < 0) return undefined;
-  if (isWhitespace(text[index])) {
-    if (index > 0 && !isWhitespace(text[index - 1])) index--;
-    else return undefined;
-  }
-  let start = index;
-  while (start > 0 && !isWhitespace(text[start - 1])) start--;
-  let end = index + 1;
-  while (end < text.length && !isWhitespace(text[end])) end++;
-  return start < end ? { start, end } : undefined;
-}
-
-function quoteRangeAtOffset(
-  text: string,
-  cursor: Position,
-  quote: string,
-): { start: number; end: number } | undefined {
-  const current = positionToOffset(text, cursor);
-  const bounds = lineBoundsForPosition(text, cursor);
-  const before = text.lastIndexOf(quote, Math.max(bounds.start, current - 1));
-  if (before < bounds.start) return undefined;
-  const after = text.indexOf(quote, current);
-  if (after < 0 || after > bounds.end || after <= before) return undefined;
-  return { start: before, end: after + 1 };
-}
-
 function bracketStartOffset(
   text: string,
   current: number,
@@ -2320,18 +2286,23 @@ function bracketEndOffset(
   return undefined;
 }
 
-function bracketRangeAtOffset(
-  text: string,
-  cursor: Position,
-  open: string,
-  close: string,
-): { start: number; end: number } | undefined {
-  const start = bracketStartOffset(text, positionToOffset(text, cursor), open, close);
-  const end = start === undefined ? undefined : bracketEndOffset(text, start, open, close);
-  return start === undefined || end === undefined ? undefined : { start, end };
-}
 type OffsetRange = { start: number; end: number };
 
+/** Character class of a word run; line breaks end every run. */
+function wordRunKind(model: WordBoundaryModel, char: string | undefined) {
+  return char === undefined || char === "\n" ? undefined : boundaryKind(model, char);
+}
+
+function runRange(text: string, index: number, model: WordBoundaryModel): OffsetRange {
+  const kind = wordRunKind(model, text[index]);
+  let start = index;
+  while (start > 0 && wordRunKind(model, text[start - 1]) === kind) start--;
+  let end = index + 1;
+  while (end < text.length && wordRunKind(model, text[end]) === kind) end++;
+  return { start, end };
+}
+
+/** Add blanks after `range`, or before it when there are none after (Vim `aw`, `a"`). */
 function aroundWordRange(text: string, range: OffsetRange): OffsetRange {
   let end = range.end;
   while (end < text.length && isWhitespace(text[end]) && text[end] !== "\n") end++;
@@ -2341,10 +2312,63 @@ function aroundWordRange(text: string, range: OffsetRange): OffsetRange {
   return { start, end: range.end };
 }
 
+/** Vim `iw`/`aw` (small model) and `iW`/`aW` (big model) at `cursor`. */
+function wordTextObjectOffsets(
+  text: string,
+  cursor: Position,
+  model: WordBoundaryModel,
+  kind: VimTextObjectKind,
+): OffsetRange | undefined {
+  let index = positionToOffset(text, cursor);
+  if (wordRunKind(model, text[index]) === undefined) {
+    if (index > 0 && wordRunKind(model, text[index - 1]) !== undefined) index--;
+    else return undefined;
+  }
+  const run = runRange(text, index, model);
+  if (kind === "inner") return run;
+  if (wordRunKind(model, text[index]) !== "whitespace") return aroundWordRange(text, run);
+  return wordRunKind(model, text[run.end]) === undefined
+    ? run
+    : { start: run.start, end: runRange(text, run.end, model).end };
+}
+
+/**
+ * Quote pair around the cursor, as Vim's quote text objects find it: a cursor
+ * on a quote pairs quotes from the start of the line; otherwise the nearest
+ * quote before the cursor opens the string, or the first string after the
+ * cursor is used when there is none before. Backslash-escaped quotes are
+ * skipped.
+ */
+export function quotePairRange(
+  text: string,
+  cursor: Position,
+  quote: string,
+): DelimitedOffsetRange | undefined {
+  const bounds = lineBoundsForPosition(text, cursor);
+  const col = positionToOffset(text, cursor) - bounds.start;
+  const quotes: number[] = [];
+  for (let index = 0; index < bounds.line.length; index++) {
+    if (bounds.line[index] === "\\" && quote !== "\\") index++;
+    else if (bounds.line[index] === quote) quotes.push(index);
+  }
+  const at = quotes.indexOf(col);
+  let pair: [number | undefined, number | undefined];
+  if (at >= 0) pair = at % 2 === 0 ? [col, quotes[at + 1]] : [quotes[at - 1], col];
+  else {
+    const before = quotes.filter((index) => index < col).at(-1);
+    const after = quotes.filter((index) => index > (before ?? col));
+    pair = before === undefined ? [after[0], after[1]] : [before, after[0]];
+  }
+  const [open, close] = pair;
+  if (open === undefined || close === undefined) return undefined;
+  return { start: bounds.start + open, end: bounds.start + close + 1 };
+}
+
 function delimiterRange(
   text: string,
   cursor: Position,
   target: VimTextObject["target"],
+  kind: VimTextObjectKind,
 ): OffsetRange | undefined {
   const delimiters: Partial<Record<VimTextObject["target"], [string, string]>> = {
     singleQuote: ["'", "'"],
@@ -2355,9 +2379,11 @@ function delimiterRange(
   };
   const pair = delimiters[target];
   if (!pair) return undefined;
-  return pair[0] === pair[1]
-    ? quoteRangeAtOffset(text, cursor, pair[0])
-    : bracketRangeAtOffset(text, cursor, pair[0], pair[1]);
+  if (pair[0] === pair[1]) {
+    const range = quotePairRange(text, cursor, pair[0]);
+    return range && kind === "around" ? aroundWordRange(text, range) : range;
+  }
+  return enclosingBracketRange(text, cursor, pair[0], pair[1]);
 }
 
 function baseTextObjectRange(
@@ -2366,11 +2392,11 @@ function baseTextObjectRange(
   textObject: VimTextObject,
   promptStructures?: ResolvedVimPromptStructures,
 ): OffsetRange | undefined {
-  if (textObject.target === "word") {
-    const range = wordRangeAtOffset(text, positionToOffset(text, cursor));
-    return range && textObject.kind === "around" ? aroundWordRange(text, range) : range;
+  if (textObject.target === "word" || textObject.target === "bigWord") {
+    const model = textObject.target === "word" ? "small" : "big";
+    return wordTextObjectOffsets(text, cursor, model, textObject.kind);
   }
-  const delimiter = delimiterRange(text, cursor, textObject.target);
+  const delimiter = delimiterRange(text, cursor, textObject.target, textObject.kind);
   if (delimiter) return delimiter;
   if (textObject.target === "paragraph")
     return paragraphTextObjectOffsets(text, cursor, textObject.kind);
@@ -2398,9 +2424,16 @@ export function textObjectRange(
 }
 
 function isPromptStructureTarget(target: VimTextObject["target"]): target is PromptStructureTarget {
-  return !["word", "singleQuote", "doubleQuote", "paren", "bracket", "brace", "paragraph"].includes(
-    target,
-  );
+  return ![
+    "word",
+    "bigWord",
+    "singleQuote",
+    "doubleQuote",
+    "paren",
+    "bracket",
+    "brace",
+    "paragraph",
+  ].includes(target);
 }
 
 function blankRunEnd(lines: string[], start: number): number {
@@ -2574,29 +2607,6 @@ export function enclosingBracketRange(
     current = start - 1;
   }
   return range;
-}
-
-/**
- * Pair of `char` on the cursor line, as Vim pairs quotes: occurrences pair up
- * from the start of the line, a cursor on or between a pair selects it, and
- * otherwise the next pair after the cursor is used.
- */
-export function enclosingCharRange(
-  text: string,
-  cursor: Position,
-  char: string,
-): DelimitedOffsetRange | undefined {
-  const bounds = lineBoundsForPosition(text, cursor);
-  const col = positionToOffset(text, cursor) - bounds.start;
-  const columns: number[] = [];
-  for (let index = 0; index < bounds.line.length; index++)
-    if (bounds.line[index] === char) columns.push(index);
-  for (let index = 0; index + 1 < columns.length; index += 2) {
-    const open = columns[index]!;
-    const close = columns[index + 1]!;
-    if (col <= close) return { start: bounds.start + open, end: bounds.start + close + 1 };
-  }
-  return undefined;
 }
 
 export type SurroundTargetSpec =

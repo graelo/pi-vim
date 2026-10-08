@@ -356,6 +356,17 @@ function handleInsertKey(
     ]);
 }
 
+/** Leave insert mode; like Vim, the cursor steps back one character unless at line start. */
+function leaveInsertUpdate(
+  state: ModalState,
+  snapshot: EditorSnapshot,
+  options: ModalOptions,
+): ModalUpdate {
+  const stepBack: ModalEffect[] =
+    snapshot.cursor.col > 0 ? [{ type: "adapterCommand", command: "left" }] : [];
+  return modeUpdate(clearPendingInsertEscape(state), "normal", options, stepBack);
+}
+
 function handleInsertInput(
   state: ModalState,
   snapshot: EditorSnapshot,
@@ -366,11 +377,10 @@ function handleInsertInput(
   if (matchesKey(data, "escape"))
     return snapshot.isAutocompleteOpen
       ? delegateBufferedInsertEscape(state, data)
-      : modeUpdate(clearPendingInsertEscape(state), "normal", options);
+      : leaveInsertUpdate(state, snapshot, options);
   if (snapshot.isAutocompleteOpen) return delegateBufferedInsertEscape(state, data);
   const match = matchInsertEscapeInput(state, data, escapeAliasesForScope(options, "insert"));
-  if (match.kind === "matched")
-    return modeUpdate(clearPendingInsertEscape(state), "normal", options);
+  if (match.kind === "matched") return leaveInsertUpdate(state, snapshot, options);
   if (match.kind === "pending")
     return withEffects(pendingInsertEscape(state, match.sequence, data), []);
   if (match.kind === "mismatched") return delegateBufferedInsertEscape(state, data);
@@ -568,13 +578,11 @@ function handleNormalMacroOrMark(
   return undefined;
 }
 
+/** A register prefix survives counts and operator targets; the resolved command decides. */
 function applyNormalPendingResolution(
   state: ModalState,
-  keymap: ResolvedVimKeymap,
   result: Extract<SemanticCommandResult, { type: "pending" }>,
 ): ModalUpdate {
-  if (state.pendingRegister && !operatorActionForSequence(result.pending, keymap))
-    return invalidate(clearPending(state));
   return invalidate({ ...state, pending: result.pending });
 }
 
@@ -703,7 +711,7 @@ function applyNormalResolution(
 ): ModalUpdate {
   const surround = surroundStartUpdate(state, result, displayMappingSequence(typed));
   if (surround) return surround;
-  if (result.type === "pending") return applyNormalPendingResolution(state, keymap, result);
+  if (result.type === "pending") return applyNormalPendingResolution(state, result);
   if (result.type === "motion")
     return state.pendingRegister
       ? invalidate(clearPending(state))

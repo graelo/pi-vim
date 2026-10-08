@@ -3329,10 +3329,10 @@ test("normal operators support character search targets", () => {
   expect(counted.state.register).toEqual({ type: "char", text: "a,b," });
 
   const changed = applyModalKeys({ mode: "normal" }, "a:b:c", p(0, 2), ["c", "F", ":"]);
-  expect(changed.text).toBe("a:c");
+  expect(changed.text).toBe("ab:c");
   expect(changed.cursor).toEqual(p(0, 1));
   expect(changed.state.mode).toBe("insert");
-  expect(changed.state.register).toEqual({ type: "char", text: ":b" });
+  expect(changed.state.register).toEqual({ type: "char", text: ":" });
 
   const changedTill = applyModalKeys({ mode: "normal" }, "foo,bar", p(0, 0), ["c", "t", ","]);
   expect(changedTill.text).toBe(",bar");
@@ -3343,17 +3343,21 @@ test("normal operators support character search targets", () => {
   const yanked = applyModalKeys({ mode: "normal" }, "a[b]c", p(0, 3), ["y", "T", "["]);
   expect(yanked.text).toBe("a[b]c");
   expect(yanked.cursor).toEqual(p(0, 3));
-  expect(yanked.state.register).toEqual({ type: "char", text: "b]" });
+  expect(yanked.state.register).toEqual({ type: "char", text: "b" });
   expect(yanked.state.lastRepeatableChange).toBeUndefined();
 
   const noOp = applyModalKeys(
     { mode: "normal", register: { type: "char", text: "old" } },
     "a:b",
-    p(0, 0),
-    ["d", "t", ":"],
+    p(0, 2),
+    ["d", "T", ":"],
   );
   expect(noOp.text).toBe("a:b");
-  expect(noOp.cursor).toEqual(p(0, 0));
+  expect(noOp.cursor).toEqual(p(0, 2));
+
+  const adjacentTill = applyModalKeys({ mode: "normal" }, "ab,c", p(0, 1), ["d", "t", ","]);
+  expect(adjacentTill.text).toBe("a,c");
+  expect(adjacentTill.state.register).toEqual({ type: "char", text: "b" });
   expect(noOp.state.register).toEqual({ type: "char", text: "old" });
 });
 
@@ -3371,9 +3375,9 @@ test("normal operators support repeated character search targets", () => {
   expect(deleted.state.register).toEqual({ type: "char", text: ":b:" });
 
   const reversed = applyModalKeys(searched.state, searched.text, p(0, 3), ["c", ","]);
-  expect(reversed.text).toBe("ac");
+  expect(reversed.text).toBe("a:c");
   expect(reversed.state.mode).toBe("insert");
-  expect(reversed.state.register).toEqual({ type: "char", text: ":b:" });
+  expect(reversed.state.register).toEqual({ type: "char", text: ":b" });
   expect(reversed.state.lastCharSearch).toEqual({ command: "findCharForward", target: ":" });
 
   const tillSearched = applyModalKeys({ mode: "normal" }, "banana apple alpha", p(0, 0), [
@@ -3457,7 +3461,7 @@ test("normal operators support WORD and previous-end motions", () => {
   expect(previousEnd.text).toBe("alpha beta.gamm/tmp/file");
   expect(previousEnd.state.register).toEqual({ type: "char", text: "a " });
 
-  const repeatedChange = applyModalKeys(changedEnd.state, "run next-token", p(0, 4), ["\x1b", "."]);
+  const repeatedChange = applyModalKeys(changedEnd.state, "run next-token", p(0, 5), ["\x1b", "."]);
   expect(repeatedChange.text).toBe("run ");
   expect(repeatedChange.state.mode).toBe("insert");
   expect(repeatedChange.state.register).toEqual({ type: "char", text: "next-token" });
@@ -4297,6 +4301,40 @@ test("normal named register prefix writes deletes and operator yanks", () => {
   );
   expect(yankedWord.state.namedRegisters?.c).toEqual({ type: "char", text: "abc " });
   expect(yankedWord.effects).toEqual([{ type: "invalidate" }]);
+});
+
+test("register prefixes reach counts and operator targets", () => {
+  const named = (state: { namedRegisters?: Record<string, unknown> }) => state.namedRegisters?.a;
+  const textObject = applyModalKeys({ mode: "normal" }, "alpha beta", p(0, 7), [
+    '"',
+    "a",
+    "d",
+    "i",
+    "w",
+  ]);
+  expect(textObject.text).toBe("alpha ");
+  expect(named(textObject.state)).toEqual({ type: "char", text: "beta" });
+
+  const counted = applyModalKeys({ mode: "normal" }, "one\ntwo\nthree", p(0, 0), [
+    '"',
+    "a",
+    "2",
+    "y",
+    "y",
+  ]);
+  expect(named(counted.state)).toEqual({ type: "line", text: "one\ntwo" });
+
+  const charSearch = applyModalKeys({ mode: "normal" }, "ab,c", p(0, 0), ['"', "a", "d", "t", ","]);
+  expect(charSearch.text).toBe(",c");
+  expect(named(charSearch.state)).toEqual({ type: "char", text: "ab" });
+
+  const countedChar = applyModalKeys({ mode: "normal" }, "abc", p(0, 0), ['"', "a", "2", "x"]);
+  expect(countedChar.text).toBe("c");
+  expect(named(countedChar.state)).toEqual({ type: "char", text: "ab" });
+
+  const motion = applyModalKeys({ mode: "normal" }, "one\ntwo", p(0, 0), ['"', "a", "j"]);
+  expect(motion.cursor).toEqual(p(0, 0));
+  expect(motion.state.pendingRegister).toBeUndefined();
 });
 
 test("named register paste reads named target and leaves unnamed paste unchanged", () => {

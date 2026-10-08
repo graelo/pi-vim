@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   enclosingBracketRange,
-  enclosingCharRange,
+  quotePairRange,
   type SurroundTargetSpec,
   surroundRangeFor,
 } from "../src/buffer.ts";
@@ -56,16 +56,18 @@ describe("enclosing pair finders", () => {
 
   test("same-character pairs follow Vim quote pairing on the cursor line", () => {
     const text = 'say "hi" and "yo"';
-    expect(enclosingCharRange(text, p(0, 5), '"')).toEqual({ start: 4, end: 8 });
-    expect(enclosingCharRange(text, p(0, 4), '"')).toEqual({ start: 4, end: 8 });
-    expect(enclosingCharRange(text, p(0, 7), '"')).toEqual({ start: 4, end: 8 });
-    expect(enclosingCharRange(text, p(0, 0), '"')).toEqual({ start: 4, end: 8 });
-    expect(enclosingCharRange(text, p(0, 10), '"')).toEqual({ start: 13, end: 17 });
-    expect(enclosingCharRange(text, p(0, 16), '"')).toEqual({ start: 13, end: 17 });
-    expect(enclosingCharRange('"a\nb"', p(1, 0), '"')).toBeUndefined();
-    expect(enclosingCharRange("a *b* c", p(0, 3), "*")).toEqual({ start: 2, end: 5 });
-    expect(enclosingCharRange("a *b* c", p(0, 4), "*")).toEqual({ start: 2, end: 5 });
-    expect(enclosingCharRange("a *b\nc*", p(0, 3), "*")).toBeUndefined();
+    expect(quotePairRange(text, p(0, 5), '"')).toEqual({ start: 4, end: 8 });
+    expect(quotePairRange(text, p(0, 4), '"')).toEqual({ start: 4, end: 8 });
+    expect(quotePairRange(text, p(0, 7), '"')).toEqual({ start: 4, end: 8 });
+    expect(quotePairRange(text, p(0, 0), '"')).toEqual({ start: 4, end: 8 });
+    expect(quotePairRange(text, p(0, 10), '"')).toEqual({ start: 7, end: 14 });
+    expect(quotePairRange(text, p(0, 13), '"')).toEqual({ start: 13, end: 17 });
+    expect(quotePairRange(text, p(0, 16), '"')).toEqual({ start: 13, end: 17 });
+    expect(quotePairRange('"a\nb"', p(1, 0), '"')).toBeUndefined();
+    expect(quotePairRange('"a\\"b"', p(0, 1), '"')).toEqual({ start: 0, end: 6 });
+    expect(quotePairRange("a *b* c", p(0, 3), "*")).toEqual({ start: 2, end: 5 });
+    expect(quotePairRange("a *b* c", p(0, 4), "*")).toEqual({ start: 2, end: 5 });
+    expect(quotePairRange("a *b\nc*", p(0, 3), "*")).toBeUndefined();
   });
 });
 

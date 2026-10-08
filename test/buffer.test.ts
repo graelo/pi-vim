@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
 
+import type { VimTextObject } from "../src/types.ts";
+
 import {
   adjustNumberAtOrAfterCursor,
   bufferEndPosition,
@@ -944,24 +946,30 @@ describe("roadmap buffer helpers", () => {
       changed: true,
     });
     expect(deleteByCharSearch("a:b:c", p(0, 2), "findBackward", ":")).toMatchObject({
-      text: "a:c",
+      text: "ab:c",
       cursor: p(0, 1),
-      register: { type: "char", text: ":b" },
+      register: { type: "char", text: ":" },
       changed: true,
     });
     expect(yankByCharSearch("a[b]c", p(0, 3), "tillBackward", "[")).toEqual({
       type: "char",
-      text: "b]",
+      text: "b",
+    });
+    expect(deleteByCharSearch("a:b", p(0, 0), "tillForward", ":")).toMatchObject({
+      text: ":b",
+      cursor: p(0, 0),
+      register: { type: "char", text: "a" },
+      changed: true,
     });
   });
 
   test("character search operator ranges no-op safely", () => {
-    expect(deleteByCharSearch("a:b", p(0, 0), "tillForward", ":")).toMatchObject({
+    expect(deleteByCharSearch("a:b", p(0, 2), "tillBackward", ":")).toMatchObject({
       text: "a:b",
-      cursor: p(0, 0),
+      cursor: p(0, 2),
       changed: false,
     });
-    expect(yankByCharSearch("a:b", p(0, 0), "tillForward", ":")).toBeUndefined();
+    expect(yankByCharSearch("a:b", p(0, 2), "tillBackward", ":")).toBeUndefined();
     expect(deleteByCharSearch("a:b\n:c", p(0, 2), "findForward", ":")).toMatchObject({
       text: "a:b\n:c",
       cursor: p(0, 2),
@@ -993,6 +1001,36 @@ describe("roadmap buffer helpers", () => {
       type: "char",
       text: "(one)",
     });
+  });
+
+  test("word text objects follow Vim word classes", () => {
+    const yankWord = (text: string, col: number, kind: "inner" | "around", target = "word") =>
+      yankTextObject(text, p(0, col), { kind, target } as VimTextObject)?.text;
+    expect(yankWord('say "world"', 5, "inner")).toBe("world");
+    expect(yankWord('say "world"', 4, "inner")).toBe('"');
+    expect(yankWord("a   b", 2, "inner")).toBe("   ");
+    expect(yankWord("a   b", 2, "around")).toBe("   b");
+    expect(yankWord("foo.bar baz", 1, "around")).toBe("foo");
+    expect(yankWord("foo bar", 5, "around")).toBe(" bar");
+    expect(yankWord("one\ntwo", 1, "inner")).toBe("one");
+    expect(yankWord('say "world"', 5, "inner", "bigWord")).toBe('"world"');
+    expect(yankWord('say "world" x', 5, "around", "bigWord")).toBe('"world" ');
+    expect(yankWord("abc", 3, "inner")).toBe("abc");
+  });
+
+  test("quote and bracket text objects follow Vim pairing", () => {
+    const yankObject = (text: string, col: number, kind: "inner" | "around", target: string) =>
+      yankTextObject(text, p(0, col), { kind, target } as VimTextObject)?.text;
+    expect(yankObject('x "hi" y', 2, "inner", "doubleQuote")).toBe("hi");
+    expect(yankObject('x "hi" y', 5, "inner", "doubleQuote")).toBe("hi");
+    expect(yankObject('say "hi"', 0, "inner", "doubleQuote")).toBe("hi");
+    expect(yankObject('"a" x "b"', 4, "inner", "doubleQuote")).toBe(" x ");
+    expect(yankObject('"a\\"b"', 1, "inner", "doubleQuote")).toBe('a\\"b');
+    expect(yankObject('x "hi" y', 3, "around", "doubleQuote")).toBe('"hi" ');
+    expect(yankObject('x "hi"', 3, "around", "doubleQuote")).toBe(' "hi"');
+    expect(yankObject("say 'hi'", 0, "inner", "doubleQuote")).toBeUndefined();
+    expect(yankObject("f(a) x", 3, "inner", "paren")).toBe("a");
+    expect(yankObject("f(a) x", 1, "around", "paren")).toBe("(a)");
   });
 
   test("resolves prompt-native text objects through buffer operations", () => {

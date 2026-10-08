@@ -18,9 +18,24 @@ editor behavior is unchanged from 0.9.0.
   not). Keys are configurable under `piVim.keymap.operators.surround` and
   `piVim.keymap.commands`. See the Surround section of `docs/features.md`.
 - `guu`, `gUU`, and `g~~` line forms, next to `gugu`, `gUgU`, and `g~g~`.
+- `iW` and `aW` text objects for whitespace-delimited WORDs (target
+  `bigWord`, default `W`).
 
 ### Changed
 
+- Editing now follows Vim in these cases:
+  - leaving insert mode moves the cursor one character left, unless it is at
+    the start of the line;
+  - `iw`/`aw` use Vim word classes, so `iw` stops at punctuation (use `iW` for
+    the previous whitespace-delimited behavior);
+  - quote text objects pair quotes as Vim does, so `ci"` works with the cursor
+    on a quote or before the first string, and skip backslash-escaped quotes;
+    `a"` and `a'` include surrounding blanks;
+  - bracket text objects work with the cursor on the closing bracket;
+  - `dt,` right before a comma deletes the character under the cursor, and
+    `F`/`T` operator targets no longer include it;
+  - a register prefix works before counts, text objects, and character
+    searches (`"adiw`, `"a2yy`, `"adt,`).
 - Published as `@graelo/pi-vim`. Install with
   `pi install npm:@graelo/pi-vim`, and update the JSDoc import of trusted
   JavaScript config to `./npm/node_modules/@graelo/pi-vim/config`.

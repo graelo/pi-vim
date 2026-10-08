@@ -92,6 +92,7 @@ export const KEYMAP_TEXT_OBJECT_KIND_DESCRIPTORS = {
 
 export const KEYMAP_TEXT_OBJECT_TARGET_DESCRIPTORS = {
   word: { defaults: ["w"] },
+  bigWord: { defaults: ["W"] },
   singleQuote: { defaults: ["'"] },
   doubleQuote: { defaults: ['"'] },
   paren: { defaults: ["(", ")"] },

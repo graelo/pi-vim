@@ -592,6 +592,33 @@ test("insert escape stays on modal path and exits insert mode", () => {
   expectEditorState(editor, { text: "a", mode: "normal" });
 });
 
+test("leaving insert mode steps the cursor back like Vim", () => {
+  const { editor } = createEditor();
+  editor.setText("hello");
+  editor.handleInput("\x1b");
+  typeKeys(editor, ["A", "!", "\x1b"]);
+  expectEditorState(editor, { text: "hello!", cursor: { line: 0, col: 5 }, mode: "normal" });
+
+  typeKeys(editor, ["0", "i", "\x1b"]);
+  expectEditorState(editor, { text: "hello!", cursor: { line: 0, col: 0 }, mode: "normal" });
+
+  editor.setText("a😀");
+  typeKeys(editor, ["A", "\x1b"]);
+  expectEditorState(editor, { text: "a😀", cursor: { line: 0, col: 1 }, mode: "normal" });
+
+  typeKeys(editor, ["d", "d", "i"]);
+  for (const char of "word") editor.handleInput(char);
+  typeKeys(editor, ["\x1b", "x"]);
+  expectEditorState(editor, { text: "wor", mode: "normal" });
+});
+
+test("insert escape alias steps the cursor back", () => {
+  const options = resolveVimOptions({ piVim: { keymap: { escape: ["<D-j>"] } } }).options;
+  const { editor } = createEditor(options);
+  typeKeys(editor, ["a", "b", "c", superJ]);
+  expectEditorState(editor, { text: "abc", cursor: { line: 0, col: 2 }, mode: "normal" });
+});
+
 test("configured super+j insert escape exits insert without inserting alias", () => {
   const options = resolveVimOptions({
     piVim: { keymap: { escape: ["<D-j>"] } },
@@ -1376,7 +1403,7 @@ test("normal search can cancel and insert slash remains delegated", () => {
   editor.handleInput("/");
   editor.handleInput("z");
   editor.handleInput("\x1b");
-  expectEditorState(editor, { text: "/", cursor: { line: 0, col: 1 }, mode: "normal" });
+  expectEditorState(editor, { text: "/", cursor: { line: 0, col: 0 }, mode: "normal" });
 });
 
 test("normal x deletes character under cursor into register", () => {
@@ -1384,7 +1411,6 @@ test("normal x deletes character under cursor into register", () => {
   editor.handleInput("a");
   editor.handleInput("b");
   editor.handleInput("\x1b");
-  editor.handleInput("h");
   editor.handleInput("x");
   expect(editor.getText()).toBe("a");
   expect(editor.getRegister()).toEqual({ type: "char", text: "b" });
@@ -1397,9 +1423,9 @@ test("normal X deletes character before cursor into register", () => {
   editor.handleInput("c");
   editor.handleInput("\x1b");
   editor.handleInput("X");
-  expect(editor.getText()).toBe("ab");
-  expect(editor.getCursor()).toEqual({ line: 0, col: 2 });
-  expect(editor.getRegister()).toEqual({ type: "char", text: "c" });
+  expect(editor.getText()).toBe("ac");
+  expect(editor.getCursor()).toEqual({ line: 0, col: 1 });
+  expect(editor.getRegister()).toEqual({ type: "char", text: "b" });
 });
 
 test("mark keys and behavior are configurable", () => {
@@ -2116,7 +2142,6 @@ test("visual delete removes selected text and returns normal", () => {
   const { editor } = createEditor();
   for (const char of "abcd") editor.handleInput(char);
   editor.handleInput("\x1b");
-  editor.handleInput("h");
   editor.handleInput("h");
   editor.handleInput("v");
   editor.handleInput("l");

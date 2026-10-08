@@ -551,6 +551,7 @@ Defaults preserve Vim-style `iw`, `aw`, plus prompt-native objects.
 | `piVim.keymap.textObjects.kinds.inner`            | `["i"]`      | Kind key for inner text objects, e.g. `diw`, `cif`.     |
 | `piVim.keymap.textObjects.kinds.around`           | `["a"]`      | Kind key for around text objects, e.g. `daw`, `yaf`.    |
 | `piVim.keymap.textObjects.targets.word`           | `["w"]`      | Word text object target.                                |
+| `piVim.keymap.textObjects.targets.bigWord`        | `["W"]`      | WORD (whitespace-delimited) text object target.         |
 | `piVim.keymap.textObjects.targets.singleQuote`    | `["'"]`      | Single-quoted string target.                            |
 | `piVim.keymap.textObjects.targets.doubleQuote`    | `["\""]`     | Double-quoted string target.                            |
 | `piVim.keymap.textObjects.targets.paren`          | `["(", ")"]` | Parenthesized target.                                   |

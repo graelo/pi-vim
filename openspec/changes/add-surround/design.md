@@ -151,10 +151,10 @@ follow from the descriptors.
   sequences that were invalid before.
 - [Linewise surround inserts lines without reindenting] → documented
   non-goal; prompts rarely need indentation-aware wrapping.
-- [Quote pairing] → `ds"`/`cs"` pair quotes from the start of the line, as
-  Vim does, so a cursor on the opening quote (where `yss"` leaves it) works.
-  The existing `i"` text object does not handle that case yet; aligning it is
-  out of scope here.
+- [Quote pairing] → `ds"`/`cs"` pair quotes as Vim's `i"` does, so a cursor
+  on the opening quote (where `yss"` leaves it) works. The
+  `align-vim-editing-gaps` change makes the text objects and surround share
+  one helper.
 
 ## Migration Plan
 

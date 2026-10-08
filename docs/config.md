@@ -1279,6 +1279,15 @@ in [`docs/settings.md`](settings.md).
 - Default keys: `i`
 - Compatibility aliases: none
 
+#### `textObject.target.bigWord`
+
+<a id="config-action-textObject-target-bigWord"></a>
+
+- Canonical factory: `vim.action.textObject.target.bigWord()`
+- Supported mapping scopes: `operatorPending`
+- Default keys: `W`
+- Compatibility aliases: none
+
 #### `textObject.target.brace`
 
 <a id="config-action-textObject-target-brace"></a>

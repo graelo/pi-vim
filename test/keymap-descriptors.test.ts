@@ -110,6 +110,7 @@ const expectedCommands = [
 ];
 const expectedTextObjectTargets = [
   "word",
+  "bigWord",
   "singleQuote",
   "doubleQuote",
   "paren",
