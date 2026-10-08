@@ -615,6 +615,34 @@ test("project empty action removes JS descriptor across canonical scopes", () =>
   expect(result.plan.scopes.operatorPending.exact.H).toBeUndefined();
 });
 
+test("project empty insert action removes JS insert binding", () => {
+  const result = resolveVimOptions(
+    undefined,
+    { piVimMode: { keymap: { insert: { deleteWordBackward: [] } } } },
+    {
+      kind: "success",
+      warnings: [],
+      operations: [
+        { kind: "map", mapping: { kind: "insert", action: "deleteWordBackward", key: "alt+w" } },
+      ],
+    },
+  );
+
+  expect(result.warnings).toEqual([]);
+  expect(result.options.keymap!.insert.deleteWordBackward).toEqual([]);
+  expect(result.plan.scopes.insert.exact["alt+w"]).toBeUndefined();
+});
+
+test("insert action with only rejected keys keeps inherited bindings", () => {
+  const result = resolveVimOptions(
+    { piVimMode: { keymap: { insert: { deleteWordBackward: ["ctrl+w"] } } } },
+    { piVimMode: { keymap: { insert: { deleteWordBackward: ["enter"] } } } },
+  );
+
+  expect(result.warnings.some((warning) => warning.includes("protected key enter"))).toBe(true);
+  expect(result.options.keymap!.insert.deleteWordBackward).toEqual(["ctrl+w"]);
+});
+
 test("operator-pending unmaps suppress inherited motions and text objects", () => {
   const result = resolveVimOptions(undefined, undefined, {
     kind: "success",

@@ -162,8 +162,9 @@ Rules:
 - A mapping may begin with case-insensitive `<leader>` when `piVimMode.leader`
     is configured. `<leader><leader>` is valid; a lone `<leader>` or
     `g<leader>x` is rejected.
-- Empty arrays do not override existing/default bindings for classic keymap
-    groups.
+- An empty array clears that action's bindings, including defaults and
+    bindings inherited from lower layers such as global JS config. A list whose
+    keys are all rejected warns and keeps the inherited bindings.
 - `piVimMode.keymap.escape` defaults to `[]` and replaces the inherited escape
     alias list when set.
 - Escape aliases are key aliases such as `<D-j>` or `<C-j>`, not raw text

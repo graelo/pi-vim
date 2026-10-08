@@ -8,7 +8,7 @@ project uses [Semantic Versioning](https://semver.org/).
 
 Hard fork of [pekochan069/pi-vimmode](https://github.com/pekochan069/pi-vimmode)
 at v0.9.0, published as `@graelo/pi-vimmode`. Apart from the removals and the
-fix below, editor behavior is unchanged from 0.9.0.
+fixes below, editor behavior is unchanged from 0.9.0.
 
 ### Changed
 
@@ -39,6 +39,9 @@ fix below, editor behavior is unchanged from 0.9.0.
 
 - Configured `easymotion` options (such as `labelColor`) are no longer dropped
   when resolved editor options are cloned.
+- An empty array under `piVimMode.keymap.insert.<action>` now clears that
+  action's inherited bindings, including ones added by global JS config, as it
+  already did for other keymap groups.
 
 ## [0.9.0] - 2026-07-23
 

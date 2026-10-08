@@ -700,7 +700,9 @@ function parseInsertBindings(
       continue;
     }
     const keys = parseInsertBinding(action, bindings, sourceLabel, warnings, options);
-    if (!keys?.length) continue;
+    // An explicit [] clears inherited bindings; a list whose keys were all rejected does not.
+    const clears = Array.isArray(bindings) && bindings.length === 0;
+    if (!keys || (keys.length === 0 && !clears)) continue;
     parsed[action as keyof ResolvedVimInsertKeymap] = keys;
     for (const key of keys) {
       warnDuplicateBinding(
