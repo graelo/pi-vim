@@ -47,7 +47,7 @@ import {
   type SemanticCommandResult,
 } from "../commands.ts";
 import {
-  escapeAliasesForScope as configuredEscapeAliasesForScope,
+  escapeAliasesForScope,
   keymapForOptions,
   macrosForOptions,
   marksForOptions,
@@ -182,11 +182,11 @@ function isInsertEscapePrefix(data: string, sequences: readonly string[]): boole
   return Boolean(key && sequences.some((sequence) => aliasStartsWith(sequence, key)));
 }
 
-function escapeAliasesForScope(
+function escapeAliasesForOptions(
   options: ModalOptions,
   scope: "insert" | "visual" | "visualLine" | "visualBlock" | "operatorPending",
 ): string[] {
-  return configuredEscapeAliasesForScope(keymapForOptions(options), scope);
+  return escapeAliasesForScope(keymapForOptions(options), scope);
 }
 
 type InsertEscapeMatch =
@@ -378,7 +378,7 @@ function handleInsertInput(
       ? delegateBufferedInsertEscape(state, data)
       : leaveInsertUpdate(state, snapshot, options);
   if (snapshot.isAutocompleteOpen) return delegateBufferedInsertEscape(state, data);
-  const match = matchInsertEscapeInput(state, data, escapeAliasesForScope(options, "insert"));
+  const match = matchInsertEscapeInput(state, data, escapeAliasesForOptions(options, "insert"));
   if (match.kind === "matched") return leaveInsertUpdate(state, snapshot, options);
   if (match.kind === "pending")
     return withEffects(pendingInsertEscape(state, match.sequence, data), []);
@@ -794,7 +794,7 @@ function handleNormalEscapeOrProtectedInput(
     const escapeMatch = matchInsertEscapeInput(
       state,
       data,
-      escapeAliasesForScope(options, "operatorPending"),
+      escapeAliasesForOptions(options, "operatorPending"),
     );
     if (escapeMatch.kind === "matched") return invalidate(clearPending(state));
     if (escapeMatch.kind === "pending")
@@ -1024,7 +1024,7 @@ function handleVisualEscapeInput(
   const match = matchInsertEscapeInput(
     state,
     data,
-    escapeAliasesForScope(options, state.mode as "visual" | "visualLine" | "visualBlock"),
+    escapeAliasesForOptions(options, state.mode as "visual" | "visualLine" | "visualBlock"),
   );
   if (match.kind === "matched")
     return captureBeforeVisualExit(state, snapshot, modeUpdate(state, "normal", options));
