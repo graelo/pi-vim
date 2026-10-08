@@ -23,6 +23,9 @@ editor behavior is unchanged from 0.9.0.
 - `:s` and `:&` apply on the first `Enter`, as in Vim, instead of first showing
   a match preview that needed a second `Enter`. Use the `n` flag
   (`:s/old/new/gn`) to count matches without editing.
+- The `vim` / `vim ⚠` / `vim off` Pi footer status is gone, so the extension
+  no longer takes a footer line. New settings warnings show a one-time
+  notification pointing to `:vimdoctor` instead.
 
 ### Removed
 

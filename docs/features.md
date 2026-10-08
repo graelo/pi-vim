@@ -20,9 +20,8 @@ Runtime behavior:
 - Registers `/vimmode [on|off|toggle|status]` to temporarily enable/disable
     the modal editor without uninstalling the extension.
 - Loads settings from global and project Pi settings whenever it installs.
-- Shows status key `pi-vimmode` as `vim` when settings parse cleanly.
-- Shows `vim ⚠` when settings load with warnings.
-- Shows `vim off` when disabled through `/vimmode off`.
+- Adds no line to the Pi footer. When settings load with new warnings, shows
+    one notification with the warning count and a pointer to `:vimdoctor`.
 - Keeps `bar` hardware cursors visible while Pi agent work is active,
     suppresses non-bar hardware cursors, and resets terminal cursor hints on
     `session_shutdown` or `/vimmode off`.
@@ -751,7 +750,7 @@ Important semantics:
 - `:nohlsearch` clears visible prompt search highlights but keeps
     repeat-search state for `n`/`N`.
 - `:vimdoctor` opens a read-only popup with live customization health, warning
-    count, and first actionable settings warning behind `vim ⚠`.
+    count, and first actionable settings warning.
 - `:keymap [query]` opens a read-only popup with effective resolved semantic
     keymap entries, e.g. `:keymap redo`.
 - `:keybindings [query]` opens a read-only popup listing effective bindings by
@@ -890,7 +889,7 @@ Examples:
 
 `:keymap` searches actions and their bindings,
 `:mapcheck` explains one key or sequence, and `:vimdoctor` reports retained
-settings warnings behind `vim ⚠`. Diagnostic/help metadata IDs use the
+settings warnings. Diagnostic/help metadata IDs use the
 `vimmode.*` namespace for search and docs classification only; they are
 metadata-only, not bindable, and do not create a plugin action API.
 

@@ -82,10 +82,12 @@ function createConfigState(
     const planChanged = serializePlan(currentConfiguration) !== previousPlan;
     const diagnosticsChanged = serializeDiagnostics(currentConfiguration) !== previousDiagnostics;
     if (planChanged || diagnosticsChanged) onUpdate(currentConfiguration, planChanged);
-    ctx.ui.setStatus(
-      "pi-vimmode",
-      currentConfiguration.diagnostics.warnings.length > 0 ? "vim ⚠" : "vim",
-    );
+    const warningCount = currentConfiguration.diagnostics.warnings.length;
+    if (diagnosticsChanged && warningCount > 0)
+      ctx.ui.notify(
+        `pi-vimmode: ${warningCount} settings warning${warningCount === 1 ? "" : "s"}; run :vimdoctor`,
+        "warning",
+      );
   };
   const applyFailure = (ctx: ExtensionContext, error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
@@ -172,16 +174,12 @@ function installEditor(
   generation = state.installGeneration,
 ): void | Promise<void> {
   if (generation !== state.installGeneration) return;
-  if (!state.enabled) {
-    ctx.ui.setStatus("pi-vimmode", "vim off");
-    return;
-  }
+  if (!state.enabled) return;
   const refreshed = state.config.refresh(ctx);
   if (refreshed instanceof Promise) {
     return refreshed.then((applied) => {
       if (!applied || generation !== state.installGeneration) return;
       if (state.enabled) finishInstall(state, ctx, force);
-      else ctx.ui.setStatus("pi-vimmode", "vim off");
     });
   }
   finishInstall(state, ctx, force);
@@ -259,7 +257,6 @@ function disableEditor(state: EditorState, ctx: ExtensionContext): void {
     ctx.ui.setEditorComponent(state.previousEditorFactory);
     state.hasInstalledFactory = false;
   }
-  ctx.ui.setStatus("pi-vimmode", "vim off");
 }
 
 function notifyVimStatus(state: EditorState, ctx: ExtensionContext): void {

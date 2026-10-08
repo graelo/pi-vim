@@ -42,10 +42,10 @@ Example:
 }
 ```
 
-Warnings are non-fatal. When settings or JS config produce warnings, Pi status
-shows `pi-vimmode: vim ⚠`. Run `:vimdoctor` in normal mode to see the retained
-warning count and first actionable warning for the live editor. Run
-`:help settings` for compact runtime reminders, but this file remains the
+Warnings are non-fatal. When settings or JS config produce new warnings, pi
+shows a notification with the warning count. Run `:vimdoctor` in normal mode to
+see the retained warning count and first actionable warning for the live editor.
+Run `:help settings` for compact runtime reminders, but this file remains the
 complete settings reference.
 
 Common warning causes:
@@ -1344,11 +1344,11 @@ motions.
 
 ## Troubleshooting
 
-### Status shows `vim ⚠`
+### Settings warning notification
 
-`vim ⚠` is currently a summary-only status indicator; pi-vimmode does not expose
-the exact warning text in the prompt UI. To isolate the failing setting, check
-project settings first, then global settings:
+The notification only reports the warning count. Run `:vimdoctor` for the first
+actionable warning. To isolate the failing setting, check project settings
+first, then global settings:
 
 1. Review `.pi/settings.json` in the current project.
 2. Review `~/.pi/agent/settings.json` for global `piVimMode` values.
