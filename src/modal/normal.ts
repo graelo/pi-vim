@@ -1,5 +1,6 @@
 import type { CaseTransformAction } from "../buffer.ts";
 import type {
+  EditResult,
   VimCommandAction,
   VimMotion,
   VimMotionAction,
@@ -259,6 +260,43 @@ function withRepeatableChange(
   return changed ? { ...state, lastRepeatableChange: change } : state;
 }
 
+/**
+ * Register-aware edit: applies register-write effects, records the dot-repeat
+ * change, and optionally transitions to insert mode.
+ */
+function editWithRepeat(
+  state: ModalState,
+  result: EditResult,
+  repeat: RepeatableChange | undefined,
+  insertOptions?: ModalOptions,
+): ModalUpdate {
+  const written = editStateAndEffects(state, result);
+  let edited = written.state;
+  if (repeat) edited = withRepeatableChange(edited, repeat, result.changed);
+  const effects: ModalEffect[] = [{ type: "edit", result }, ...written.effects];
+  return insertOptions
+    ? modeUpdate(edited, "insert", insertOptions, effects)
+    : withEffects(edited, effects);
+}
+
+/**
+ * Pure text edit without register-write effects: records the dot-repeat
+ * change and optionally transitions to insert mode.
+ */
+function textEditWithRepeat(
+  state: ModalState,
+  result: EditResult,
+  repeat: RepeatableChange | undefined,
+  insertOptions?: ModalOptions,
+): ModalUpdate {
+  let edited = editState(state, result);
+  if (repeat) edited = withRepeatableChange(edited, repeat, result.changed);
+  const effects: ModalEffect[] = [{ type: "edit", result }];
+  return insertOptions
+    ? modeUpdate(edited, "insert", insertOptions, effects)
+    : withEffects(edited, effects);
+}
+
 function caseActionForOperator(operator: VimMotionOperatorAction): CaseTransformAction | undefined {
   if (operator === "lowercase") return "lowercase";
   if (operator === "uppercase") return "uppercase";
@@ -303,19 +341,12 @@ export function applyOperatorMotion(
     return yankUpdate(baseState, yankByMotion(snapshot.text, snapshot.cursor, legacyMotion, count));
   }
 
-  const result = deleteByMotion(snapshot.text, snapshot.cursor, legacyMotion, count);
-  const written = editStateAndEffects(baseState, result);
-  let edited = written.state;
-  if (recordRepeat) {
-    edited = withRepeatableChange(
-      edited,
-      { type: "operatorMotion", operator, motion, count },
-      result.changed,
-    );
-  }
-  const effects: ModalEffect[] = [{ type: "edit", result }, ...written.effects];
-  if (operator === "change") return modeUpdate(edited, "insert", options, effects);
-  return withEffects(edited, effects);
+  return editWithRepeat(
+    baseState,
+    deleteByMotion(snapshot.text, snapshot.cursor, legacyMotion, count),
+    recordRepeat ? { type: "operatorMotion", operator, motion, count } : undefined,
+    operator === "change" ? options : undefined,
+  );
 }
 
 function applyCaseOrShiftLineCommand(
@@ -372,30 +403,19 @@ export function applyLineCommand(
   const nextState = clearCommandPending(state);
   const specialUpdate = applyCaseOrShiftLineCommand(state, snapshot, operator, count, recordRepeat);
   if (specialUpdate) return specialUpdate;
-  if (operator === "delete") {
-    const result = deleteLine(snapshot.text, snapshot.cursor, count);
-    const written = editStateAndEffects(nextState, result);
-    let edited = written.state;
-    if (recordRepeat)
-      edited = withRepeatableChange(
-        edited,
-        { type: "lineCommand", operator, count },
-        result.changed,
-      );
-    return withEffects(edited, [{ type: "edit", result }, ...written.effects]);
-  }
-  if (operator === "change") {
-    const result = changeLine(snapshot.text, snapshot.cursor, count);
-    const written = editStateAndEffects(nextState, result);
-    let edited = written.state;
-    if (recordRepeat)
-      edited = withRepeatableChange(
-        edited,
-        { type: "lineCommand", operator, count },
-        result.changed,
-      );
-    return modeUpdate(edited, "insert", options, [{ type: "edit", result }, ...written.effects]);
-  }
+  if (operator === "delete")
+    return editWithRepeat(
+      nextState,
+      deleteLine(snapshot.text, snapshot.cursor, count),
+      recordRepeat ? { type: "lineCommand", operator, count } : undefined,
+    );
+  if (operator === "change")
+    return editWithRepeat(
+      nextState,
+      changeLine(snapshot.text, snapshot.cursor, count),
+      recordRepeat ? { type: "lineCommand", operator, count } : undefined,
+      options,
+    );
   return yankUpdate(
     nextState,
     count > 1
@@ -404,283 +424,240 @@ export function applyLineCommand(
   );
 }
 
-function applyCommandGroup0(
-  _state: ModalState,
-  snapshot: EditorSnapshot,
-  options: ModalOptions,
-  command: VimCommandAction,
-  _count: number,
-  _char: string | undefined,
-  _recordRepeat: boolean,
-  nextState: ModalState,
-): ModalUpdate | undefined {
-  switch (command) {
-    case "insertBefore":
-      return modeUpdate(nextState, "insert", options);
-    case "insertAfter":
-      return modeUpdate(
-        nextState,
-        "insert",
-        options,
-        snapshot.cursor.col < (snapshot.lines[snapshot.cursor.line] ?? "").length
-          ? [{ type: "adapterCommand", command: "right" }, { type: "invalidate" }]
-          : [],
-      );
-    case "insertLineStart":
-      return modeUpdate(nextState, "insert", options, [
-        { type: "adapterCommand", command: "lineStart" },
-        { type: "invalidate" },
-      ]);
-    case "insertLineEnd":
-      return modeUpdate(nextState, "insert", options, [
-        { type: "adapterCommand", command: "lineEnd" },
-        { type: "invalidate" },
-      ]);
-    case "openLineBelow": {
-      const result = openLineBelow(snapshot.text, snapshot.cursor);
-      return modeUpdate(editState(nextState, result), "insert", options, [
-        { type: "edit", result },
-      ]);
-    }
-    case "openLineAbove": {
-      const result = openLineAbove(snapshot.text, snapshot.cursor);
-      return modeUpdate(editState(nextState, result), "insert", options, [
-        { type: "edit", result },
-      ]);
-    }
-    case "visualChar":
-      return modeUpdate({ ...nextState, visualAnchor: snapshot.cursor }, "visual", options);
-    case "visualLine":
-      return modeUpdate({ ...nextState, visualAnchor: snapshot.cursor }, "visualLine", options);
-    case "visualBlock":
-      return modeUpdate({ ...nextState, visualAnchor: snapshot.cursor }, "visualBlock", options);
-    default:
-      return undefined;
-  }
-}
-function applyCommandGroup1(
-  state: ModalState,
-  snapshot: EditorSnapshot,
-  options: ModalOptions,
-  command: VimCommandAction,
-  count: number,
-  _char: string | undefined,
-  recordRepeat: boolean,
-  nextState: ModalState,
-): ModalUpdate | undefined {
-  switch (command) {
-    case "deleteChar": {
-      const result = deleteCharAt(snapshot.text, snapshot.cursor, count);
-      const written = editStateAndEffects(nextState, result);
-      let edited = written.state;
-      if (recordRepeat)
-        edited = withRepeatableChange(edited, { type: "command", command, count }, result.changed);
-      return withEffects(edited, [{ type: "edit", result }, ...written.effects]);
-    }
-    case "deleteCharBefore": {
-      const result = deleteCharBefore(snapshot.text, snapshot.cursor, count);
-      const written = editStateAndEffects(nextState, result);
-      let edited = written.state;
-      if (recordRepeat)
-        edited = withRepeatableChange(edited, { type: "command", command, count }, result.changed);
-      return withEffects(edited, [{ type: "edit", result }, ...written.effects]);
-    }
-    case "deleteToLineEnd": {
-      const result = deleteByMotion(snapshot.text, snapshot.cursor, "$", count);
-      const written = editStateAndEffects(nextState, result);
-      let edited = written.state;
-      if (recordRepeat)
-        edited = withRepeatableChange(edited, { type: "command", command, count }, result.changed);
-      return withEffects(edited, [{ type: "edit", result }, ...written.effects]);
-    }
-    case "changeToLineEnd": {
-      const result = deleteByMotion(snapshot.text, snapshot.cursor, "$", count);
-      const written = editStateAndEffects(nextState, result);
-      let edited = written.state;
-      if (recordRepeat)
-        edited = withRepeatableChange(edited, { type: "command", command, count }, result.changed);
-      return modeUpdate(edited, "insert", options, [{ type: "edit", result }, ...written.effects]);
-    }
-    case "yankLine":
-      return yankUpdate(
-        nextState,
-        count > 1
-          ? yankLineCount(snapshot.text, snapshot.cursor, count)
-          : yankLine(snapshot.text, snapshot.cursor),
-      );
-    case "joinLine":
-      return editUpdate(nextState, joinLineWithNext(snapshot.text, snapshot.cursor));
-    case "pasteAfter": {
-      const clipboardTarget = clipboardTargetToRead(state);
-      if (clipboardTarget) {
-        return withEffects(clearRegisterTarget(nextState), [
-          {
-            type: "readClipboard",
-            register: clipboardTarget.slot,
-            placement: "after",
-            fallback: state.clipboardRegisters?.[clipboardTarget.slot],
-            ...(count > 1 ? { count } : {}),
-          },
-        ]);
-      }
-      return editUpdate(
-        clearRegisterTarget(nextState),
-        pasteRegister(snapshot.text, snapshot.cursor, repeatRegister(registerToRead(state), count)),
-      );
-    }
-    case "pasteBefore": {
-      const clipboardTarget = clipboardTargetToRead(state);
-      if (clipboardTarget) {
-        return withEffects(clearRegisterTarget(nextState), [
-          {
-            type: "readClipboard",
-            register: clipboardTarget.slot,
-            placement: "before",
-            fallback: state.clipboardRegisters?.[clipboardTarget.slot],
-            ...(count > 1 ? { count } : {}),
-          },
-        ]);
-      }
-      return editUpdate(
-        clearRegisterTarget(nextState),
-        pasteRegisterBefore(
-          snapshot.text,
-          snapshot.cursor,
-          repeatRegister(registerToRead(state), count),
-        ),
-      );
-    }
-    default:
-      return undefined;
-  }
-}
-function applyCommandGroup2(
-  _state: ModalState,
-  snapshot: EditorSnapshot,
-  options: ModalOptions,
-  command: VimCommandAction,
-  count: number,
-  char: string | undefined,
-  recordRepeat: boolean,
-  nextState: ModalState,
-): ModalUpdate | undefined {
-  switch (command) {
-    case "incrementNumber":
-    case "decrementNumber": {
-      const delta = (command === "incrementNumber" ? 1 : -1) * Math.max(1, count);
-      const result = adjustNumberAtOrAfterCursor(snapshot.text, snapshot.cursor, delta);
-      let edited = editState(nextState, result);
-      if (recordRepeat)
-        edited = withRepeatableChange(edited, { type: "command", command, count }, result.changed);
-      return withEffects(edited, [{ type: "edit", result }]);
-    }
-    case "toggleCase": {
-      const result = toggleCaseAt(snapshot.text, snapshot.cursor, count);
-      let edited = editState(nextState, result);
-      if (recordRepeat)
-        edited = withRepeatableChange(edited, { type: "command", command, count }, result.changed);
-      return withEffects(edited, [{ type: "edit", result }]);
-    }
-    case "replaceChar": {
-      const result = replaceCharAt(snapshot.text, snapshot.cursor, char ?? "", count);
-      let edited = editState(nextState, result);
-      if (recordRepeat)
-        edited = withRepeatableChange(
-          edited,
-          { type: "command", command, count, char },
-          result.changed,
-        );
-      return withEffects(edited, [{ type: "edit", result }]);
-    }
-    case "substituteChar": {
-      const result = substituteCharAt(snapshot.text, snapshot.cursor, count);
-      let edited = editState(nextState, result);
-      if (recordRepeat)
-        edited = withRepeatableChange(edited, { type: "command", command, count }, result.changed);
-      return modeUpdate(edited, "insert", options, [{ type: "edit", result }]);
-    }
-    case "substituteLine": {
-      const result = changeLine(snapshot.text, snapshot.cursor, count);
-      let edited = editState(nextState, result);
-      if (recordRepeat)
-        edited = withRepeatableChange(edited, { type: "command", command, count }, result.changed);
-      return modeUpdate(edited, "insert", options, [{ type: "edit", result }]);
-    }
-    default:
-      return undefined;
-  }
-}
-function applyCommandGroup3(
-  _state: ModalState,
-  snapshot: EditorSnapshot,
-  _options: ModalOptions,
-  command: VimCommandAction,
-  count: number,
-  char: string | undefined,
-  _recordRepeat: boolean,
-  nextState: ModalState,
-): ModalUpdate | undefined {
-  switch (command) {
-    case "findCharForward":
-    case "findCharBackward":
-    case "tillCharForward":
-    case "tillCharBackward":
-      return applyCharSearch(nextState, snapshot, command, char ?? "", count);
-    case "repeatCharSearch":
-      return repeatCharSearch(nextState, snapshot, false, count);
-    case "repeatCharSearchReverse":
-      return repeatCharSearch(nextState, snapshot, true, count);
-    default:
-      return undefined;
-  }
-}
+type NormalCommandContext = {
+  command: VimCommandAction;
+  state: ModalState;
+  nextState: ModalState;
+  snapshot: EditorSnapshot;
+  options: ModalOptions;
+  count: number;
+  char: string | undefined;
+  recordRepeat: boolean;
+};
 
-function applyCommandGroup4(
-  state: ModalState,
-  snapshot: EditorSnapshot,
-  options: ModalOptions,
-  command: VimCommandAction,
-  count: number,
-  _char: string | undefined,
-  _recordRepeat: boolean,
-  nextState: ModalState,
-): ModalUpdate | undefined {
-  switch (command) {
-    case "startSearch":
-      return startSearchUpdate(nextState);
-    case "startSearchBackward":
-      return startSearchUpdate(nextState, "backward");
-    case "repeatSearch":
-      return repeatSearch(nextState, snapshot, options, false);
-    case "repeatSearchReverse":
-      return repeatSearch(nextState, snapshot, options, true);
-    case "searchWordForward":
-      return searchWordUnderCursor(nextState, snapshot, options, "forward");
-    case "searchWordBackward":
-      return searchWordUnderCursor(nextState, snapshot, options, "backward");
-    case "startExCommand":
-      return startExCommandUpdate(nextState, snapshot, count);
-    case "repeatChange":
-      return repeatChange(state, snapshot, options);
-    case "undo":
-      return withEffects(nextState, [{ type: "adapterCommand", command: "undo" }]);
-    case "redo":
-      return snapshot.isRedoAvailable
-        ? withEffects(nextState, [{ type: "adapterCommand", command: "redo" }])
-        : invalidate(withNoopFeedback(nextState, options, "redo stack empty"));
-    case "reselectVisual":
-      return reselectVisualUpdate(nextState, snapshot, options);
-    case "showKeybindings": {
-      const popup = keybindingsPopup(options);
-      return withEffects({ ...nextState, helpPopup: popup }, [
-        { type: "openReadOnlyPopup", popup },
-        { type: "invalidate" },
-      ]);
-    }
-    default:
-      return undefined;
+type NormalCommandHandler = (context: NormalCommandContext) => ModalUpdate;
+
+// The engine resolves easymotion, deleteSurround, changeSurround, and
+// surroundSelection before normal command dispatch; invalidate keeps the legacy
+// fallback if one ever reaches this table.
+const invalidNormalCommand: NormalCommandHandler = ({ nextState }) => invalidate(nextState);
+
+const charSearchCommand: NormalCommandHandler = ({ nextState, snapshot, command, count, char }) =>
+  applyCharSearch(nextState, snapshot, command as CharSearchCommand, char ?? "", count);
+
+const visualModeCommand =
+  (mode: "visual" | "visualLine" | "visualBlock"): NormalCommandHandler =>
+  ({ nextState, snapshot, options }) =>
+    modeUpdate({ ...nextState, visualAnchor: snapshot.cursor }, mode, options);
+
+const openLineCommand =
+  (open: typeof openLineBelow): NormalCommandHandler =>
+  ({ nextState, snapshot, options }) => {
+    const result = open(snapshot.text, snapshot.cursor);
+    return modeUpdate(editState(nextState, result), "insert", options, [{ type: "edit", result }]);
+  };
+
+const deleteEditCommand =
+  (compute: (snapshot: EditorSnapshot, count: number) => EditResult): NormalCommandHandler =>
+  ({ nextState, snapshot, command, count, recordRepeat }) =>
+    editWithRepeat(
+      nextState,
+      compute(snapshot, count),
+      recordRepeat ? { type: "command", command, count } : undefined,
+    );
+
+const textEditCommand =
+  (compute: (snapshot: EditorSnapshot, count: number) => EditResult): NormalCommandHandler =>
+  ({ nextState, snapshot, command, count, recordRepeat }) =>
+    textEditWithRepeat(
+      nextState,
+      compute(snapshot, count),
+      recordRepeat ? { type: "command", command, count } : undefined,
+    );
+
+const numberAdjustCommand =
+  (direction: 1 | -1): NormalCommandHandler =>
+  ({ nextState, snapshot, command, count, recordRepeat }) =>
+    textEditWithRepeat(
+      nextState,
+      adjustNumberAtOrAfterCursor(snapshot.text, snapshot.cursor, direction * Math.max(1, count)),
+      recordRepeat ? { type: "command", command, count } : undefined,
+    );
+
+const repeatSearchCommand =
+  (reverse: boolean): NormalCommandHandler =>
+  ({ nextState, snapshot, options }) =>
+    repeatSearch(nextState, snapshot, options, reverse);
+
+const searchWordCommand =
+  (direction: "forward" | "backward"): NormalCommandHandler =>
+  ({ nextState, snapshot, options }) =>
+    searchWordUnderCursor(nextState, snapshot, options, direction);
+
+const pasteAfterCommand: NormalCommandHandler = ({ state, nextState, snapshot, count }) => {
+  const clipboardTarget = clipboardTargetToRead(state);
+  if (clipboardTarget) {
+    return withEffects(clearRegisterTarget(nextState), [
+      {
+        type: "readClipboard",
+        register: clipboardTarget.slot,
+        placement: "after",
+        fallback: state.clipboardRegisters?.[clipboardTarget.slot],
+        ...(count > 1 ? { count } : {}),
+      },
+    ]);
   }
-}
+  return editUpdate(
+    clearRegisterTarget(nextState),
+    pasteRegister(snapshot.text, snapshot.cursor, repeatRegister(registerToRead(state), count)),
+  );
+};
+
+const pasteBeforeCommand: NormalCommandHandler = ({ state, nextState, snapshot, count }) => {
+  const clipboardTarget = clipboardTargetToRead(state);
+  if (clipboardTarget) {
+    return withEffects(clearRegisterTarget(nextState), [
+      {
+        type: "readClipboard",
+        register: clipboardTarget.slot,
+        placement: "before",
+        fallback: state.clipboardRegisters?.[clipboardTarget.slot],
+        ...(count > 1 ? { count } : {}),
+      },
+    ]);
+  }
+  return editUpdate(
+    clearRegisterTarget(nextState),
+    pasteRegisterBefore(
+      snapshot.text,
+      snapshot.cursor,
+      repeatRegister(registerToRead(state), count),
+    ),
+  );
+};
+
+const NORMAL_COMMAND_HANDLERS: Record<VimCommandAction, NormalCommandHandler> = {
+  // Engine-intercepted commands.
+  easymotion: invalidNormalCommand,
+  deleteSurround: invalidNormalCommand,
+  changeSurround: invalidNormalCommand,
+  surroundSelection: invalidNormalCommand,
+  // Mode entry.
+  insertBefore: ({ nextState, options }) => modeUpdate(nextState, "insert", options),
+  insertAfter: ({ nextState, snapshot, options }) =>
+    modeUpdate(
+      nextState,
+      "insert",
+      options,
+      snapshot.cursor.col < (snapshot.lines[snapshot.cursor.line] ?? "").length
+        ? [{ type: "adapterCommand", command: "right" }, { type: "invalidate" }]
+        : [],
+    ),
+  insertLineStart: ({ nextState, options }) =>
+    modeUpdate(nextState, "insert", options, [
+      { type: "adapterCommand", command: "lineStart" },
+      { type: "invalidate" },
+    ]),
+  insertLineEnd: ({ nextState, options }) =>
+    modeUpdate(nextState, "insert", options, [
+      { type: "adapterCommand", command: "lineEnd" },
+      { type: "invalidate" },
+    ]),
+  openLineBelow: openLineCommand(openLineBelow),
+  openLineAbove: openLineCommand(openLineAbove),
+  visualChar: visualModeCommand("visual"),
+  visualLine: visualModeCommand("visualLine"),
+  visualBlock: visualModeCommand("visualBlock"),
+  // Register-aware edits.
+  deleteChar: deleteEditCommand((snapshot, count) =>
+    deleteCharAt(snapshot.text, snapshot.cursor, count),
+  ),
+  deleteCharBefore: deleteEditCommand((snapshot, count) =>
+    deleteCharBefore(snapshot.text, snapshot.cursor, count),
+  ),
+  deleteToLineEnd: deleteEditCommand((snapshot, count) =>
+    deleteByMotion(snapshot.text, snapshot.cursor, "$", count),
+  ),
+  changeToLineEnd: ({ nextState, snapshot, options, command, count, recordRepeat }) =>
+    editWithRepeat(
+      nextState,
+      deleteByMotion(snapshot.text, snapshot.cursor, "$", count),
+      recordRepeat ? { type: "command", command, count } : undefined,
+      options,
+    ),
+  yankLine: ({ nextState, snapshot, count }) =>
+    yankUpdate(
+      nextState,
+      count > 1
+        ? yankLineCount(snapshot.text, snapshot.cursor, count)
+        : yankLine(snapshot.text, snapshot.cursor),
+    ),
+  joinLine: ({ nextState, snapshot }) =>
+    editUpdate(nextState, joinLineWithNext(snapshot.text, snapshot.cursor)),
+  pasteAfter: pasteAfterCommand,
+  pasteBefore: pasteBeforeCommand,
+  // Pure text edits.
+  incrementNumber: numberAdjustCommand(1),
+  decrementNumber: numberAdjustCommand(-1),
+  toggleCase: textEditCommand((snapshot, count) =>
+    toggleCaseAt(snapshot.text, snapshot.cursor, count),
+  ),
+  replaceChar: ({ nextState, snapshot, command, count, char, recordRepeat }) =>
+    textEditWithRepeat(
+      nextState,
+      replaceCharAt(snapshot.text, snapshot.cursor, char ?? "", count),
+      recordRepeat ? { type: "command", command, count, char } : undefined,
+    ),
+  substituteChar: ({ nextState, snapshot, options, command, count, recordRepeat }) =>
+    textEditWithRepeat(
+      nextState,
+      substituteCharAt(snapshot.text, snapshot.cursor, count),
+      recordRepeat ? { type: "command", command, count } : undefined,
+      options,
+    ),
+  substituteLine: ({ nextState, snapshot, options, command, count, recordRepeat }) =>
+    textEditWithRepeat(
+      nextState,
+      changeLine(snapshot.text, snapshot.cursor, count),
+      recordRepeat ? { type: "command", command, count } : undefined,
+      options,
+    ),
+  // Character search.
+  findCharForward: charSearchCommand,
+  findCharBackward: charSearchCommand,
+  tillCharForward: charSearchCommand,
+  tillCharBackward: charSearchCommand,
+  repeatCharSearch: ({ nextState, snapshot, count }) =>
+    repeatCharSearch(nextState, snapshot, false, count),
+  repeatCharSearchReverse: ({ nextState, snapshot, count }) =>
+    repeatCharSearch(nextState, snapshot, true, count),
+  // Prompt search.
+  startSearch: ({ nextState }) => startSearchUpdate(nextState),
+  startSearchBackward: ({ nextState }) => startSearchUpdate(nextState, "backward"),
+  repeatSearch: repeatSearchCommand(false),
+  repeatSearchReverse: repeatSearchCommand(true),
+  searchWordForward: searchWordCommand("forward"),
+  searchWordBackward: searchWordCommand("backward"),
+  // Ex command line, history, and system commands.
+  startExCommand: ({ nextState, snapshot, count }) =>
+    startExCommandUpdate(nextState, snapshot, count),
+  repeatChange: ({ state, snapshot, options }) => repeatChange(state, snapshot, options),
+  undo: ({ nextState }) => withEffects(nextState, [{ type: "adapterCommand", command: "undo" }]),
+  redo: ({ nextState, snapshot, options }) =>
+    snapshot.isRedoAvailable
+      ? withEffects(nextState, [{ type: "adapterCommand", command: "redo" }])
+      : invalidate(withNoopFeedback(nextState, options, "redo stack empty")),
+  reselectVisual: ({ nextState, snapshot, options }) =>
+    reselectVisualUpdate(nextState, snapshot, options),
+  showKeybindings: ({ nextState, options }) => {
+    const popup = keybindingsPopup(options);
+    return withEffects({ ...nextState, helpPopup: popup }, [
+      { type: "openReadOnlyPopup", popup },
+      { type: "invalidate" },
+    ]);
+  },
+};
+
 export function applyCommand(
   state: ModalState,
   snapshot: EditorSnapshot,
@@ -690,16 +667,16 @@ export function applyCommand(
   char?: string,
   recordRepeat = true,
 ): ModalUpdate {
-  const nextState = clearCommandPending(state);
-  const args = [state, snapshot, options, command, count, char, recordRepeat, nextState] as const;
-  return (
-    applyCommandGroup0(...args) ??
-    applyCommandGroup1(...args) ??
-    applyCommandGroup2(...args) ??
-    applyCommandGroup3(...args) ??
-    applyCommandGroup4(...args) ??
-    invalidate(nextState)
-  );
+  return NORMAL_COMMAND_HANDLERS[command]({
+    command,
+    state,
+    nextState: clearCommandPending(state),
+    snapshot,
+    options,
+    count,
+    char,
+    recordRepeat,
+  });
 }
 
 type CharSearchCommand = Extract<
