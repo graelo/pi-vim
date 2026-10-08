@@ -5533,6 +5533,68 @@ test("paragraph delete is repeatable with dot", () => {
   expect(repeated.text).toBe("para3\n\npara4");
 });
 
+const prose = "Foo bar. Baz qux. End.";
+
+test("normal ( and ) move across sentences", () => {
+  expect(applyModalKeys({ mode: "normal" }, prose, p(0, 4), [")"]).cursor).toEqual(p(0, 9));
+  expect(applyModalKeys({ mode: "normal" }, prose, p(0, 12), ["("]).cursor).toEqual(p(0, 9));
+  expect(applyModalKeys({ mode: "normal" }, prose, p(0, 9), ["("]).cursor).toEqual(p(0, 0));
+  expect(applyModalKeys({ mode: "normal" }, prose, p(0, 0), ["2", ")"]).cursor).toEqual(p(0, 18));
+});
+
+test("visual ( and ) preserve anchor and move active cursor", () => {
+  for (const mode of ["visual", "visualLine", "visualBlock"] as const) {
+    const visual = applyModalKeys({ mode, visualAnchor: p(0, 0) }, prose, p(0, 0), [")"]);
+    expect(visual.state.mode).toBe(mode);
+    expect(visual.state.visualAnchor).toEqual(p(0, 0));
+    expect(visual.cursor).toEqual(p(0, 9));
+  }
+});
+
+test("d) deletes to the next sentence and writes character register", () => {
+  const deleted = applyModalKeys({ mode: "normal" }, "Foo bar. Baz qux.", p(0, 4), ["d", ")"]);
+  expect(deleted.text).toBe("Foo Baz qux.");
+  expect(deleted.state.register).toEqual({ type: "char", text: "bar. " });
+  expect(deleted.state.mode).toBe("normal");
+});
+
+test("c( changes back to sentence start and enters insert mode", () => {
+  const changed = applyModalKeys({ mode: "normal" }, prose, p(0, 13), ["c", "("]);
+  expect(changed.text).toBe("Foo bar. qux. End.");
+  expect(changed.state.register).toEqual({ type: "char", text: "Baz " });
+  expect(changed.state.mode).toBe("insert");
+  expect(changed.cursor).toEqual(p(0, 9));
+});
+
+test("register prefix applies to sentence operators", () => {
+  const deleted = applyModalKeys({ mode: "normal" }, prose, p(0, 0), ['"', "a", "d", ")"]);
+  expect(deleted.text).toBe("Baz qux. End.");
+  expect(deleted.state.namedRegisters?.a).toEqual({ type: "char", text: "Foo bar. " });
+});
+
+test("dis and das edit sentence text objects", () => {
+  const inner = applyModalKeys({ mode: "normal" }, prose, p(0, 10), ["d", "i", "s"]);
+  expect(inner.text).toBe("Foo bar.  End.");
+  expect(inner.state.register).toEqual({ type: "char", text: "Baz qux." });
+  const around = applyModalKeys({ mode: "normal" }, prose, p(0, 10), ["d", "a", "s"]);
+  expect(around.text).toBe("Foo bar. End.");
+});
+
+test("missing sentence text object is a safe no-op", () => {
+  const noOp = applyModalKeys({ mode: "normal" }, "\n\n", p(0, 0), ["d", "a", "s"]);
+  expect(noOp.text).toBe("\n\n");
+  expect(noOp.state.register).toBeUndefined();
+  expect(noOp.state.pending).toBeUndefined();
+});
+
+test("sentence deletes are repeatable with dot", () => {
+  const first = applyModalKeys({ mode: "normal" }, prose, p(0, 0), ["d", "a", "s"]);
+  expect(first.text).toBe("Baz qux. End.");
+  expect(applyModalKeys(first.state, first.text, p(0, 0), ["."]).text).toBe("End.");
+  const motion = applyModalKeys({ mode: "normal" }, prose, p(0, 0), ["d", ")"]);
+  expect(applyModalKeys(motion.state, motion.text, p(0, 0), ["."]).text).toBe("End.");
+});
+
 test("characterwise gv after exiting visual mode restores mode, anchor, and cursor", () => {
   // Enter visual mode, move, escape, then press gv
   const entered = applyModalKeys({ mode: "normal" }, "abcd", p(0, 0), ["v", "l", "l", "\x1b"]);

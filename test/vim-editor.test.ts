@@ -1724,6 +1724,34 @@ test("VimEditor honors configured paragraph motion and text object keys", () => 
   expect(editor.getText()).toBe("alpha\n\n");
 });
 
+test("VimEditor honors default and configured sentence keys", () => {
+  const { editor } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
+  editor.setText("Foo bar. Baz qux. End.");
+  typeKeys(editor, ["0", ")"]);
+  expect(editor.getCursor()).toEqual({ line: 0, col: 9 });
+  typeKeys(editor, ["d", "a", "s"]);
+  expect(editor.getText()).toBe("Foo bar. End.");
+
+  const options = resolveVimOptions({
+    piVim: {
+      startMode: "normal",
+      keymap: {
+        motions: { sentenceForward: ["S"] },
+        textObjects: { targets: { sentence: ["z"] } },
+        operatorMotions: { delete: ["sentenceForward"] },
+      },
+    },
+  }).options;
+  const configured = createEditor(options).editor;
+  configured.setText("Foo bar. Baz qux. End.");
+  typeKeys(configured, ["0", "S"]);
+  expect(configured.getCursor()).toEqual({ line: 0, col: 9 });
+  typeKeys(configured, ["d", "S"]);
+  expect(configured.getText()).toBe("Foo bar. End.");
+  typeKeys(configured, ["0", "d", "i", "z"]);
+  expect(configured.getText()).toBe(" End.");
+});
+
 test("VimEditor propagates configured paragraph options without dropping siblings", () => {
   const options = resolveVimOptions({
     piVim: {

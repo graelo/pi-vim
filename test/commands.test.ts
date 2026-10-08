@@ -1131,3 +1131,61 @@ test("visual S resolves to surround selection and normal S stays substitute line
     command: "surroundSelection",
   });
 });
+
+test("resolves sentence motions and sentence text objects", () => {
+  expect(resolveKeys(["("])).toEqual({ type: "motion", motion: "sentenceBackward" });
+  expect(resolveKeys([")"])).toEqual({ type: "motion", motion: "sentenceForward" });
+  expect(parseNormalCommand(")", "d")).toEqual({
+    type: "operatorMotion",
+    operator: "d",
+    motion: ")",
+  });
+  expect(resolveKeys(["c", "("])).toMatchObject({
+    type: "operatorMotion",
+    operator: "change",
+    motion: "sentenceBackward",
+  });
+  expect(resolveKeys(["d", "i", "s"])).toMatchObject({
+    type: "operatorTextObject",
+    operator: "delete",
+    textObject: { kind: "inner", target: "sentence" },
+  });
+  expect(resolveKeys(["y", "s", "a", "s"])).toMatchObject({
+    type: "operatorTextObject",
+    operator: "surround",
+    textObject: { kind: "around", target: "sentence" },
+  });
+  expect(resolveKeys(["d", "i", ")"])).toMatchObject({
+    textObject: { kind: "inner", target: "paren" },
+  });
+});
+
+test("sentence target leaves surround commands unchanged", () => {
+  expect(resolveKeys(["d", "s"])).toEqual({ type: "command", command: "deleteSurround" });
+  expect(resolveKeys(["c", "s"])).toEqual({ type: "command", command: "changeSurround" });
+});
+
+test("uses configured sentence motion and text object keys", () => {
+  const keymap = {
+    ...DEFAULT_VIM_KEYMAP,
+    motions: { ...DEFAULT_VIM_KEYMAP.motions, sentenceForward: ["S"], sentenceBackward: ["R"] },
+    textObjects: {
+      ...DEFAULT_VIM_KEYMAP.textObjects,
+      targets: { ...DEFAULT_VIM_KEYMAP.textObjects.targets, sentence: ["z"] },
+    },
+  };
+  expect(resolveKeys(["S"], keymap)).toEqual({ type: "motion", motion: "sentenceForward" });
+  expect(resolveKeys(["R"], keymap)).toEqual({ type: "motion", motion: "sentenceBackward" });
+  expect(resolveKeys(["d", "S"], keymap)).toMatchObject({ motion: "sentenceForward" });
+  expect(resolveKeys(["d", "a", "z"], keymap)).toMatchObject({
+    textObject: { kind: "around", target: "sentence" },
+  });
+});
+
+test("omitted sentence operator motion clears pending state", () => {
+  const keymap = {
+    ...DEFAULT_VIM_KEYMAP,
+    operatorMotions: { ...DEFAULT_VIM_KEYMAP.operatorMotions, delete: ["wordForward"] as const },
+  };
+  expect(resolveKeys(["d", ")"], keymap)).toEqual({ type: "invalid" });
+});

@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
 project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Sentence motions `(` and `)`, with counts, in normal and visual modes and
+  after operators (`d)`, `c(`, `y)`), and `is`/`as` sentence text objects.
+  Sentences follow `:help sentence`. Keys are configurable under
+  `piVim.keymap.motions.sentenceBackward`, `sentenceForward`, and
+  `piVim.keymap.textObjects.targets.sentence`. Explicit
+  `piVim.keymap.operatorMotions` lists need the new motions added to allow
+  `d)` and friends.
+
 ## [1.0.0] - 2026-10-08
 
 Hard fork of [pekochan069/pi-vimmode](https://github.com/pekochan069/pi-vimmode)

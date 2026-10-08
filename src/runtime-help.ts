@@ -95,10 +95,10 @@ const ENTRIES = [
   {
     id: "motions",
     category: "motions",
-    topics: ["motions", "motion", "word", "WORD", "ge", "gE"],
+    topics: ["motions", "motion", "word", "WORD", "ge", "gE", "sentence", "(", ")"],
     summary:
-      "normal and visual modes support prompt-local motions including word/WORD movement, previous word end, line, buffer, pair, search, mark, and character-search targets",
-    examples: ["W", "gE", "dW", "cE", "dge"],
+      "normal and visual modes support prompt-local motions including word/WORD movement, previous word end, line, buffer, pair, paragraph, sentence, search, mark, and character-search targets",
+    examples: ["W", "gE", "dW", "cE", "dge", ")", "d)", "das"],
     limits: ["prompt-local", "no subword/camelCase motions", "no display-line motions"],
     docsAnchor: "runtime-help:motions",
     specAnchor: "openspec/specs/extended-vim-keybindings/spec.md",

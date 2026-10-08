@@ -56,6 +56,8 @@ import {
   pasteRegisterBefore,
   paragraphForwardPosition,
   paragraphBackwardPosition,
+  sentenceBackwardPosition,
+  sentenceForwardPosition,
   putExRegisterAfterRange,
   putRegisterAfterResolvedLineRange,
   replaceVisualRangeChars,
@@ -63,6 +65,7 @@ import {
   substituteLineRangeRegex,
   toggleCaseAt,
   toggleCaseVisualRange,
+  transformCaseTextObject,
   transformCaseVisualRange,
   wordBackwardPosition,
   wordEndPosition,
@@ -1317,6 +1320,87 @@ describe("Ex line operations", () => {
   });
 });
 
+describe("sentence motions", () => {
+  const prose = "Foo bar. Baz qux! End?";
+
+  test("forward motion moves to the next sentence start", () => {
+    expect(sentenceForwardPosition(prose, p(0, 4))).toEqual(p(0, 9));
+    expect(sentenceForwardPosition(prose, p(0, 9))).toEqual(p(0, 18));
+  });
+
+  test("forward motion reaches prompt end after the last sentence", () => {
+    expect(sentenceForwardPosition(prose, p(0, 19))).toEqual(p(0, 22));
+    expect(sentenceForwardPosition(prose, p(0, 22))).toEqual(p(0, 22));
+  });
+
+  test("backward motion moves to the current, then previous, sentence start", () => {
+    expect(sentenceBackwardPosition(prose, p(0, 12))).toEqual(p(0, 9));
+    expect(sentenceBackwardPosition(prose, p(0, 9))).toEqual(p(0, 0));
+    expect(sentenceBackwardPosition(prose, p(0, 0))).toEqual(p(0, 0));
+  });
+
+  test("a period needs trailing whitespace to end a sentence", () => {
+    expect(sentenceForwardPosition("See v1.2 now. Then go.", p(0, 0))).toEqual(p(0, 14));
+  });
+
+  test("closing characters belong to the sentence", () => {
+    expect(sentenceForwardPosition('He said "stop." Then left.', p(0, 0))).toEqual(p(0, 16));
+    expect(sentenceForwardPosition("(Done.) Next.", p(0, 0))).toEqual(p(0, 8));
+  });
+
+  test("sentences span line breaks within a paragraph", () => {
+    const text = "One that\nwraps. Two.";
+    expect(sentenceForwardPosition(text, p(0, 0))).toEqual(p(1, 7));
+    expect(sentenceBackwardPosition(text, p(1, 2))).toEqual(p(0, 0));
+    expect(sentenceForwardPosition("End.\nNext.", p(0, 0))).toEqual(p(1, 0));
+  });
+
+  test("blank lines stop sentence motions", () => {
+    const text = "One. Two\n\n\nThree.";
+    expect(sentenceForwardPosition(text, p(0, 5))).toEqual(p(1, 0));
+    expect(sentenceForwardPosition(text, p(1, 0))).toEqual(p(3, 0));
+    expect(sentenceBackwardPosition(text, p(3, 0))).toEqual(p(1, 0));
+    expect(sentenceBackwardPosition(text, p(1, 0))).toEqual(p(0, 5));
+  });
+
+  test("counted motions repeat and clamp at prompt bounds", () => {
+    expect(sentenceForwardPosition(prose, p(0, 0), 2)).toEqual(p(0, 18));
+    expect(sentenceForwardPosition(prose, p(0, 0), 9)).toEqual(p(0, 22));
+    expect(sentenceBackwardPosition(prose, p(0, 20), 2)).toEqual(p(0, 9));
+    expect(sentenceBackwardPosition(prose, p(0, 20), 9)).toEqual(p(0, 0));
+  });
+
+  test("empty and blank prompts are safe", () => {
+    expect(sentenceForwardPosition("", p(0, 0))).toEqual(p(0, 0));
+    expect(sentenceBackwardPosition("", p(0, 0))).toEqual(p(0, 0));
+    expect(sentenceForwardPosition("\n  \n", p(0, 0))).toEqual(p(2, 0));
+    expect(sentenceBackwardPosition("\n  \n", p(1, 1))).toEqual(p(0, 0));
+  });
+
+  test("delete by sentence motion is exclusive", () => {
+    expect(deleteByMotion("Foo bar. Baz qux.", p(0, 4), ")")).toMatchObject({
+      text: "Foo Baz qux.",
+      cursor: p(0, 4),
+      register: { type: "char", text: "bar. " },
+      changed: true,
+    });
+    expect(deleteByMotion("Foo bar. Baz qux.", p(0, 13), "(")).toMatchObject({
+      text: "Foo bar. qux.",
+      cursor: p(0, 9),
+      register: { type: "char", text: "Baz " },
+    });
+  });
+
+  test("counted delete by sentence motion and yank", () => {
+    expect(deleteByMotion("A. B. C.", p(0, 0), ")", 2)).toMatchObject({ text: "C." });
+    expect(yankByMotion("A. B. C.", p(0, 3), ")")).toEqual({ type: "char", text: "B. " });
+  });
+
+  test("delete by sentence motion at prompt end is a no-op", () => {
+    expect(deleteByMotion("Foo.", p(0, 4), ")")).toMatchObject({ text: "Foo.", changed: false });
+  });
+});
+
 describe("paragraph motions", () => {
   const three = "alpha\nbeta\n\ngamma\n\ndelta\nepsilon";
 
@@ -1438,6 +1522,77 @@ describe("paragraph motions", () => {
       deleteTextObject("\n  \n\n", p(1, 0), { kind: "around", target: "paragraph" }),
     ).toMatchObject({ changed: false });
     expect(yankTextObject("\n\n", p(0, 0), { kind: "inner", target: "paragraph" })).toBeUndefined();
+  });
+});
+
+describe("sentence text objects", () => {
+  const is = { kind: "inner", target: "sentence" } as const;
+  const as = { kind: "around", target: "sentence" } as const;
+
+  test("inner sentence deletes the sentence without surrounding blanks", () => {
+    expect(deleteTextObject("Foo bar. Baz qux.", p(0, 5), is)).toMatchObject({
+      text: " Baz qux.",
+      cursor: p(0, 0),
+      register: { type: "char", text: "Foo bar." },
+      changed: true,
+    });
+  });
+
+  test("around sentence adds trailing blanks", () => {
+    expect(deleteTextObject("Foo bar. Baz qux.", p(0, 5), as)).toMatchObject({
+      text: "Baz qux.",
+      register: { type: "char", text: "Foo bar. " },
+    });
+    expect(deleteTextObject("Foo.\nBar.", p(0, 1), as)).toMatchObject({ text: "Bar." });
+  });
+
+  test("around sentence uses leading blanks at paragraph end", () => {
+    expect(deleteTextObject("Foo bar. Baz qux.", p(0, 10), as)).toMatchObject({
+      text: "Foo bar.",
+      register: { type: "char", text: " Baz qux." },
+    });
+    expect(deleteTextObject("Foo. Bar.\n\nNext.", p(0, 6), as)).toMatchObject({
+      text: "Foo.\n\nNext.",
+    });
+  });
+
+  test("inner sentence on blanks between sentences selects the blank run", () => {
+    expect(deleteTextObject("Foo.   Bar.", p(0, 5), is)).toMatchObject({
+      text: "Foo.Bar.",
+      register: { type: "char", text: "   " },
+    });
+    expect(deleteTextObject("Foo.   Bar.", p(0, 5), as)).toMatchObject({ text: "Foo." });
+  });
+
+  test("sentence objects span lines within a paragraph", () => {
+    expect(yankTextObject("One that\nwraps. Two.", p(0, 2), is)).toEqual({
+      type: "char",
+      text: "One that\nwraps.",
+    });
+  });
+
+  test("closers belong to the inner sentence", () => {
+    expect(yankTextObject('He said "stop." Then left.', p(0, 3), is)).toEqual({
+      type: "char",
+      text: 'He said "stop."',
+    });
+  });
+
+  test("case operators apply to the sentence range", () => {
+    expect(transformCaseTextObject("Foo bar. Baz.", p(0, 1), is, "uppercase")).toMatchObject({
+      text: "FOO BAR. Baz.",
+    });
+  });
+
+  test("blank lines and empty prompts yield no sentence object", () => {
+    for (const object of [is, as]) {
+      expect(deleteTextObject("Foo.\n  \nBar.", p(1, 1), object)).toMatchObject({
+        text: "Foo.\n  \nBar.",
+        changed: false,
+      });
+      expect(deleteTextObject("", p(0, 0), object)).toMatchObject({ changed: false });
+      expect(yankTextObject("", p(0, 0), object)).toBeUndefined();
+    }
   });
 });
 

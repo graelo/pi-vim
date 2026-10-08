@@ -361,6 +361,10 @@ function motionOffsetRange(
   }
   if (motion === "}" || motion === "{")
     return paragraphMotionOffsetRange(text, cursor, motion, count);
+  if (motion === ")" || motion === "(") {
+    const direction = motion === ")" ? "forward" : "backward";
+    return orderedOffsetRange(current, sentenceTargetOffset(text, current, direction, count));
+  }
   return standardMotionOffsetRange(text, current, motion, count);
 }
 function motionLineRange(
@@ -1927,6 +1931,105 @@ export function paragraphBackwardPosition(text: string, cursor: Position, count 
   return countedParagraphPosition(text, cursor, count, paragraphBackwardStep);
 }
 
+/** Offset range `[start, end)` of one sentence, from its first character through its closers. */
+type SentenceSpan = { start: number; end: number };
+
+/** A nonblank line run as offsets `[start, end)`, with its sentences. */
+type SentenceParagraph = { start: number; end: number; endLine: number; spans: SentenceSpan[] };
+
+const SENTENCE_TERMINATORS = ".!?";
+const SENTENCE_CLOSERS = ")]\"'";
+
+function isSentenceSpace(char: string | undefined): boolean {
+  return char === undefined || char === " " || char === "\t" || char === "\n";
+}
+
+/**
+ * Sentences in `[start, end)` per `:help sentence`: a sentence ends at `.`,
+ * `!`, or `?`, then any closers, then a blank or the end of the line.
+ */
+function paragraphSentences(text: string, start: number, end: number): SentenceSpan[] {
+  const spans: SentenceSpan[] = [];
+  let open: number | undefined;
+  let lastNonBlank = start;
+  for (let index = start; index < end; index++) {
+    const char = text[index]!;
+    if (isSentenceSpace(char)) continue;
+    open ??= index;
+    lastNonBlank = index + 1;
+    if (!SENTENCE_TERMINATORS.includes(char)) continue;
+    let after = index + 1;
+    while (after < end && SENTENCE_CLOSERS.includes(text[after]!)) after++;
+    if (after < end && !isSentenceSpace(text[after])) continue;
+    spans.push({ start: open, end: after });
+    open = undefined;
+    index = after - 1;
+  }
+  if (open !== undefined) spans.push({ start: open, end: lastNonBlank });
+  return spans;
+}
+
+function sentenceParagraph(
+  text: string,
+  lines: string[],
+  starts: number[],
+  line: number,
+): SentenceParagraph {
+  const runStart = paragraphRunStart(lines, line);
+  const endLine = paragraphRunEnd(lines, line);
+  const start = starts[runStart]!;
+  const end = starts[endLine]! + lines[endLine]!.length;
+  return { start, end, endLine, spans: paragraphSentences(text, start, end) };
+}
+
+/** Sentence starts in prompt order, including the first line of each blank run after a paragraph. */
+function sentenceStarts(text: string): number[] {
+  const lines = splitText(text);
+  const starts = lineStartOffsets(lines);
+  const result: number[] = [];
+  let line = 0;
+  while (line < lines.length) {
+    if (isBlankLine(lines[line]!)) {
+      line++;
+      continue;
+    }
+    const paragraph = sentenceParagraph(text, lines, starts, line);
+    for (const span of paragraph.spans) result.push(span.start);
+    line = paragraph.endLine + 1;
+    if (line < lines.length) result.push(starts[line]!);
+  }
+  return result;
+}
+
+function sentenceTargetOffset(
+  text: string,
+  offset: number,
+  direction: "forward" | "backward",
+  count: number,
+): number {
+  const starts = sentenceStarts(text);
+  let target = offset;
+  for (let index = 0; index < Math.max(1, count); index++) {
+    const next =
+      direction === "forward"
+        ? (starts.find((start) => start > target) ?? text.length)
+        : (starts.findLast((start) => start < target) ?? 0);
+    if (next === target) break;
+    target = next;
+  }
+  return target;
+}
+
+export function sentenceForwardPosition(text: string, cursor: Position, count = 1): Position {
+  const offset = sentenceTargetOffset(text, positionToOffset(text, cursor), "forward", count);
+  return offsetToPosition(text, offset);
+}
+
+export function sentenceBackwardPosition(text: string, cursor: Position, count = 1): Position {
+  const offset = sentenceTargetOffset(text, positionToOffset(text, cursor), "backward", count);
+  return offsetToPosition(text, offset);
+}
+
 export function deleteByMotion(
   text: string,
   cursor: Position,
@@ -2409,8 +2512,8 @@ function baseTextObjectRange(
   }
   const delimiter = delimiterRange(text, cursor, textObject.target, textObject.kind);
   if (delimiter) return delimiter;
-  if (textObject.target === "paragraph")
-    return paragraphTextObjectOffsets(text, cursor, textObject.kind);
+  if (isOffsetTextObjectTarget(textObject.target))
+    return offsetTextObjectRange(text, cursor, textObject);
   const structure = promptStructureTextObjectRange(text, cursor, textObject, promptStructures);
   return structure && { start: structure.start, end: structure.endExclusive };
 }
@@ -2445,6 +2548,7 @@ function isPromptStructureTarget(target: VimTextObject["target"]): target is Pro
     "bracket",
     "brace",
     "paragraph",
+    "sentence",
   ].includes(target);
 }
 
@@ -2485,6 +2589,54 @@ function paragraphTextObjectOffsets(
   return { start: starts[runStart]!, end: afterBody };
 }
 
+/**
+ * `is` selects the sentence, or the blank run between sentences; `as` adds the
+ * trailing blanks, or the leading blanks when there are none trailing.
+ */
+function sentenceTextObjectOffsets(
+  text: string,
+  cursor: Position,
+  kind: VimTextObjectKind,
+): OffsetRange | undefined {
+  const lines = splitText(text);
+  const pos = clampPosition(lines, cursor);
+  if (isBlankLine(lines[pos.line]!)) return undefined;
+  const starts = lineStartOffsets(lines);
+  const paragraph = sentenceParagraph(text, lines, starts, pos.line);
+  const offset = Math.min(starts[pos.line]! + pos.col, paragraph.end - 1);
+  const spans = paragraph.spans;
+  const index = spans.findIndex((span) => offset < span.end);
+  const span = spans[index];
+  if (span && offset >= span.start) {
+    if (kind === "inner") return span;
+    const trailingEnd = spans[index + 1]?.start ?? paragraph.end;
+    if (trailingEnd > span.end) return { start: span.start, end: trailingEnd };
+    return { start: spans[index - 1]?.end ?? paragraph.start, end: span.end };
+  }
+  const gap = {
+    start: (index === -1 ? spans.at(-1)?.end : spans[index - 1]?.end) ?? paragraph.start,
+    end: span?.start ?? paragraph.end,
+  };
+  if (kind === "inner") return gap;
+  if (span) return { start: gap.start, end: span.end };
+  return { start: spans.at(-1)?.start ?? gap.start, end: gap.end };
+}
+
+function isOffsetTextObjectTarget(target: VimTextObject["target"]): boolean {
+  return target === "paragraph" || target === "sentence";
+}
+
+/** Paragraph and sentence objects resolve as offsets, since they may span line breaks. */
+function offsetTextObjectRange(
+  text: string,
+  cursor: Position,
+  textObject: VimTextObject,
+): OffsetRange | undefined {
+  if (textObject.target === "sentence")
+    return sentenceTextObjectOffsets(text, cursor, textObject.kind);
+  return paragraphTextObjectOffsets(text, cursor, textObject.kind);
+}
+
 function promptStructureTextObjectRange(
   text: string,
   cursor: Position,
@@ -2513,8 +2665,8 @@ export function yankTextObject(
   const structureRange = promptStructureTextObjectRange(text, cursor, textObject, promptStructures);
   if (structureRange)
     return { type: "char", text: text.slice(structureRange.start, structureRange.endExclusive) };
-  if (textObject.target === "paragraph") {
-    const offsets = paragraphTextObjectOffsets(text, cursor, textObject.kind);
+  if (isOffsetTextObjectTarget(textObject.target)) {
+    const offsets = offsetTextObjectRange(text, cursor, textObject);
     if (!offsets || offsets.start >= offsets.end) return undefined;
     return { type: "char", text: text.slice(offsets.start, offsets.end) };
   }
@@ -2555,8 +2707,8 @@ export function deleteTextObject(
       changed: nextText !== text,
     };
   }
-  if (textObject.target === "paragraph") {
-    const offsets = paragraphTextObjectOffsets(text, cursor, textObject.kind);
+  if (isOffsetTextObjectTarget(textObject.target)) {
+    const offsets = offsetTextObjectRange(text, cursor, textObject);
     if (!offsets || offsets.start >= offsets.end)
       return { text, cursor: normalizeBufferPosition(text, cursor), changed: false };
     return deleteOffsetRange(text, offsets.start, offsets.end);
@@ -2582,8 +2734,8 @@ export function transformCaseTextObject(
       action,
     );
   }
-  if (textObject.target === "paragraph") {
-    const offsets = paragraphTextObjectOffsets(text, cursor, textObject.kind);
+  if (isOffsetTextObjectTarget(textObject.target)) {
+    const offsets = offsetTextObjectRange(text, cursor, textObject);
     if (!offsets || offsets.start >= offsets.end)
       return { text, cursor: normalizeBufferPosition(text, cursor), changed: false };
     return transformCaseOffsetRange(text, offsets.start, offsets.end, action);

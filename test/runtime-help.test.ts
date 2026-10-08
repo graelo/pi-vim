@@ -36,6 +36,8 @@ describe("runtime help registry", () => {
     expect(runtimeHelpMessage("vimdoctor", context)).toMatch(/^customization: /);
     expect(runtimeHelpMessage("surround", context)).toMatch(/^surround: ys\{target\}/);
     expect(runtimeHelpMessage("cs", context)).toContain("no tags or function surrounds");
+    expect(runtimeHelpMessage("sentence", context)).toMatch(/^motions: .*sentence/);
+    expect(runtimeHelpMessage(")", context)).toMatch(/^motions: /);
     expect(runtimeHelpMessage("vimscript", context)).toBe("help: no match for vimscript");
   });
 

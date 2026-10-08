@@ -38,6 +38,8 @@ import {
   pasteRegisterBefore,
   repeatRegister,
   replaceCharAt,
+  sentenceBackwardPosition,
+  sentenceForwardPosition,
   shiftLinesFromCursor,
   substituteCharAt,
   toggleCaseAt,
@@ -201,6 +203,18 @@ function moveEffectFor(
     return {
       type: "restoreCursor",
       position: paragraphBackwardPosition(snapshot.text, snapshot.cursor, count),
+    };
+  }
+  if (motion === "sentenceForward") {
+    return {
+      type: "restoreCursor",
+      position: sentenceForwardPosition(snapshot.text, snapshot.cursor, count),
+    };
+  }
+  if (motion === "sentenceBackward") {
+    return {
+      type: "restoreCursor",
+      position: sentenceBackwardPosition(snapshot.text, snapshot.cursor, count),
     };
   }
   if (motion === "halfPageDown" || motion === "halfPageUp") {

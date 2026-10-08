@@ -120,6 +120,8 @@ const MOTION_DESCRIPTIONS: Record<VimMotionAction, string> = {
   halfPageUp: "move up by half a prompt page",
   paragraphBackward: "move to previous paragraph",
   paragraphForward: "move to next paragraph",
+  sentenceBackward: "move to sentence start",
+  sentenceForward: "move to next sentence",
 };
 
 const SEARCH_COMMANDS = new Set<VimCommandAction>([

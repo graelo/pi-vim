@@ -207,13 +207,14 @@ Enter        -> submit through Pi
 | `Ctrl-D` / `Ctrl-U`   | half-page down / up                     | Prompt-local line movement; counts multiply the half-page amount.                                                           |
 | `%`                   | matching pair                           | Supports `()`, `[]`, `{}` under or after cursor on current line.                                                            |
 | `{` / `}`             | paragraph backward / forward            | Blank-line-separated paragraph runs; counts repeat and clamp at prompt bounds.                                              |
+| `(` / `)` | sentence backward / forward | Sentence start; counts repeat and clamp at prompt bounds. Blank lines also stop. |
 | `f{char}` / `F{char}` | find char forward/backward              | Current line only.                                                                                                          |
 | `t{char}` / `T{char}` | move until before/after char            | Current line only.                                                                                                          |
 | `;` / `,`             | repeat char search                      | Same/opposite direction.                                                                                                    |
 
 Counts work for supported motions: `3w`, `2e`, `2W`, `2gE`, `4j`, `2fx`,
-`2<C-d>`, `2}`. `Ctrl-D` and `Ctrl-U` clamp safely at prompt bounds and move the
-cursor so existing rendering reveals the new location.
+`2<C-d>`, `2}`, `2)`. `Ctrl-D` and `Ctrl-U` clamp safely at prompt bounds and
+move the cursor so existing rendering reveals the new location.
 
 Paragraph motions are prompt-local and blank-line based. A paragraph is a
 contiguous run of non-blank lines separated by one or more whitespace-only blank
@@ -221,8 +222,18 @@ lines. `}` moves to the first column of the next paragraph, or to the prompt end
 when no later paragraph exists. `{` moves to the current paragraph start, or to
 the previous paragraph start when already there. They work in normal and visual
 modes; visual mode keeps the anchor and moves the active cursor. This is smaller
-than Vim's full paragraph grammar: no nroff macros, sentence motions, section
-motions, or language-aware paragraph parsing.
+than Vim's full paragraph grammar: no nroff macros, section motions, or
+language-aware paragraph parsing.
+
+Sentence motions follow `:help sentence`. A sentence ends at `.`, `!`, or `?`,
+followed by any number of `)`, `]`, `"`, or `'`, then a space, tab, or line
+end; so `v1.2` does not end a sentence, and `"stop."` keeps its closing quote.
+Sentences can span lines within a paragraph, and a blank line ends a sentence
+too. `)` moves to the next sentence start, stopping on the first blank line
+after a paragraph, or to the prompt end. `(` moves to the current sentence
+start, or the previous one when already there. With an operator, `d)` deletes
+from the cursor up to the next sentence start, including the blanks between
+sentences. Abbreviations such as `e.g.` end a sentence, as in Vim.
 
 Motion limitations: this feature set does not add subword/camelCase navigation,
 display-line motions such as `gj`/`gk`, full-page scroll keys such as
@@ -396,6 +407,7 @@ Text objects work after `d`, `c`, `y`, the case operators, and `ys`.
 | `it` / `at`               | inner/around XML-ish tag                    |
 | `ie` / `ae`               | inner/around pasted error block             |
 | `ip` / `ap`               | inner/around blank-line paragraph           |
+| `is` / `as` | inner/around sentence |
 
 Word objects follow Vim: `iw` selects a run of keyword characters (`A-Z`,
 `a-z`, `0-9`, `_`), a run of other non-blank characters, or a run of blanks;
@@ -418,11 +430,11 @@ cih   change body of current Markdown heading section
 yal   yank current Markdown list item
 dip   delete current paragraph body without adjacent blank separators
 dap   delete current paragraph plus one adjacent blank separator group
+das   delete current sentence plus the blanks after it
 ```
 
 Limitations:
 
-- Word objects use whitespace boundaries.
 - Quote objects search current line.
 - Bracket objects balance delimiters in prompt text, but do not implement
     Vim's full syntax awareness.
@@ -432,6 +444,11 @@ Limitations:
     `ip` selects the paragraph body only; `ap` adds one adjacent blank separator
     group when present (following, otherwise preceding) so deleting a paragraph
     does not leave double blank separators.
+- Sentence objects use the same sentence model as `(` and `)`. `is` selects
+    the sentence, or the blanks when the cursor is between sentences; `as`
+    adds the trailing blanks, or the leading blanks when there are none
+    trailing. They do not take counts (`d2as`), and visual mode has no text
+    objects.
 - XML-ish tags support matching `<name ...>` / `</name>` pairs and ignore
     self-closing tags.
 - Error block detection is heuristic and stops at blank or unrelated prose

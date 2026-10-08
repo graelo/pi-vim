@@ -447,6 +447,8 @@ mark-target shift ranges are unsupported safe no-ops.
 | `piVim.keymap.motions.halfPageUp`         | `["ctrl+u"]`     | Move up by half the visible prompt page; count multiplies the distance.                                     |
 | `piVim.keymap.motions.paragraphBackward`  | `["{"]`          | Move to current paragraph start, or previous paragraph start when already there. Blank-line-separated runs. |
 | `piVim.keymap.motions.paragraphForward`   | `["}"]`          | Move to next paragraph first column, or prompt end when none remain. Blank-line-separated runs.             |
+| `piVim.keymap.motions.sentenceBackward` | `["("]` | Move to current sentence start, or previous sentence start when already there. |
+| `piVim.keymap.motions.sentenceForward` | `[")"]` | Move to next sentence start, or prompt end when none remain. Blank lines also stop the motion. |
 
 ### Commands
 
@@ -562,6 +564,7 @@ Defaults preserve Vim-style `iw`, `aw`, plus prompt-native objects.
 | `piVim.keymap.textObjects.targets.tag`            | `["t"]`      | XML-ish tag block target.                               |
 | `piVim.keymap.textObjects.targets.errorBlock`     | `["e"]`      | Pasted error/stack-trace block target.                  |
 | `piVim.keymap.textObjects.targets.paragraph`      | `["p"]`      | Blank-line paragraph target for `ip`/`ap` text objects. |
+| `piVim.keymap.textObjects.targets.sentence` | `["s"]` | Sentence target for `is`/`as` text objects. |
 
 Example:
 
@@ -584,18 +587,18 @@ These settings decide which semantic motions are valid after each operator.
 Accepted motion action names:
 
 ```text
-left, down, up, right, wordForward, wordBackward, wordEnd, wordForwardBig, wordBackwardBig, wordEndBig, wordPreviousEnd, wordPreviousEndBig, lineStart, firstNonBlank, lineEnd, bufferStart, bufferEnd, matchingPair, paragraphBackward, paragraphForward
+left, down, up, right, wordForward, wordBackward, wordEnd, wordForwardBig, wordBackwardBig, wordEndBig, wordPreviousEnd, wordPreviousEndBig, lineStart, firstNonBlank, lineEnd, bufferStart, bufferEnd, matchingPair, paragraphBackward, paragraphForward, sentenceBackward, sentenceForward
 ```
 
 | Path                                          | Default                                                          | Effect                                                                         |
 | --------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `piVim.keymap.operatorMotions.delete`     | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after delete operator. Remove entries to disable combinations. |
-| `piVim.keymap.operatorMotions.change`     | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after change operator.                                         |
-| `piVim.keymap.operatorMotions.yank`       | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after yank operator.                                           |
-| `piVim.keymap.operatorMotions.lowercase`  | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after lowercase operator.                                      |
-| `piVim.keymap.operatorMotions.uppercase`  | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after uppercase operator.                                      |
-| `piVim.keymap.operatorMotions.toggleCase` | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after range toggle-case operator.                              |
-| `piVim.keymap.operatorMotions.surround` | all supported motion actions (`left` through `paragraphForward`) | Motions allowed after the surround operator. |
+| `piVim.keymap.operatorMotions.delete`     | all supported motion actions (`left` through `sentenceForward`) | Motions allowed after delete operator. Remove entries to disable combinations. |
+| `piVim.keymap.operatorMotions.change`     | all supported motion actions (`left` through `sentenceForward`) | Motions allowed after change operator.                                         |
+| `piVim.keymap.operatorMotions.yank`       | all supported motion actions (`left` through `sentenceForward`) | Motions allowed after yank operator.                                           |
+| `piVim.keymap.operatorMotions.lowercase`  | all supported motion actions (`left` through `sentenceForward`) | Motions allowed after lowercase operator.                                      |
+| `piVim.keymap.operatorMotions.uppercase`  | all supported motion actions (`left` through `sentenceForward`) | Motions allowed after uppercase operator.                                      |
+| `piVim.keymap.operatorMotions.toggleCase` | all supported motion actions (`left` through `sentenceForward`) | Motions allowed after range toggle-case operator.                              |
+| `piVim.keymap.operatorMotions.surround` | all supported motion actions (`left` through `sentenceForward`) | Motions allowed after the surround operator. |
 
 WORD and previous-end actions can be customized and used in `operatorMotions`
 like other finite motions. This example makes `dgw` and `dg-` valid delete
