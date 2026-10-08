@@ -420,38 +420,6 @@ function preferredActionMatch(
   return matches.find((entry) => entry.id.toLowerCase() === needle) ?? matches[0];
 }
 
-const ACTION_COUNT_LABELS: ReadonlyArray<readonly [VimActionKind, string]> = [
-  ["command", "commands"],
-  ["motion", "motions"],
-  ["operator", "operators"],
-  ["textObject", "text objects"],
-  ["macro", "macros"],
-  ["mark", "marks"],
-  ["search", "searches"],
-  ["escape", "escape aliases"],
-  ["diagnostic", "diagnostic metadata"],
-  ["runtimeHelp", "runtime-help metadata"],
-];
-
-function actionSummary(entries: readonly VimActionEntry[]): string {
-  const counts = new Map<VimActionKind, number>();
-  for (const entry of entries) counts.set(entry.kind, (counts.get(entry.kind) ?? 0) + 1);
-  return ACTION_COUNT_LABELS.map(([kind, label]) => `${counts.get(kind) ?? 0} ${label}`).join(", ");
-}
-
-export function actionsMessage(
-  keymap: ResolvedVimKeymap,
-  query = "",
-  macros?: ResolvedVimMacros,
-  marks?: ResolvedVimMarks,
-): string {
-  const matches = searchActions(keymap, query, macros, marks);
-  const needle = query.trim();
-  if (!needle) return `actions: ${actionSummary(matches)}; :actions <query>`;
-  const match = preferredActionMatch(matches, query);
-  return match ? summarizeEntry(match) : `actions: no match for ${needle}`;
-}
-
 export function keymapMessage(
   keymap: ResolvedVimKeymap,
   query = "",

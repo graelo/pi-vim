@@ -83,12 +83,12 @@ const ENTRIES = [
     testAnchors: ["test/ex.test.ts", "test/modal.test.ts"],
   },
   {
-    id: "actions",
+    id: "customization",
     category: "diagnostics",
-    topics: ["actions", "keybindings", "keymap", "mapcheck", "vimdoctor", "customization"],
+    topics: ["keybindings", "keymap", "mapcheck", "vimdoctor", "customization"],
     summary:
-      ":actions, :keybindings, :keymap, :mapcheck, and :vimdoctor explain finite actions, bindings, protected shortcuts, and settings warnings",
-    examples: [":actions redo", ":keybindings redo", ":mapcheck ctrl+p", ":vimdoctor"],
+      ":keybindings, :keymap, :mapcheck, and :vimdoctor explain finite actions, bindings, protected shortcuts, and settings warnings",
+    examples: [":keybindings redo", ":keymap redo", ":mapcheck ctrl+p", ":vimdoctor"],
     limits: ["no full command palette", "no .vimrc", "no Vimscript"],
     docsAnchor: "runtime-help:customization-diagnostics",
     specAnchor: "openspec/specs/vim-customization-diagnostics/spec.md",
@@ -168,11 +168,9 @@ export function runtimeHelpEntries(
 export function runtimeHelpMessage(topic: string | undefined, context: RuntimeHelpContext): string {
   const query = topic?.trim();
   if (!query) {
-    return "help: :help <topic>, :keybindings [query], :vimmode inspect, :messages, :actions, :keymap, :mapcheck, :vimdoctor";
+    return "help: :help <topic>, :keybindings [query], :vimmode inspect, :messages, :keymap, :mapcheck, :vimdoctor";
   }
-  const wantsDiagnosticActions = ["actions", "action", "diagnostics", "diagnostic"].includes(
-    query.toLowerCase(),
-  );
+  const wantsDiagnosticActions = ["diagnostics", "diagnostic"].includes(query.toLowerCase());
   const entry = findEntry(query);
   if (entry && !wantsDiagnosticActions) return compactEntry(entry, context);
   const diagnostic = searchDiagnosticActions(query)[0];

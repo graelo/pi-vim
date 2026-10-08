@@ -4,7 +4,6 @@ import type { ResolvedVimEditorOptions, VimDiagnostics } from "./types.ts";
 
 import { keymapForOptions, macrosForOptions, marksForOptions } from "./config.ts";
 import {
-  actionsMessage,
   doctorMessage,
   keybindingCatalogLines,
   keybindingDetailLines,
@@ -31,7 +30,7 @@ export type RuntimeHelpPopupCommand = {
 };
 
 export type DiagnosticPopupCommand = {
-  command: "vimdoctor" | "keymap" | "mapcheck" | "actions";
+  command: "vimdoctor" | "keymap" | "mapcheck";
   query?: string;
 };
 
@@ -98,9 +97,7 @@ export function diagnosticPopup(
       ? doctorMessage(options, diagnostics)
       : command.command === "keymap"
         ? keymapMessage(keymap, command.query, macros, marks)
-        : command.command === "mapcheck"
-          ? mapcheckMessage(keymap, command.query ?? "", diagnostics.warnings)
-          : actionsMessage(keymap, command.query, macros, marks);
+        : mapcheckMessage(keymap, command.query ?? "", diagnostics.warnings);
   return popupFromMessage({
     title: command.query ? `:${command.command} ${command.query}` : `:${command.command}`,
     source: command.command,

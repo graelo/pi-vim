@@ -39,14 +39,6 @@ export const DIAGNOSTIC_ACTIONS = [
     [":vimdoctor"],
   ),
   entry(
-    "vimmode.actions",
-    "diagnostic",
-    ":actions",
-    ["actions", "action", "metadata", "search"],
-    "metadata-only diagnostic action for searching finite supported action metadata",
-    [":actions redo", ":actions vimmode.doctor"],
-  ),
-  entry(
     "vimmode.keymap",
     "diagnostic",
     ":keymap",
@@ -76,7 +68,7 @@ export const DIAGNOSTIC_ACTIONS = [
     ":help",
     ["help", "topic", "diagnostics", "runtime help"],
     "metadata-only runtimeHelp action for finite source-backed help topics",
-    [":help actions", ":help diagnostics"],
+    [":help diagnostics", ":help keymap"],
   ),
   entry(
     "vimmode.messages",

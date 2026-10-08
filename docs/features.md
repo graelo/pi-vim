@@ -83,13 +83,12 @@ supported; it is not a Vim/Neovim quickref clone.
 | ------------------------------------ | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Modal motions/edits                  | `h`, `j`, `w`, `dd`, `ciw`, `/query`, `n`                                     | Prompt editing actions; configurable only through supported semantic keymap fields.                 |
 | Ex line commands                     | `:delete`, `:yank a`, `:put`, `:copy`, `:move`, `:join`, `:s/old/new/`        | Finite prompt-buffer commands; no Vimscript or file/window/shell commands.                          |
-| Customization diagnostics            | `:vimdoctor`, `:actions`, `:keybindings`, `:keymap`, `:mapcheck`              | Read-only metadata/help actions shown in popup output; searchable as `vimmode.*`, not bindable.     |
+| Customization diagnostics            | `:vimdoctor`, `:keybindings`, `:keymap`, `:mapcheck`                          | Read-only metadata/help actions shown in popup output; searchable as `vimmode.*`, not bindable.     |
 | Runtime help/inspectability          | `:help`, `:messages`, `:vimmode inspect`                                      | Read-only source-backed help and prompt-local state/message summaries shown in popup output.        |
 | Pi shortcut compatibility            | `Enter`, `Ctrl-C`, `Ctrl-G`, `Ctrl-P`, `Ctrl-v`, `Alt-v`, `Ctrl-Alt-v`, `Tab` | Pi-owned or protected shortcuts; use `:mapcheck <key>` to inspect ownership.                        |
 | Escape aliases                       | `<D-j>`, `<C-j>` via `piVimMode.keymap.escape`                                | Opt-in key aliases for leaving insert, visual, or pending Ex command states; not full Vim mappings. |
 
 <!-- diagnostic-actions:vimmode.doctor -->
-<!-- diagnostic-actions:vimmode.actions -->
 <!-- diagnostic-actions:vimmode.keymap -->
 <!-- diagnostic-actions:vimmode.keybindings -->
 <!-- diagnostic-actions:vimmode.mapcheck -->
@@ -98,7 +97,7 @@ supported; it is not a Vim/Neovim quickref clone.
 <!-- diagnostic-actions:vimmode.inspect -->
 
 Diagnostic/help metadata IDs are for discovery only: `vimmode.doctor`,
-`vimmode.actions`, `vimmode.keymap`, `vimmode.keybindings`, `vimmode.mapcheck`,
+`vimmode.keymap`, `vimmode.keybindings`, `vimmode.mapcheck`,
 `vimmode.help`, `vimmode.messages`, and `vimmode.inspect` cannot be bound to
 keys or dispatched from user keybindings. Use
 `piVimMode.keymap.commands.showKeybindings` for an optional normal-mode
@@ -681,7 +680,6 @@ Supported commands:
 :vimdoctor
 :keymap redo
 :mapcheck ctrl+p
-:actions search
 :keybindings
 :keybindings redo
 :keybindings ctrl+p
@@ -762,8 +760,6 @@ Important semantics:
     `:keybindings redo` or `:keybindings ctrl+p`.
 - `:mapcheck <key>` opens a read-only popup explaining mapped, unmapped,
     protected, or warning-related key ownership, e.g. `:mapcheck ctrl+p`.
-- `:actions [query]` opens a read-only popup listing/searching finite
-    supported actions without adding arbitrary Vim grammar.
 - `:help [topic]` opens a read-only popup with source-backed runtime help for
     finite pi-vimmode topics, e.g. `:help search` or `:help ex`.
 - `:messages` opens a read-only popup with a bounded prompt-local summary of
@@ -786,12 +782,10 @@ Important semantics:
     commands in the current editor instance and move the command cursor to the
     end of the recalled command.
 - Enter on an empty command closes the Ex row without a message.
-- Substitution is two-phase: first `Enter` highlights matched target text and
-    reports a match count without editing, second unchanged `Enter` applies,
-    `Esc` cancels.
+- `Enter` applies a substitution immediately, as in Vim, and reports the
+    substitution count.
 - `:&`, `:&&`, and range-qualified forms such as `:%&` repeat the last
-    successfully applied substitution through the same preview/apply flow.
-- Editing or history navigation clears a pending substitution match preview.
+    successfully applied substitution.
 - Unsupported command, range, destination, delimiter, argument, flag, register
     operand, invalid regex, too-large regex input, or zero-length regex match
     produces transient Ex error text.
@@ -801,13 +795,13 @@ Important semantics:
 - Successful mutating/editing commands show transient count text such as
     `2 substitutions`, `1 line deleted`, or `3 lines moved`.
 - Valid read-only help/diagnostic commands open a bounded popup: `:help`,
-    `:help <topic>`, `:keybindings`, `:keybindings <query>`, `:actions`,
-    `:actions <query>`, `:keymap`, `:keymap <action>`, `:mapcheck <key>`,
-    `:messages`, `:vimmode inspect`, and `:vimdoctor`.
+    `:help <topic>`, `:keybindings`, `:keybindings <query>`, `:keymap`,
+    `:keymap <action>`, `:mapcheck <key>`, `:messages`, `:vimmode inspect`, and
+    `:vimdoctor`.
 - Popup-backed commands do not edit prompt text, registers, marks, search
     state, visual state, macros, or dot-repeat.
 - Mutating command success/error feedback, parser errors, invalid command
-    feedback, substitution preview/apply messages, `:noh`, and optional no-op
+    feedback, substitution messages, `:noh`, and optional no-op
     feedback stay in the compact Ex/workbench row.
 - Compact success/error/info messages stay in the Ex row until the next
     handled input.
@@ -830,7 +824,7 @@ Important semantics:
 Valid read-only Ex help and diagnostic commands open a dedicated bounded
 read-only overlay popup, similar to Pi picker-style overlay UIs. Popup-backed
 commands include `:help`, `:help <topic>`, `:keybindings`,
-`:keybindings <query>`, `:actions`, `:actions <query>`, `:keymap`,
+`:keybindings <query>`, `:keymap`,
 `:keymap <action>`, `:mapcheck <key>`, `:messages`, `:vimmode inspect`, and
 `:vimdoctor`.
 
@@ -854,9 +848,9 @@ dismissal, and the output of `:messages` itself are not retained as runtime
 message history.
 
 Dismiss the popup with `Esc`, `Ctrl-C`, or `Ctrl-G`. Mutating Ex commands,
-parser errors, edit-flow success/errors, `:noh`, substitution preview/apply
-feedback, and optional no-op feedback keep compact inline/workbench behavior
-rather than opening the read-only popup.
+parser errors, edit-flow success/errors, `:noh`, substitution feedback, and
+optional no-op feedback keep compact inline/workbench behavior rather than
+opening the read-only popup.
 
 Popup non-goals: no Vim help tags, no command palette, no runtime `:map`, no
 runtime `:action`, no recursive mappings, no Vimscript, no plugin API, no
@@ -894,7 +888,7 @@ Examples:
 :messages         " retained recent runtime message summary
 ```
 
-`:actions` remains action-focused, `:keymap` remains binding-focused,
+`:keymap` searches actions and their bindings,
 `:mapcheck` explains one key or sequence, and `:vimdoctor` reports retained
 settings warnings behind `vim ⚠`. Diagnostic/help metadata IDs use the
 `vimmode.*` namespace for search and docs classification only; they are
@@ -1060,7 +1054,7 @@ Rendering behavior:
 - Insert-mode autocomplete rows remain Pi-owned and visible; Vim status
     feedback renders on a separate row while completion UI is open.
 - Pending `/`, `?`, and `:` workbench input plus search/Ex errors, info
-    diagnostics, optional no-op feedback, and substitution match previews render
+    diagnostics, optional no-op feedback, and substitution results render
     in a dedicated row below the prompt and shrink prompt viewport by one row by
     default.
 - `piVimMode.ui.workbench.reservedRows` can reserve 0-5 width-safe workbench

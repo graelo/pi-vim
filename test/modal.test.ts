@@ -607,7 +607,6 @@ test("Ex input edits command text, executes substitution, and reports success", 
     "/",
     "g",
     "\r",
-    "\r",
   ]);
   expect(result.text).toBe("new new\nnew");
   expect(result.cursor).toEqual(p(0, 0));
@@ -678,13 +677,12 @@ test("diagnostic Ex commands report info without editing state", () => {
   };
   const result = applyModalKeys(initial, "abc", p(0, 1), [
     ":",
+    "k",
+    "e",
+    "y",
+    "m",
     "a",
-    "c",
-    "t",
-    "i",
-    "o",
-    "n",
-    "s",
+    "p",
     " ",
     "v",
     "i",
@@ -709,7 +707,7 @@ test("diagnostic Ex commands report info without editing state", () => {
   expect(result.state.searchHighlight).toEqual(initial.searchHighlight);
   expect(result.state.lastRepeatableChange).toEqual(initial.lastRepeatableChange);
   expect(result.state.exMessage).toBeUndefined();
-  expect(result.state.helpPopup?.title).toBe(":actions vimmode.help");
+  expect(result.state.helpPopup?.title).toBe(":keymap vimmode.help");
   expect(result.state.helpPopup?.lines.join("\n")).toContain("vimmode.help");
 });
 
@@ -722,7 +720,7 @@ test("visual diagnostic Ex commands preserve visual state", () => {
     ":",
   );
   let state = opened.state;
-  for (const key of ["a", "c", "t", "i", "o", "n", "s"]) {
+  for (const key of ["k", "e", "y", "m", "a", "p"]) {
     state = handleModalInput(
       state,
       { text: "one\ntwo", lines: ["one", "two"], cursor: p(1, 2) },
@@ -741,7 +739,7 @@ test("visual diagnostic Ex commands preserve visual state", () => {
   expect(result.state.visualAnchor).toEqual(p(0, 1));
   expect(result.effects).toContainEqual({ type: "restoreCursor", position: p(1, 2) });
   expect(result.state.exMessage).toBeUndefined();
-  expect(result.state.helpPopup?.title).toBe(":actions");
+  expect(result.state.helpPopup?.title).toBe(":keymap");
   expect(result.effects).toContainEqual({
     type: "openReadOnlyPopup",
     popup: result.state.helpPopup!,
@@ -1319,16 +1317,12 @@ test("Ex errors and identical substitutions do not emit edit effects", () => {
   expect(error.effects.some((effect) => effect.type === "edit")).toBe(false);
   expect(error.state.exMessage).toEqual({ kind: "error", text: "Pattern not found: missing" });
 
-  const preview = handleModalInput(
+  const identical = handleModalInput(
     { mode: "normal", pendingEx: { command: "s/abc/abc/", sourceMode: "normal" } },
     snapshot,
     options,
     "\r",
   );
-  expect(preview.effects.some((effect) => effect.type === "edit")).toBe(false);
-  expect(preview.state.pendingEx?.preview).toMatchObject({ command: "s/abc/abc/", matches: 1 });
-
-  const identical = handleModalInput(preview.state, snapshot, options, "\r");
   expect(identical.effects.some((effect) => effect.type === "edit")).toBe(false);
   expect(identical.state.exMessage).toEqual({ kind: "success", text: "1 substitution" });
 });
@@ -1341,15 +1335,15 @@ test("Ex substitution clears search highlights only when text changes and preser
     searchHighlight: { query: "old", current: p(0, 0) },
     pendingEx: { command: "s/old/new/", sourceMode: "normal" },
   };
-  const preview = handleModalInput(state, { text: "old", lines: ["old"], cursor }, options, "\r");
-  expect(preview.state.searchHighlight).toEqual({ query: "old", current: p(0, 0) });
-
-  const changed = handleModalInput(
-    preview.state,
+  const unchanged = handleModalInput(
+    { ...state, pendingEx: { command: "s/old/old/", sourceMode: "normal" } },
     { text: "old", lines: ["old"], cursor },
     options,
     "\r",
   );
+  expect(unchanged.state.searchHighlight).toEqual({ query: "old", current: p(0, 0) });
+
+  const changed = handleModalInput(state, { text: "old", lines: ["old"], cursor }, options, "\r");
   expect(changed.state.register).toEqual({ type: "char", text: "keep" });
   expect(changed.state.lastRepeatableChange).toEqual({ type: "command", command: "deleteChar" });
   expect(changed.state.searchHighlight).toBeUndefined();
@@ -1394,7 +1388,7 @@ test("count-only and no-error substitution flags avoid mutation and preserve rep
   expect(noMatch.state.pendingEx).toBeUndefined();
 });
 
-test("repeat substitution previews then applies last applied substitution semantics", () => {
+test("repeat substitution applies last applied substitution semantics", () => {
   const applied = applyModalKeys({ mode: "normal" }, "foo foo", p(0, 0), [
     ":",
     "%",
@@ -1410,20 +1404,11 @@ test("repeat substitution previews then applies last applied substitution semant
     "/",
     "g",
     "\r",
-    "\r",
   ]);
   expect(applied.text).toBe("bar bar");
 
-  const repeatPreview = handleModalInput(
-    { ...applied.state, pendingEx: { command: "%&", sourceMode: "normal" } },
-    { text: "foo\nfoo", lines: ["foo", "foo"], cursor: p(0, 0) },
-    options,
-    "\r",
-  );
-  expect(repeatPreview.state.pendingEx?.preview).toMatchObject({ command: "%&", matches: 2 });
-
   const repeated = handleModalInput(
-    repeatPreview.state,
+    { ...applied.state, pendingEx: { command: "%&", sourceMode: "normal" } },
     { text: "foo\nfoo", lines: ["foo", "foo"], cursor: p(0, 0) },
     options,
     "\r",
@@ -1447,7 +1432,7 @@ test("repeat substitution without previous applied substitution is safe", () => 
   expect(result.state.exHistory).toBeUndefined();
 });
 
-test("Ex history recalls successful commands and skips preview-only failures", () => {
+test("Ex history recalls and reruns successful commands", () => {
   const substituted = applyModalKeys({ mode: "normal" }, "old old", p(0, 0), [
     ":",
     "s",
@@ -1461,20 +1446,17 @@ test("Ex history recalls successful commands and skips preview-only failures", (
     "w",
     "/",
     "\r",
-    "\r",
     ":",
     "\x1b[A",
     "\r",
   ]);
 
-  expect(substituted.state.pendingEx?.preview).toMatchObject({
-    command: "s/old/new/",
-    matches: 1,
-  });
+  expect(substituted.text).toBe("new new");
+  expect(substituted.state.exMessage).toEqual({ kind: "success", text: "1 substitution" });
   expect(substituted.state.exHistory).toEqual(["s/old/new/"]);
 });
 
-test("Ex offset and semicolon substitution ranges preview and apply", () => {
+test("Ex offset and semicolon substitution ranges apply", () => {
   const offset = applyModalKeys({ mode: "normal" }, "foo\nfoo\nfoo", p(0, 0), [
     ":",
     "2",
@@ -1493,7 +1475,6 @@ test("Ex offset and semicolon substitution ranges preview and apply", () => {
     "r",
     "/",
     "g",
-    "\r",
     "\r",
   ]);
   expect(offset.text).toBe("foo\nbar\nbar");
@@ -1517,7 +1498,6 @@ test("Ex offset and semicolon substitution ranges preview and apply", () => {
     "z",
     "/",
     "g",
-    "\r",
     "\r",
   ]);
   expect(semicolon.text).toBe("foo\nbaz\nbaz");
@@ -1710,7 +1690,7 @@ test("invalid offset ranges leave state unchanged", () => {
   expect(update.state.exMessage).toEqual({ kind: "error", text: "Invalid Ex range" });
 });
 
-test("Ex regex substitution previews and applies with literal replacement", () => {
+test("Ex regex substitution applies with literal replacement", () => {
   const result = applyModalKeys({ mode: "normal" }, "TODO FIXME", p(0, 0), [
     ":",
     "%",
@@ -1738,29 +1718,10 @@ test("Ex regex substitution previews and applies with literal replacement", () =
     "g",
     "r",
     "\r",
-    "\r",
   ]);
 
   expect(result.text).toBe("&-$1-\\1 &-$1-\\1");
   expect(result.state.exMessage).toEqual({ kind: "success", text: "2 substitutions" });
-});
-
-test("editing Ex command clears substitution preview", () => {
-  const preview = handleModalInput(
-    { mode: "normal", pendingEx: { command: "s/old/new/", sourceMode: "normal" } },
-    { text: "old", lines: ["old"], cursor },
-    options,
-    "\r",
-  );
-  const edited = handleModalInput(
-    preview.state,
-    { text: "old", lines: ["old"], cursor },
-    options,
-    "x",
-  );
-  expect(edited.state.pendingEx?.command).toBe("s/old/new/x");
-  expect(edited.state.pendingEx?.cursor).toBe("s/old/new/x".length);
-  expect(edited.state.pendingEx?.preview).toBeUndefined();
 });
 
 test("Ex command-line cursor edits command text without touching prompt", () => {
@@ -1820,7 +1781,6 @@ test("Ex history recall moves command cursor to end", () => {
     "e",
     "w",
     "/",
-    "\r",
     "\r",
     ":",
     "x",

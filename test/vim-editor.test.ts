@@ -915,7 +915,7 @@ test("renders Ex command suggestions width-safely and reserves viewport rows", (
   editor.handleInput("");
 });
 
-test("search and substitution preview rows render width-safely below prompt", () => {
+test("search rows and substitution results render width-safely below prompt", () => {
   const { editor } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
   const baseline = editor.render(20);
 
@@ -930,11 +930,10 @@ test("search and substitution preview rows render width-safely below prompt", ()
   editor.setText("old old");
   editor.handleInput(":");
   typeKeys(editor, ["%", "s", "/", "o", "l", "d", "/", "n", "e", "w", "/", "g", "\r"]);
-  const preview = editor.render(80);
-  expect(preview.at(-1)).toContain("2 matches found");
-  expect(preview.at(-1)).toContain("Enter applies");
-  expect(preview.join("\n")).toContain(SEARCH_START);
-  expectRenderedWidth(preview, 80);
+  expect(editor.getText()).toBe("new new");
+  const applied = editor.render(80);
+  expect(applied.at(-1)).toContain("2 substitutions");
+  expectRenderedWidth(applied, 80);
 });
 
 test("Ex row composes with visual selection and search highlights", () => {
@@ -1036,7 +1035,6 @@ test("representative read-only Ex commands open live popups", () => {
   const { editor, overlays } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
   const cases = [
     ["help search", ":help search", "prompt search"],
-    ["actions redo", ":actions redo", "command.redo"],
     ["keymap redo", ":keymap redo", "command.redo"],
     ["mapcheck ctrl+p", ":mapcheck ctrl+p", "protected"],
     ["vimdoctor", ":vimdoctor", "vimdoctor: ok"],
@@ -1742,7 +1740,6 @@ test("macro records and replays Ex substitutions and cancellation", () => {
     "e",
     "w",
     "/",
-    "\r",
     "\r",
     "q",
   ]);

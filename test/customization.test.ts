@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest";
 
 import { DEFAULT_VIM_OPTIONS, resolveVimOptions } from "../src/config.ts";
 import {
-  actionsMessage,
   doctorMessage,
   keybindingCatalogLines,
   keybindingDetailLines,
@@ -22,8 +21,6 @@ describe("vim customization helpers", () => {
       keys: ["ctrl+r"],
     });
     expect(searchActions(keymap, "next word")[0]).toMatchObject({ id: "wordForward" });
-    expect(actionsMessage(keymap)).toContain("commands");
-    expect(actionsMessage(keymap, "vimscript")).toBe("actions: no match for vimscript");
   });
 
   test("formats keymap entries from resolved bindings", () => {
@@ -39,12 +36,9 @@ describe("vim customization helpers", () => {
       kind: "diagnostic",
       keys: [],
     });
-    expect(actionsMessage(keymap, "vimdoctor")).toContain("vimmode.doctor");
-    expect(actionsMessage(keymap, "vimdoctor")).toContain("metadata-only not bindable");
-    expect(actionsMessage(keymap, "vimmode.help")).toContain("runtimeHelp");
-    expect(actionsMessage(keymap, "vimmode.dump")).toBe("actions: no match for vimmode.dump");
-    expect(actionsMessage(keymap)).toContain("diagnostic metadata");
-    expect(actionsMessage(keymap)).toContain("runtime-help metadata");
+    expect(keymapMessage(keymap, "vimdoctor")).toContain("vimmode.doctor");
+    expect(keymapMessage(keymap, "vimmode.help")).toContain("runtimeHelp");
+    expect(keymapMessage(keymap, "vimmode.dump")).toBe("keymap: no match for vimmode.dump");
     expect(keymapMessage(keymap, "vimmode.doctor")).toContain("metadata-only not bindable");
   });
 
@@ -53,8 +47,8 @@ describe("vim customization helpers", () => {
     expect(keymapMessage(options.keymap!, "macro", options.macros, options.marks)).toBe(
       "keymap: no match for macro",
     );
-    expect(actionsMessage(options.keymap!, "mark", options.macros, options.marks)).toBe(
-      "actions: no match for mark",
+    expect(keymapMessage(options.keymap!, "mark", options.macros, options.marks)).toBe(
+      "keymap: no match for mark",
     );
   });
 
@@ -91,7 +85,6 @@ describe("vim customization helpers", () => {
       piVimMode: { keymap: { escape: ["<C-j>", "<D-j>"] } },
     });
 
-    expect(actionsMessage(options.keymap!)).toContain("1 escape aliases");
     expect(keymapMessage(options.keymap!, "escape")).toContain("escape.alias ctrl+j,super+j");
     expect(keymapMessage(options.keymap!, "escape")).toContain("Ex command-line");
     expect(mapcheckMessage(options.keymap!, "super+j")).toBe("mapcheck: super+j -> escape.alias");

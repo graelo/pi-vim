@@ -330,11 +330,6 @@ test("parses read-only customization diagnostic commands", () => {
     command: "mapcheck",
     query: "ctrl+p",
   });
-  expect(parseExCommand("actions search", context)).toEqual({
-    type: "diagnostic",
-    command: "actions",
-    query: "search",
-  });
 });
 
 test("parses finite runtime help commands", () => {
@@ -506,7 +501,7 @@ test("rejects invalid Ex commands and arguments", () => {
     type: "error",
     message: "Unexpected Ex command arguments",
   });
-  for (const removed of ["quote", "reflow", "fence ts", "changelog"]) {
+  for (const removed of ["quote", "reflow", "fence ts", "changelog", "actions redo"]) {
     expect(parseExCommand(removed, context)).toEqual({
       type: "error",
       message: `Unsupported Ex command: ${removed.split(" ")[0]}`,

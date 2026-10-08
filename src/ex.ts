@@ -50,7 +50,7 @@ export type ParsedExDestinationCommand = {
 
 export type ParsedExDiagnosticCommand = {
   type: "diagnostic";
-  command: "vimdoctor" | "keymap" | "mapcheck" | "actions";
+  command: "vimdoctor" | "keymap" | "mapcheck";
   query?: string;
 };
 
@@ -112,7 +112,6 @@ type ParsedCommandName =
   | "vimdoctor"
   | "keymap"
   | "mapcheck"
-  | "actions"
   | "help"
   | "messages"
   | "keybindings"
@@ -160,7 +159,6 @@ const COMMAND_TYPES: Record<ParsedCommandName, ParsedCommandType> = {
   vimdoctor: "diagnostic",
   keymap: "diagnostic",
   mapcheck: "diagnostic",
-  actions: "diagnostic",
   help: "runtimeHelp",
   messages: "runtimeHelp",
   keybindings: "keybindings",
@@ -202,7 +200,6 @@ function parseCommand(
     "vimdoctor",
     "keymap",
     "mapcheck",
-    "actions",
     "help",
     "messages",
     "keybindings",
@@ -506,7 +503,7 @@ const CANDIDATE_NAMES_BY_COMMAND_TYPE: Record<string, string[]> = {
   quit: ["q", "quit"],
   repeatSubstitute: ["&", "&&"],
   lineJump: [] as string[],
-  diagnostic: ["vimdoctor", "keymap", "mapcheck", "actions"],
+  diagnostic: ["vimdoctor", "keymap", "mapcheck"],
   runtimeHelp: ["help", "messages"],
   keybindings: ["keybindings"],
   inspect: ["vimmode"],

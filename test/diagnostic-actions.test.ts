@@ -10,7 +10,6 @@ describe("diagnostic/help action metadata", () => {
   test("registry contains finite metadata-only vimmode actions", () => {
     expect(DIAGNOSTIC_ACTIONS.map((entry) => entry.id)).toEqual([
       "vimmode.doctor",
-      "vimmode.actions",
       "vimmode.keymap",
       "vimmode.keybindings",
       "vimmode.mapcheck",

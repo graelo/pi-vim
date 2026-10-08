@@ -229,7 +229,7 @@ describe("keybinding popup documentation", () => {
     expect(featuresDoc).toContain("no diagnostic/help action keybinding dispatch");
     expect(featuresDoc).toContain("no default keybinding for `:keybindings`");
     expect(featuresDoc).toContain("no unbounded output log");
-    for (const removed of [":features", ":changelog", "prompt.transform."]) {
+    for (const removed of [":features", ":changelog", ":actions", "prompt.transform."]) {
       expect(allUserDocs).not.toContain(removed);
     }
   });

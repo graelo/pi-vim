@@ -21,7 +21,6 @@ const exEntry = (text = ""): ExWorkbench => ({
   prefix: ":",
   text,
   sourceMode: "normal",
-  preview: { command: "s/foo/bar/", matches: 1, message: "1 substitution" },
 });
 
 describe("workbench helper", () => {
@@ -31,15 +30,13 @@ describe("workbench helper", () => {
     expect(workbenchDisplayText(exEntry("s/foo/bar/"))).toBe(":s/foo/bar/");
   });
 
-  test("append and backspace edit text and clear preview/history navigation", () => {
+  test("append and backspace edit text and clear history navigation", () => {
     const appended = appendWorkbenchText({ ...exEntry("s/foo/bar/"), historyIndex: 0 }, "g");
     expect(appended.text).toBe("s/foo/bar/g");
     expect(appended.historyIndex).toBeUndefined();
-    expect(appended.preview).toBeUndefined();
 
     const backed = backspaceWorkbenchText(appended);
     expect(backed.text).toBe("s/foo/bar/");
-    expect(backed.preview).toBeUndefined();
 
     expect(backspaceWorkbenchText(searchEntry(""))).toEqual(searchEntry(""));
   });
@@ -68,13 +65,12 @@ describe("workbench helper", () => {
     expect(restored.historyDraft).toBeUndefined();
   });
 
-  test("history navigation is bounded and clears preview", () => {
+  test("history navigation is bounded", () => {
     const history = ["one"];
     const pending = exEntry("draft");
 
     const previous = navigateWorkbenchHistory(pending, history, "previous");
     expect(previous.text).toBe("one");
-    expect(previous.preview).toBeUndefined();
 
     const stillPrevious = navigateWorkbenchHistory(previous, history, "previous");
     expect(stillPrevious.text).toBe("one");

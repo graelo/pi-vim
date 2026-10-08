@@ -229,36 +229,11 @@ function finishExEdit(
   return withEffects(finished, effects);
 }
 
-function finishExPreview(
-  state: ModalState,
-  pendingEx: NonNullable<ModalState["pendingEx"]>,
-): ModalUpdate | undefined {
-  if (pendingEx.preview?.command === pendingEx.command) {
-    const result = pendingEx.preview;
-    const source = result.repeatSource ?? state.lastExSubstitution;
-    const base = result.edit.changed ? clearSearchHighlight(state) : state;
-    const finished = finishExState(
-      source ? { ...base, lastExSubstitution: source } : base,
-      "success",
-      substitutionMessage(result.matches),
-    );
-    const effects: ModalEffect[] = result.edit.changed
-      ? [{ type: "edit", result: result.edit }]
-      : [{ type: "invalidate" }];
-    return withEffects(finished, effects);
-  }
-  return undefined;
-}
-
 function executeSubstitutionCommand(
   state: ModalState,
   snapshot: EditorSnapshot,
-  pendingEx: NonNullable<ModalState["pendingEx"]>,
   parsed: Extract<ExParseResult, { type: "substitute" | "repeatSubstitute" }>,
 ): ModalUpdate {
-  const previewUpdate = finishExPreview(state, pendingEx);
-  if (previewUpdate) return previewUpdate;
-
   const source =
     parsed.type === "substitute" ? substitutionSource(parsed) : state.lastExSubstitution;
   if (!source) return invalidate(finishExState(state, "error", "No previous substitution"));
@@ -289,21 +264,16 @@ function executeSubstitutionCommand(
     return invalidate(finishExState(state, "error", `Pattern not found: ${source.pattern}`));
   }
 
-  const message = `${result.matches} ${result.matches === 1 ? "match" : "matches"} found; Enter applies, Esc cancels`;
-  return invalidate({
-    ...state,
-    pendingEx: {
-      ...pendingEx,
-      preview: {
-        command: pendingEx.command,
-        matches: result.matches,
-        ranges: result.ranges,
-        edit: result.edit,
-        message,
-        repeatSource: source,
-      },
-    },
-  });
+  const base = result.edit.changed ? clearSearchHighlight(state) : state;
+  const finished = finishExState(
+    { ...base, lastExSubstitution: source },
+    "success",
+    substitutionMessage(result.matches),
+  );
+  const effects: ModalEffect[] = result.edit.changed
+    ? [{ type: "edit", result: result.edit }]
+    : [{ type: "invalidate" }];
+  return withEffects(finished, effects);
 }
 
 function executeExPopupCommand(
@@ -448,7 +418,7 @@ function executeExCommand(
   if (parsed.type === "error") return invalidate(finishExState(state, "error", parsed.message));
 
   if (parsed.type === "substitute" || parsed.type === "repeatSubstitute")
-    return executeSubstitutionCommand(state, snapshot, pendingEx, parsed);
+    return executeSubstitutionCommand(state, snapshot, parsed);
 
   const directUpdate = executeExDirectCommand(state, snapshot, parsed);
   if (directUpdate) return directUpdate;
@@ -460,11 +430,6 @@ function executeExCommand(
   if (editUpdate) return editUpdate;
 
   return executeExMoveRangeCommand(state, snapshot, parsed);
-}
-
-function clearExPreview(pendingEx: NonNullable<ModalState["pendingEx"]>) {
-  const { preview: _preview, ...rest } = pendingEx;
-  return rest;
 }
 
 function exCursor(pendingEx: NonNullable<ModalState["pendingEx"]>): number {
@@ -583,7 +548,7 @@ function editPendingEx(
   cursor: number,
 ): PendingExCommand {
   return {
-    ...clearExPreview(pendingEx),
+    ...pendingEx,
     command,
     cursor: Math.max(0, Math.min(cursor, command.length)),
     historyIndex: undefined,
@@ -611,7 +576,7 @@ function navigateExHistory(
     return {
       ...state,
       pendingEx: {
-        ...clearExPreview(pendingEx),
+        ...pendingEx,
         command: draft,
         cursor: draft.length,
         historyIndex: undefined,
@@ -622,7 +587,7 @@ function navigateExHistory(
   return {
     ...state,
     pendingEx: {
-      ...clearExPreview(pendingEx),
+      ...pendingEx,
       command: history[nextIndex] ?? draft,
       cursor: (history[nextIndex] ?? draft).length,
       historyIndex: nextIndex,
@@ -663,19 +628,19 @@ function handleExEditingNavigation(
   }
   if (keyMatches(data, "left")) {
     const cursor = Math.max(0, exCursor(pendingEx) - 1);
-    return invalidate({ ...state, pendingEx: { ...clearExPreview(pendingEx), cursor } });
+    return invalidate({ ...state, pendingEx: { ...pendingEx, cursor } });
   }
   if (keyMatches(data, "right")) {
     const cursor = Math.min(pendingEx.command.length, exCursor(pendingEx) + 1);
-    return invalidate({ ...state, pendingEx: { ...clearExPreview(pendingEx), cursor } });
+    return invalidate({ ...state, pendingEx: { ...pendingEx, cursor } });
   }
   if (keyMatches(data, "home")) {
-    return invalidate({ ...state, pendingEx: { ...clearExPreview(pendingEx), cursor: 0 } });
+    return invalidate({ ...state, pendingEx: { ...pendingEx, cursor: 0 } });
   }
   if (keyMatches(data, "end")) {
     return invalidate({
       ...state,
-      pendingEx: { ...clearExPreview(pendingEx), cursor: pendingEx.command.length },
+      pendingEx: { ...pendingEx, cursor: pendingEx.command.length },
     });
   }
   return undefined;
@@ -730,7 +695,7 @@ function handleExWordNavigation(
     return invalidate({
       ...state,
       pendingEx: {
-        ...clearExPreview(pendingEx),
+        ...pendingEx,
         cursor: wordLeft(pendingEx.command, exCursor(pendingEx)),
       },
     });
@@ -739,7 +704,7 @@ function handleExWordNavigation(
     return invalidate({
       ...state,
       pendingEx: {
-        ...clearExPreview(pendingEx),
+        ...pendingEx,
         cursor: wordRight(pendingEx.command, exCursor(pendingEx)),
       },
     });

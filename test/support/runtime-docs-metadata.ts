@@ -17,7 +17,6 @@ export type PopupCommandDocsMetadata = {
 
 export const DIAGNOSTIC_ACTION_DOCS_METADATA = [
   "vimmode.doctor",
-  "vimmode.actions",
   "vimmode.keymap",
   "vimmode.keybindings",
   "vimmode.mapcheck",
@@ -50,16 +49,6 @@ export const POPUP_COMMAND_DOCS_METADATA = [
   {
     command: ":keybindings <query>",
     parserExample: "keybindings redo",
-    docsAnchor: "runtime-help:keybinding-discovery-popup",
-  },
-  {
-    command: ":actions",
-    parserExample: "actions",
-    docsAnchor: "runtime-help:keybinding-discovery-popup",
-  },
-  {
-    command: ":actions <query>",
-    parserExample: "actions redo",
     docsAnchor: "runtime-help:keybinding-discovery-popup",
   },
   {

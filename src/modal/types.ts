@@ -6,7 +6,6 @@ import type {
   LineRange,
   PendingOperator,
   Position,
-  TextRange,
   StartupMode,
   ResolvedVimEditorOptions,
   VimMode,
@@ -104,15 +103,6 @@ export type LastExSubstitution = {
   matcherMode: "literal" | "regex";
 };
 
-export type ExSubstitutionPreview = {
-  command: string;
-  matches: number;
-  ranges: TextRange[];
-  edit: EditResult;
-  message: string;
-  repeatSource?: LastExSubstitution;
-};
-
 export type PendingExCommand = {
   command: string;
   cursor?: number;
@@ -120,7 +110,6 @@ export type PendingExCommand = {
   visualAnchor?: Position;
   visualCursor?: Position;
   visualRange?: LineRange;
-  preview?: ExSubstitutionPreview;
   historyIndex?: number;
   historyDraft?: string;
   selectedSuggestion?: number;

@@ -119,7 +119,6 @@ function searchSummary(state: ModalState): string | undefined {
 function exSummary(state: ModalState): string | undefined {
   const parts = [
     state.exHistory ? `history=${state.exHistory.length}` : undefined,
-    state.pendingEx?.preview ? `preview=${state.pendingEx.preview.matches}` : undefined,
     state.exMessage ? `message=${state.exMessage.kind}:${redact(state.exMessage.text)}` : undefined,
     state.messageHistory ? `messages=${state.messageHistory.length}` : undefined,
   ].filter(Boolean);
@@ -144,8 +143,7 @@ function optionsSummary(options: ResolvedVimEditorOptions): string {
 function renderSummary(state: ModalState, render: InspectRenderSummary | undefined): string {
   const visual =
     render?.visualRenderActive ?? Boolean(state.visualAnchor && state.mode.startsWith("visual"));
-  const search =
-    render?.searchRenderActive ?? Boolean(state.searchHighlight || state.pendingEx?.preview);
+  const search = render?.searchRenderActive ?? Boolean(state.searchHighlight);
   const workbench =
     render?.workbenchRowActive ??
     Boolean(state.pendingSearch || state.pendingEx || state.exMessage);

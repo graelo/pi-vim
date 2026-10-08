@@ -87,11 +87,9 @@ function fitWidth(text: string, width: number): string {
 function workbenchText(state: ModalState): string | undefined {
   return state.pendingSearch
     ? `${state.pendingSearch.direction === "backward" ? "?" : "/"}${state.pendingSearch.query}`
-    : state.pendingEx?.preview
-      ? state.pendingEx.preview.message
-      : state.pendingEx
-        ? `:${state.pendingEx.command}`
-        : state.exMessage?.text;
+    : state.pendingEx
+      ? `:${state.pendingEx.command}`
+      : state.exMessage?.text;
 }
 
 const MAX_VISIBLE_SUGGESTIONS = 5;
@@ -100,7 +98,7 @@ function workbenchSuggestions(
   state: ModalState,
   options: ModalOptions,
 ): { items: { text: string; selected: boolean }[]; selectedIndex: number; total: number } {
-  if (!state.pendingEx || state.pendingEx.preview) return { items: [], selectedIndex: 0, total: 0 };
+  if (!state.pendingEx) return { items: [], selectedIndex: 0, total: 0 };
   if (options.exCommand?.autocomplete === false) return { items: [], selectedIndex: 0, total: 0 };
   const command = state.pendingEx.command;
   if (!/^[A-Za-z&\s]*$/.test(command)) return { items: [], selectedIndex: 0, total: 0 };
@@ -418,15 +416,6 @@ export class VimEditor extends CustomEditor {
   private searchRenderInput() {
     const search = searchForOptions(this.options);
     if (!search.highlight) return undefined;
-    const preview = this.modalState.pendingEx?.preview;
-    if (preview) {
-      return {
-        query: "",
-        ranges: preview.ranges,
-        highlightCurrent: false,
-        maxHighlights: search.maxHighlights,
-      };
-    }
     if (!this.modalState.searchHighlight) return undefined;
     return {
       query: this.modalState.searchHighlight.query,

@@ -17,7 +17,7 @@ describe("runtime help registry", () => {
     expect(message).toContain(":help <topic>");
     expect(message).not.toContain(":features");
     expect(message).toContain(":messages");
-    expect(message).toContain(":actions");
+    expect(message).not.toContain(":actions");
     expect(message).toContain(":keymap");
     expect(message).toContain(":mapcheck");
     expect(message).toContain(":vimdoctor");
@@ -32,24 +32,22 @@ describe("runtime help registry", () => {
       "clipboard reads depend on platform tools",
     );
     expect(runtimeHelpMessage("clipboard", context)).toContain("mirror fallback");
-    expect(runtimeHelpMessage("actions", context)).toContain("metadata-only");
+    expect(runtimeHelpMessage("diagnostics", context)).toContain("metadata-only");
     expect(runtimeHelpMessage("diagnostics", context)).toContain("not bindable");
     expect(runtimeHelpMessage("vimscript", context)).toBe("help: no match for vimscript");
   });
 
   test("read-only popup builders expose titles and bounded line arrays", () => {
     const help = runtimeHelpPopup({ command: "help", query: "search" }, DEFAULT_VIM_OPTIONS);
-    const actions = diagnosticPopup({ command: "actions", query: "redo" }, DEFAULT_VIM_OPTIONS);
     const keymap = diagnosticPopup({ command: "keymap", query: "redo" }, DEFAULT_VIM_OPTIONS);
     const mapcheck = diagnosticPopup({ command: "mapcheck", query: "ctrl+p" }, DEFAULT_VIM_OPTIONS);
     const doctor = diagnosticPopup({ command: "vimdoctor" }, DEFAULT_VIM_OPTIONS);
 
     expect(help).toMatchObject({ title: ":help search", source: "help", query: "search" });
-    expect(actions).toMatchObject({ title: ":actions redo", source: "actions" });
     expect(keymap).toMatchObject({ title: ":keymap redo", source: "keymap" });
     expect(mapcheck).toMatchObject({ title: ":mapcheck ctrl+p", source: "mapcheck" });
     expect(doctor).toMatchObject({ title: ":vimdoctor", source: "vimdoctor" });
-    for (const popup of [help, actions, keymap, mapcheck, doctor]) {
+    for (const popup of [help, keymap, mapcheck, doctor]) {
       expect(popup.scrollOffset).toBe(0);
       expect(popup.lines.length).toBeGreaterThan(0);
       expect(popup.lines.every((line) => line.trim().length > 0)).toBe(true);

@@ -3,7 +3,6 @@ export const HELP_POPUP_BODY_ROWS = 10;
 export type ReadOnlyPopupSource =
   | "help"
   | "keybindings"
-  | "actions"
   | "keymap"
   | "mapcheck"
   | "vimdoctor"

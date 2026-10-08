@@ -6,12 +6,6 @@ export type WorkbenchPrefix = "/" | "?" | ":";
 
 export type WorkbenchHistoryDirection = "previous" | "next";
 
-export type WorkbenchPreview = {
-  command: string;
-  matches: number;
-  message: string;
-};
-
 export type SearchWorkbench = {
   kind: "search";
   prefix: "/" | "?";
@@ -30,7 +24,6 @@ export type ExWorkbench = {
   visualAnchor?: Position;
   visualCursor?: Position;
   visualRange?: LineRange;
-  preview?: WorkbenchPreview;
   historyIndex?: number;
   historyDraft?: string;
 };
@@ -46,14 +39,8 @@ function clearNavigation<T extends PendingWorkbench>(entry: T): T {
   return rest as T;
 }
 
-export function clearWorkbenchPreview<T extends PendingWorkbench>(entry: T): T {
-  if (entry.kind !== "ex" || entry.preview === undefined) return entry;
-  const { preview: _preview, ...rest } = entry;
-  return rest as T;
-}
-
 function resetDraftState<T extends PendingWorkbench>(entry: T): T {
-  return clearWorkbenchPreview(clearNavigation(entry));
+  return clearNavigation(entry);
 }
 
 export function appendWorkbenchText<T extends PendingWorkbench>(entry: T, text: string): T {
@@ -85,7 +72,7 @@ export function navigateWorkbenchHistory<T extends PendingWorkbench>(
   if (nextIndex === undefined) return entry;
   if (nextIndex >= history.length) {
     const restored = { ...entry, text: draft, historyIndex: undefined, historyDraft: undefined };
-    return clearWorkbenchPreview(restored as T);
+    return restored as T;
   }
 
   const next = {
@@ -94,5 +81,5 @@ export function navigateWorkbenchHistory<T extends PendingWorkbench>(
     historyIndex: nextIndex,
     historyDraft: draft,
   };
-  return clearWorkbenchPreview(next as T);
+  return next as T;
 }

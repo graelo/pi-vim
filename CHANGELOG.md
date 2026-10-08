@@ -7,8 +7,8 @@ project uses [Semantic Versioning](https://semver.org/).
 ## [1.0.0] - 2026-10-08
 
 Hard fork of [pekochan069/pi-vimmode](https://github.com/pekochan069/pi-vimmode)
-at v0.9.0, published as `@graelo/pi-vimmode`. Apart from the removals and the
-fixes below, editor behavior is unchanged from 0.9.0.
+at v0.9.0, published as `@graelo/pi-vimmode`. Apart from the changes below,
+editor behavior is unchanged from 0.9.0.
 
 ### Changed
 
@@ -20,6 +20,9 @@ fixes below, editor behavior is unchanged from 0.9.0.
 - `RELEASE.md` is replaced by this `CHANGELOG.md`.
 - Development toolchain moved from Bun, rolldown, oxlint, oxfmt and lefthook
   to npm, tsc, vitest, tsx, biome and rumdl.
+- `:s` and `:&` apply on the first `Enter`, as in Vim, instead of first showing
+  a match preview that needed a second `Enter`. Use the `n` flag
+  (`:s/old/new/gn`) to count matches without editing.
 
 ### Removed
 
@@ -32,8 +35,9 @@ fixes below, editor behavior is unchanged from 0.9.0.
   `piVimMode.keymap.actionPresets`, and `piVimMode.promptTransforms`. These
   settings now produce a "removed in 1.0.0" warning (see `:vimdoctor`) and are
   ignored.
-- `:features`; use `:help`, `:keybindings`, `:actions`, and `:mapcheck`.
+- `:features`; use `:help`, `:keybindings`, and `:mapcheck`.
 - `:changelog` and its Markdown popup renderer.
+- `:actions`; use `:keymap <query>` to search actions and their bindings.
 
 ### Fixed
 

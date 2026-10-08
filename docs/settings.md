@@ -858,10 +858,10 @@ Example cursor formats:
 
 | Path                                  | Default | Accepted values         | Effect                                                                                                            |
 | ------------------------------------- | ------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `piVimMode.ui.workbench.reservedRows` | `0`     | integer from `0` to `5` | Reserves width-safe rows below the prompt for `/`, `?`, `:` input, Ex/search messages, and substitution previews. |
+| `piVimMode.ui.workbench.reservedRows` | `0`     | integer from `0` to `5` | Reserves width-safe rows below the prompt for `/`, `?`, `:` input, Ex/search messages, and substitution results. |
 
 Default `0` preserves the existing idle layout: no blank workbench row is
-reserved until search, Ex input, preview, success, or error feedback is active.
+reserved until search, Ex input, success, or error feedback is active.
 Active feedback still reserves one row. Setting `reservedRows` to `1` or more
 keeps that many rows below the prompt even when idle; active feedback renders in
 the first reserved row without subtracting extra height. Values below `0`, above
