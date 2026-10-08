@@ -34,6 +34,8 @@ describe("runtime help registry", () => {
     expect(runtimeHelpMessage("clipboard", context)).toContain("mirror fallback");
     expect(runtimeHelpMessage("diagnostics", context)).toMatch(/^runtime-help: /);
     expect(runtimeHelpMessage("vimdoctor", context)).toMatch(/^customization: /);
+    expect(runtimeHelpMessage("surround", context)).toMatch(/^surround: ys\{target\}/);
+    expect(runtimeHelpMessage("cs", context)).toContain("no tags or function surrounds");
     expect(runtimeHelpMessage("vimscript", context)).toBe("help: no match for vimscript");
   });
 

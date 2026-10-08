@@ -105,6 +105,18 @@ const ENTRIES = [
     testAnchors: ["test/commands.test.ts", "test/buffer.test.ts", "test/modal.test.ts"],
   },
   {
+    id: "surround",
+    category: "editing",
+    topics: ["surround", "ys", "yss", "ds", "cs"],
+    summary:
+      "ys{target}{char} and yss{char} add a pair, ds{char} deletes and cs{old}{new} changes the nearest pair, and visual S wraps the selection, with vim-surround pair rules",
+    examples: ["ysiw)", 'yss"', "ds(", "cs\"'", "viwS]"],
+    limits: ["no tags or function surrounds", "no newline variants", "no visual block"],
+    docsAnchor: "runtime-help:surround",
+    specAnchor: "openspec/specs/vim-surround/spec.md",
+    testAnchors: ["test/surround.test.ts", "test/modal.test.ts", "test/vim-editor.test.ts"],
+  },
+  {
     id: "registers",
     category: "registers",
     topics: ["registers", "register", "clipboard", "black-hole", "unnamed", '"+', '"*', '"_'],

@@ -439,6 +439,8 @@ Limitations:
 
 ## Surround
 
+<!-- runtime-help:surround -->
+
 Add, delete, and change the pair around text, with the keys and pair rules of
 [vim-surround](https://github.com/tpope/vim-surround).
 
