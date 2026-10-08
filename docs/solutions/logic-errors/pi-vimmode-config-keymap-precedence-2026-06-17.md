@@ -356,8 +356,6 @@ to `cloneResolvedVimOptions`, not to separate adapter-local clone lists.
     — parser precedence failures around keybinding dispatch.
 - `docs/solutions/tooling-decisions/pi-vimmode-ui-config-single-source-of-truth-2026-05-27.md`
     — config surface source-of-truth guidance.
-- `docs/solutions/architecture-patterns/pi-vimmode-typed-action-registry-keybindings-2026-06-09.md`
-    — prompt transform/action keybinding registry context.
 - `docs/solutions/developer-experience/pi-vimmode-ctrl-d-ctrl-u-half-page-scroll-2026-06-18.md`
     — semantic motion binding pattern for terminal-owned keys.
 - `docs/solutions/architecture-patterns/pi-vimmode-final-leader-resolution-2026-07-14.md`

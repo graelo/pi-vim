@@ -121,7 +121,6 @@ wrappers so callers do not need a broad migration in one commit.
 
 ## Related
 
-- `docs/solutions/architecture-patterns/pi-vimmode-typed-action-registry-keybindings-2026-06-09.md`
 - `docs/solutions/architecture-patterns/pi-vimmode-runtime-help-docs-drift-guard-2026-06-05.md`
 - `docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md`
 - `docs/solutions/architecture-patterns/pi-vimmode-compiled-keymap-cache-command-resolver-2026-06-18.md`

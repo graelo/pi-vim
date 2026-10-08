@@ -97,8 +97,6 @@ validation, modal ownership, and runtime catalog diagnostics.
 
 - `docs/solutions/logic-errors/pi-vimmode-config-keymap-precedence-2026-06-17.md`
     — related keymap precedence and clone drift guardrails
-- `docs/solutions/architecture-patterns/pi-vimmode-typed-action-registry-keybindings-2026-06-09.md`
-    — semantic action registry and protected shortcut guidance
 - `docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md`
     — finite parser and buffer-helper boundary
 - `docs/solutions/logic-errors/pi-vimmode-customization-diagnostics-edge-cases-2026-06-04.md`

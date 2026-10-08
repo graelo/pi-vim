@@ -36,7 +36,6 @@ Related docs already cover finite parser boundaries and keymap precedence:
 
 - [Finite Vim keybinding parser with pure buffer helpers](finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md)
 - [Preserve explicit pi-vimmode keymap precedence](../logic-errors/pi-vimmode-config-keymap-precedence-2026-06-17.md)
-- [Typed action registry for pi-vimmode keybindings](pi-vimmode-typed-action-registry-keybindings-2026-06-09.md)
 
 This learning is narrower: when a finite parser already has stable semantics,
 move repeated lookup cost out of the parser path without changing the parser
@@ -226,4 +225,3 @@ after code changes.
 
 - [Finite Vim keybinding parser with pure buffer helpers](finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md)
 - [Preserve explicit pi-vimmode keymap precedence](../logic-errors/pi-vimmode-config-keymap-precedence-2026-06-17.md)
-- [Typed action registry for pi-vimmode keybindings](pi-vimmode-typed-action-registry-keybindings-2026-06-09.md)

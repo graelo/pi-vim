@@ -170,12 +170,7 @@ Benefits:
 
 - `docs/solutions/design-patterns/pi-vimmode-read-only-help-overlay-ui-2026-06-09.md`
     — overlay shell for read-only help and discovery surfaces.
-- `docs/solutions/architecture-patterns/pi-vimmode-typed-action-registry-keybindings-2026-06-09.md`
-    — typed registry boundary for bindable actions versus metadata-only
-    diagnostics.
 - `docs/solutions/documentation-gaps/pi-vimmode-keybinding-discovery-help-topic-boundary-2026-06-09.md`
     — boundary between keybinding discovery and help topics.
-- `docs/solutions/developer-experience/action-keybinding-recipes-for-pivimmode-2026-06-09.md`
-    — feature discovery recipes and action keybinding presets.
 - `docs/solutions/architecture-patterns/pi-vimmode-runtime-help-docs-drift-guard-2026-06-05.md`
     — source-backed runtime help and docs drift prevention.

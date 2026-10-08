@@ -224,8 +224,6 @@ project-local manual test above.
     — final-layer keymap precedence and default conflict removal.
 - [`finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md`](finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md)
     — finite pending-prefix grammar and modal parser boundaries.
-- [`pi-vimmode-typed-action-registry-keybindings-2026-06-09.md`](pi-vimmode-typed-action-registry-keybindings-2026-06-09.md)
-    — trusted JS actions, config validation, and mode-scoped bindings.
 - [`../developer-experience/pi-vimmode-ctrl-p-insert-mode-delegates-to-pi-2026-06-22.md`](../developer-experience/pi-vimmode-ctrl-p-insert-mode-delegates-to-pi-2026-06-22.md)
     — protected shortcut ownership across modes.
 - `docs/adr/0004-final-leader-resolution.md` — architectural decision for

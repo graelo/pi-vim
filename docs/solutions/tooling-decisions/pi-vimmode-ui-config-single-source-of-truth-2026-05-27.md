@@ -243,7 +243,5 @@ contract drift doc linked below.
 - `test/config.test.ts` — parser acceptance coverage for ignored `vimOptions`.
 - `docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md`
     — related keymap/config validation architecture.
-- `docs/solutions/architecture-patterns/pi-vimmode-typed-action-registry-keybindings-2026-06-09.md`
-    — typed action/keybinding registry and docs drift prevention.
 - `docs/solutions/logic-errors/vim-behavior-contract-drift-2026-05-28.md` —
     runtime option cloning and behavior contract drift.

@@ -131,5 +131,4 @@ Avoid:
 
 - `docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md`
 - `docs/solutions/architecture-patterns/pi-vimmode-finite-delete-before-cursor-command-2026-06-19.md`
-- `docs/solutions/architecture-patterns/pi-vimmode-typed-action-registry-keybindings-2026-06-09.md`
 - `docs/solutions/architecture-patterns/pi-vimmode-runtime-help-docs-drift-guard-2026-06-05.md`

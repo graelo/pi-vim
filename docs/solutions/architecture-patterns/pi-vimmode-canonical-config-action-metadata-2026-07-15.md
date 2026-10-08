@@ -113,8 +113,6 @@ tests plus lint, formatting, and type checking.
 ## Related
 
 - GitHub issue [#35](https://github.com/pekochan069/pi-vimmode/issues/35)
-- `docs/solutions/architecture-patterns/pi-vimmode-typed-action-registry-keybindings-2026-06-09.md`
-    — bindable prompt-transform action registry boundary.
 - `docs/solutions/architecture-patterns/pi-vimmode-source-of-truth-seam-refactor-2026-06-25.md`
     — narrow-owner pattern for finite repeated facts.
 - `docs/solutions/architecture-patterns/pi-vimmode-runtime-help-docs-drift-guard-2026-06-05.md`

@@ -471,8 +471,6 @@ test("canFastDelegateInsertInput keeps configured insert newline keys on modal p
     — Mode ownership in keybinding catalog
 - `docs/solutions/logic-errors/pi-vimmode-config-keymap-precedence-2026-05-26.md`
     — Keymap precedence with same action names in different groups
-- `docs/solutions/architecture-patterns/pi-vimmode-typed-action-registry-keybindings-2026-06-09.md`
-    — Semantic action registry for keybindings
 
 ### Tests
 

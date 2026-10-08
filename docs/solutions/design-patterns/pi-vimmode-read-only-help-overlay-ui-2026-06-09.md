@@ -196,10 +196,6 @@ expect(scrolled).not.toContain("Source-backed");
 
 - `docs/solutions/architecture-patterns/pi-vimmode-runtime-help-docs-drift-guard-2026-06-05.md`
     — source-backed runtime help registry and docs/spec/test anchors.
-- `docs/solutions/developer-experience/action-keybinding-recipes-for-pivimmode-2026-06-09.md`
-    — discoverable keybinding recipes surfaced through `:features keybindings`.
-- `docs/solutions/architecture-patterns/pi-vimmode-typed-action-registry-keybindings-2026-06-09.md`
-    — typed action registry and keybinding config source of truth.
 - `docs/solutions/architecture-patterns/pi-vimmode-modal-feature-module-extraction-pattern-2026-06-05.md`
     — modal effect boundary for keeping adapter/runtime APIs out of semantic
     modal logic.

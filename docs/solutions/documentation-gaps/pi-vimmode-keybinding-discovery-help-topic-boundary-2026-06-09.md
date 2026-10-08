@@ -134,7 +134,5 @@ npm run lint
 - `docs/solutions/design-patterns/pi-vimmode-read-only-help-overlay-ui-2026-06-09.md`
     — read-only popup overlay pattern for `:features keybindings` and related
     commands.
-- `docs/solutions/developer-experience/action-keybinding-recipes-for-pivimmode-2026-06-09.md`
-    — action keybinding recipes surfaced through `:features keybindings`.
 - `docs/features.md` — user-facing runtime discovery and popup behavior
     documentation.
