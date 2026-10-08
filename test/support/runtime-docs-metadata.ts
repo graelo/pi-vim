@@ -1,34 +1,8 @@
-import type { DiagnosticActionEntry } from "../../src/diagnostic-actions.ts";
-export type DocsDriftMetadata = {
-  docsAnchor: string;
-  specAnchor: string;
-  testAnchors: readonly string[];
-};
-
-export type DiagnosticActionDocsMetadata = DocsDriftMetadata & {
-  id: DiagnosticActionEntry["id"];
-};
-
 export type PopupCommandDocsMetadata = {
   command: string;
   parserExample: string;
   docsAnchor: string;
 };
-
-export const DIAGNOSTIC_ACTION_DOCS_METADATA = [
-  "pi-vim.doctor",
-  "pi-vim.keymap",
-  "pi-vim.keybindings",
-  "pi-vim.mapcheck",
-  "pi-vim.help",
-  "pi-vim.messages",
-  "pi-vim.inspect",
-].map((id) => ({
-  id,
-  docsAnchor: `diagnostic-actions:${id}`,
-  specAnchor: "openspec/specs/vim-customization-diagnostics/spec.md",
-  testAnchors: ["test/diagnostic-actions.test.ts"],
-})) as readonly DiagnosticActionDocsMetadata[];
 
 export const POPUP_COMMAND_DOCS_METADATA = [
   {

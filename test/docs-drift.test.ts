@@ -1,15 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 
-import { VIM_ACTION_METADATA } from "../src/config-metadata.ts";
 import { DEFAULT_VIM_OPTIONS } from "../src/config.ts";
-import { DIAGNOSTIC_ACTIONS } from "../src/diagnostic-actions.ts";
 import { parseExCommand } from "../src/ex.ts";
 import { runtimeHelpEntries, runtimeHelpMessage } from "../src/runtime-help.ts";
-import {
-  DIAGNOSTIC_ACTION_DOCS_METADATA,
-  POPUP_COMMAND_DOCS_METADATA,
-} from "./support/runtime-docs-metadata.ts";
+import { POPUP_COMMAND_DOCS_METADATA } from "./support/runtime-docs-metadata.ts";
 
 // Docs are compared with whitespace collapsed, so Markdown reflow never breaks these checks.
 // Assert on identifiers, anchors, settings paths, commands, and stated non-goals, not on wording.
@@ -25,12 +20,6 @@ const globalConfigExamples = [
   "examples/async.config.js",
   "examples/imported-preset.config.js",
 ].map((path) => readFileSync(path, "utf8"));
-
-function expectSameIds(actual: readonly string[], expected: readonly string[]) {
-  expect([...actual].sort()).toEqual([...expected].sort());
-  expect(new Set(actual).size).toBe(actual.length);
-  expect(new Set(expected).size).toBe(expected.length);
-}
 
 describe("config guide documentation", () => {
   test("trusted config guide order and discovery links stay stable", () => {
@@ -84,35 +73,6 @@ describe("config guide documentation", () => {
       expect(existsSync(entry.specAnchor)).toBe(true);
       for (const testAnchor of entry.testAnchors) expect(existsSync(testAnchor)).toBe(true);
     }
-  });
-});
-
-describe("diagnostic action documentation", () => {
-  test("diagnostic action metadata covers every runtime entry both directions", () => {
-    const runtimeIds = DIAGNOSTIC_ACTIONS.map((entry) => entry.id);
-    const metadataIds = DIAGNOSTIC_ACTION_DOCS_METADATA.map((entry) => entry.id);
-    expectSameIds(runtimeIds, metadataIds);
-  });
-
-  test("diagnostic action metadata anchors exist in feature docs, specs, and tests", () => {
-    for (const entry of DIAGNOSTIC_ACTION_DOCS_METADATA) {
-      expect(featuresDoc).toContain(`<!-- ${entry.docsAnchor} -->`);
-      expect(existsSync(entry.specAnchor)).toBe(true);
-      for (const testAnchor of entry.testAnchors) expect(existsSync(testAnchor)).toBe(true);
-    }
-  });
-
-  test("diagnostic action metadata maps to finite Ex parser support", () => {
-    const context = { lineCount: 5, cursorLine: 1 };
-    for (const entry of DIAGNOSTIC_ACTIONS) {
-      const command = entry.examples[0]!.replace(/^:/, "");
-      expect(parseExCommand(command, context).type).not.toBe("error");
-    }
-  });
-
-  test("diagnostic action metadata is excluded from bindable action IDs", () => {
-    const bindableIds = VIM_ACTION_METADATA.filter(({ bindable }) => bindable).map(({ id }) => id);
-    for (const entry of DIAGNOSTIC_ACTIONS) expect(bindableIds).not.toContain(entry.id);
   });
 });
 
@@ -226,7 +186,6 @@ describe("keybinding popup documentation", () => {
     expect(featuresDoc).toContain("no Vimscript");
     expect(featuresDoc).toContain("no command palette");
     expect(featuresDoc).toContain("no Vim help tags");
-    expect(featuresDoc).toContain("no diagnostic/help action keybinding dispatch");
     expect(featuresDoc).toContain("no default keybinding for `:keybindings`");
     expect(featuresDoc).toContain("no unbounded output log");
     for (const removed of [":features", ":changelog", ":actions", "prompt.transform."]) {

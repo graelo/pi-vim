@@ -2,8 +2,6 @@ import type { ResolvedVimEditorOptions } from "./types.ts";
 
 import type { VimDiagnostics } from "./customization.ts";
 
-import { diagnosticActionMessage, searchDiagnosticActions } from "./diagnostic-actions.ts";
-
 export type RuntimeHelpCategory =
   | "modes"
   | "motions"
@@ -170,13 +168,8 @@ export function runtimeHelpMessage(topic: string | undefined, context: RuntimeHe
   if (!query) {
     return "help: :help <topic>, :keybindings [query], :vim inspect, :messages, :keymap, :mapcheck, :vimdoctor";
   }
-  const wantsDiagnosticActions = ["diagnostics", "diagnostic"].includes(query.toLowerCase());
   const entry = findEntry(query);
-  if (entry && !wantsDiagnosticActions) return compactEntry(entry, context);
-  const diagnostic = searchDiagnosticActions(query)[0];
-  if (diagnostic) return diagnosticActionMessage(diagnostic);
-  if (!entry) return `help: no match for ${query}`;
-  return compactEntry(entry, context);
+  return entry ? compactEntry(entry, context) : `help: no match for ${query}`;
 }
 
 export function runtimeMessagesMessage(messages: readonly { text: string }[] | undefined): string {

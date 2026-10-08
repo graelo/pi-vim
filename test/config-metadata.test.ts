@@ -10,7 +10,6 @@ import {
 } from "../src/config-metadata.ts";
 import { DEFAULT_VIM_OPTIONS } from "../src/config.ts";
 import { PROTECTED_SHORTCUTS } from "../src/customization.ts";
-import { DIAGNOSTIC_ACTIONS } from "../src/diagnostic-actions.ts";
 import {
   KEYMAP_COMMAND_DESCRIPTORS,
   KEYMAP_INSERT_DESCRIPTORS,
@@ -45,7 +44,6 @@ describe("canonical config metadata", () => {
       ...descriptorIds("insert", KEYMAP_INSERT_DESCRIPTORS),
       ...descriptorIds("textObject.kind", KEYMAP_TEXT_OBJECT_KIND_DESCRIPTORS),
       ...descriptorIds("textObject.target", KEYMAP_TEXT_OBJECT_TARGET_DESCRIPTORS),
-      ...DIAGNOSTIC_ACTIONS.map(({ id }) => id),
     ].sort();
 
     expect(VIM_ACTION_METADATA.map(({ id }) => id).sort()).toEqual(expected);
@@ -138,8 +136,8 @@ describe("canonical config metadata", () => {
     );
   });
 
-  test("covers trusted actions once and excludes diagnostic IDs", () => {
-    const bindable = VIM_ACTION_METADATA.filter(({ bindable }) => bindable);
+  test("covers trusted actions once", () => {
+    const bindable = VIM_ACTION_METADATA;
     const expected = [
       "escape",
       ...descriptorIds("operator", KEYMAP_OPERATOR_DESCRIPTORS),
@@ -159,13 +157,10 @@ describe("canonical config metadata", () => {
     expect(bindable.find(({ id }) => id === "mark.jumpExact")?.publicScopes).not.toContain(
       "operatorPending",
     );
-    for (const entry of VIM_ACTION_METADATA.filter(({ bindable }) => !bindable)) {
-      expect(bindable.map(({ id }) => id)).not.toContain(entry.id);
-    }
   });
 
   test("derives public scopes without duplicate mappings", () => {
-    for (const action of VIM_ACTION_METADATA.filter(({ bindable }) => bindable)) {
+    for (const action of VIM_ACTION_METADATA) {
       const expectedScopes =
         action.id === "escape"
           ? VIM_MAPPING_SCOPES.filter((scope) => scope !== "normal")

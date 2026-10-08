@@ -615,7 +615,7 @@ test("suggests commands after a valid range prefix", () => {
 
 test("suppresses suggestions once command arguments appear", () => {
   expect(suggestExCommands("help keybindings", context)).toEqual([]);
-  expect(suggestExCommands("actions pi-vim.help", context)).toEqual([]);
+  expect(suggestExCommands("keymap redo", context)).toEqual([]);
 });
 
 test("returns empty suggestions for invalid input and unsupported commandless ranges", () => {

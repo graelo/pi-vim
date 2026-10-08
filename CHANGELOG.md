@@ -79,6 +79,9 @@ editor behavior is unchanged from 0.9.0.
 - `:features`; use `:help`, `:keybindings`, and `:mapcheck`.
 - `:changelog` and its Markdown popup renderer.
 - `:actions`; use `:keymap <query>` to search actions and their bindings.
+- The `pi-vim.*` diagnostic action IDs (`pi-vim.doctor`, `pi-vim.help`, and
+  so on). `:keymap` and `:help` searches no longer list them; use
+  `:help customization` for the diagnostic commands.
 
 ### Fixed
 

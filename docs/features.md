@@ -82,27 +82,12 @@ supported; it is not a Vim/Neovim quickref clone.
 | ------------------------------------ | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Modal motions/edits                  | `h`, `j`, `w`, `dd`, `ciw`, `/query`, `n`                                     | Prompt editing actions; configurable only through supported semantic keymap fields.                 |
 | Ex line commands                     | `:delete`, `:yank a`, `:put`, `:copy`, `:move`, `:join`, `:s/old/new/`        | Finite prompt-buffer commands; no Vimscript or file/window/shell commands.                          |
-| Customization diagnostics            | `:vimdoctor`, `:keybindings`, `:keymap`, `:mapcheck`                          | Read-only metadata/help actions shown in popup output; searchable as `pi-vim.*`, not bindable.     |
+| Customization diagnostics            | `:vimdoctor`, `:keybindings`, `:keymap`, `:mapcheck`                          | Read-only diagnostics shown in popup output.                                                        |
 | Runtime help/inspectability          | `:help`, `:messages`, `:vim inspect`                                      | Read-only source-backed help and prompt-local state/message summaries shown in popup output.        |
 | Pi shortcut compatibility            | `Enter`, `Ctrl-C`, `Ctrl-G`, `Ctrl-P`, `Ctrl-v`, `Alt-v`, `Ctrl-Alt-v`, `Tab` | Pi-owned or protected shortcuts; use `:mapcheck <key>` to inspect ownership.                        |
 | Escape aliases                       | `<D-j>`, `<C-j>` via `piVim.keymap.escape`                                | Opt-in key aliases for leaving insert, visual, or pending Ex command states; not full Vim mappings. |
 
-<!-- diagnostic-actions:pi-vim.doctor -->
-<!-- diagnostic-actions:pi-vim.keymap -->
-<!-- diagnostic-actions:pi-vim.keybindings -->
-<!-- diagnostic-actions:pi-vim.mapcheck -->
-<!-- diagnostic-actions:pi-vim.help -->
-<!-- diagnostic-actions:pi-vim.messages -->
-<!-- diagnostic-actions:pi-vim.inspect -->
-
-Diagnostic/help metadata IDs are for discovery only: `pi-vim.doctor`,
-`pi-vim.keymap`, `pi-vim.keybindings`, `pi-vim.mapcheck`,
-`pi-vim.help`, `pi-vim.messages`, and `pi-vim.inspect` cannot be bound to
-keys or dispatched from user keybindings. Use
-`piVim.keymap.commands.showKeybindings` for an optional normal-mode
-shortcut to the keybindings popup.
-
-Non-goals: no public plugin action API, diagnostic action keybinding dispatch,
+Non-goals: no public plugin action API,
 runtime `:map`, runtime `:action`, Vimscript, Neovim Lua, full Vim help tags,
 help pager, or broad quickref parity.
 
@@ -936,8 +921,8 @@ opening the read-only popup.
 
 Popup non-goals: no Vim help tags, no command palette, no runtime `:map`, no
 runtime `:action`, no recursive mappings, no Vimscript, no plugin API, no
-diagnostic/help action keybinding dispatch, no default keybinding for
-`:keybindings`, no persistent logs, and no unbounded output log.
+default keybinding for `:keybindings`, no persistent logs, and no unbounded
+output log.
 
 Regex substitution bounds: pattern length 256, addressed prompt text length
 50,000 UTF-16 code units, and match-count cap 10,000.
@@ -972,9 +957,7 @@ Examples:
 
 `:keymap` searches actions and their bindings,
 `:mapcheck` explains one key or sequence, and `:vimdoctor` reports retained
-settings warnings. Diagnostic/help metadata IDs use the
-`pi-vim.*` namespace for search and docs classification only; they are
-metadata-only, not bindable, and do not create a plugin action API.
+settings warnings.
 
 `:vim inspect` is read-only and bounded. It summarizes mode, cursor, pending
 workbench state, selection kind/anchor, register slots/types/lengths, mark

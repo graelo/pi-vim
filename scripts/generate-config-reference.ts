@@ -65,7 +65,7 @@ function expectedPropertyPaths(): string[] {
 }
 
 function expectedActionIds(): string[] {
-  return VIM_ACTION_METADATA.filter(({ bindable }) => bindable).map(({ id }) => id);
+  return VIM_ACTION_METADATA.map(({ id }) => id);
 }
 
 function expectedJsonPaths(): Set<string> {
@@ -117,7 +117,7 @@ export function validateMetadata(
   actions: readonly VimActionMetadata[] = VIM_ACTION_METADATA,
 ): void {
   const propertyPaths = properties.map(({ path }) => path);
-  const publicActions = actions.filter(({ bindable }) => bindable) as PublicActionMetadata[];
+  const publicActions = actions as readonly PublicActionMetadata[];
   const actionIds = publicActions.map(({ id }) => id);
   const errors: string[] = [];
   addDuplicateErrors(errors, "property path", propertyPaths);
@@ -148,10 +148,6 @@ export function validateMetadata(
   );
   addPropertyErrors(errors, properties, expectedJsonPaths());
   addActionErrors(errors, publicActions);
-  for (const id of actions
-    .filter(({ source }) => source === "diagnostic-registry")
-    .map(({ id }) => id))
-    if (actionIds.includes(id)) errors.push(`non-bindable diagnostic exposed as action: ${id}`);
   if (errors.length > 0)
     throw new Error(`Config reference metadata invalid:\n- ${errors.join("\n- ")}`);
 }
@@ -207,10 +203,10 @@ ${entries
 export function renderActionReference(
   actions: readonly VimActionMetadata[] = VIM_ACTION_METADATA,
 ): string {
-  const bindable = (actions.filter(({ bindable }) => bindable) as PublicActionMetadata[]).sort(
-    (left, right) => left.id.localeCompare(right.id),
+  const sorted = ([...actions] as PublicActionMetadata[]).sort((left, right) =>
+    left.id.localeCompare(right.id),
   );
-  return [...groupByCategory(bindable, (action) => action.id.split(".")[0] ?? "action")]
+  return [...groupByCategory(sorted, (action) => action.id.split(".")[0] ?? "action")]
     .sort(([left], [right]) => left.localeCompare(right))
     .map(
       ([category, entries]) => `### \`vim.action.${category}\`

@@ -522,9 +522,7 @@ commands. Insert mode remains Pi-owned, so the same physical key sequence
 delegates to Pi while inserting text unless pi-vim otherwise supports that
 insert-mode input.
 
-Use this command path for a shortcut to keybinding discovery. `pi-vim.*`
-diagnostic/help metadata IDs such as `pi-vim.keybindings`, `pi-vim.keymap`,
-and `pi-vim.help` are metadata-only and cannot be bound.
+Use this command path for a shortcut to keybinding discovery.
 
 ### Macro keymap
 

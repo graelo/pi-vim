@@ -8,11 +8,6 @@ import type {
   VimOperatorAction,
 } from "./types.ts";
 
-import {
-  diagnosticActionEntries,
-  diagnosticActionMessage,
-  type DiagnosticActionEntry,
-} from "./diagnostic-actions.ts";
 import { displayMappingSequence } from "./mapping-scopes.ts";
 
 export type VimActionKind =
@@ -23,9 +18,7 @@ export type VimActionKind =
   | "mark"
   | "textObject"
   | "search"
-  | "escape"
-  | "diagnostic"
-  | "runtimeHelp";
+  | "escape";
 
 export type VimActionEntry = {
   id: string;
@@ -34,20 +27,7 @@ export type VimActionEntry = {
   keys: readonly string[];
   aliases?: readonly string[];
   exCommands?: readonly string[];
-  bindable?: false;
 };
-
-function diagnosticActionEntry(entry: DiagnosticActionEntry): VimActionEntry {
-  return {
-    id: entry.id,
-    kind: entry.category,
-    description: entry.description,
-    keys: [],
-    aliases: entry.topics,
-    exCommands: [entry.command],
-    bindable: false,
-  };
-}
 
 export type ProtectedShortcut = {
   key: string;
@@ -379,7 +359,6 @@ export function actionEntriesForKeymap(
     ...markEntries,
     ...kindEntries,
     ...targetEntries,
-    ...diagnosticActionEntries().map(diagnosticActionEntry),
   ].map((entry) => ({ ...entry, keys: entry.keys.map(displayMappingSequence) }));
 }
 
@@ -408,8 +387,6 @@ export function searchActions(
 }
 
 function summarizeEntry(entry: VimActionEntry): string {
-  const diagnostic = diagnosticActionEntries().find((action) => action.id === entry.id);
-  if (diagnostic) return diagnosticActionMessage(diagnostic);
   const keys = entry.keys.length > 0 ? entry.keys.join(",") : "unbound";
   const ex = entry.exCommands?.length ? ` ex=${entry.exCommands.join(",")}` : "";
   return `${entry.kind}.${entry.id} ${keys}${ex} — ${entry.description}`;
@@ -432,10 +409,8 @@ export function keymapMessage(
 ): string {
   const matches = searchActions(keymap, query, macros, marks);
   if (!query.trim()) {
-    const bindingEntries = actionEntriesForKeymap(keymap, macros, marks).filter(
-      (entry) => entry.bindable !== false,
-    );
-    return `keymap: ${bindingEntries.length} entries; :keymap <action>`;
+    const entries = actionEntriesForKeymap(keymap, macros, marks);
+    return `keymap: ${entries.length} entries; :keymap <action>`;
   }
   const match = preferredActionMatch(matches, query);
   return match ? summarizeEntry(match) : `keymap: no match for ${query.trim()}`;
@@ -454,7 +429,7 @@ export function keybindingCatalogLines(context: KeybindingCatalogContext): strin
     ...featureWhichKeyCategoryLines("Marks", entries, "mark", context.marks?.enabled !== false),
     ...whichKeyCategoryLines("Searches", entries, "search"),
     ...protectedShortcutTableLines(),
-    "Boundaries: no runtime :map; no recursive mappings; no Vimscript; no command palette; no diagnostic/help action keybinding dispatch.",
+    "Boundaries: no runtime :map; no recursive mappings; no Vimscript; no command palette.",
   ];
 }
 
@@ -463,7 +438,7 @@ export function keybindingDetailLines(context: KeybindingCatalogContext, query: 
   const matches = searchActions(context.keymap, needle, context.macros, context.marks);
   const ownership = keyOwnershipLine(context, needle);
   const detailLines = matches
-    .filter((entry) => entry.bindable !== false && entry.keys.length > 0)
+    .filter((entry) => entry.keys.length > 0)
     .slice(0, 12)
     .map(detailEntryLine);
   if (ownership && !detailLines.includes(ownership)) detailLines.unshift(ownership);
@@ -477,7 +452,7 @@ export function keybindingDetailLines(context: KeybindingCatalogContext, query: 
   return [
     `Query: ${needle}`,
     `No keybinding match for ${needle}`,
-    "No runtime :map, recursive mappings, Vimscript, command palette, or metadata action dispatch.",
+    "No runtime :map, recursive mappings, Vimscript, or command palette.",
   ];
 }
 
@@ -486,9 +461,7 @@ function whichKeyCategoryLines(
   entries: readonly VimActionEntry[],
   kind: VimActionKind,
 ): string[] {
-  const matches = entries.filter(
-    (entry) => entry.kind === kind && entry.bindable !== false && entry.keys.length > 0,
-  );
+  const matches = entries.filter((entry) => entry.kind === kind && entry.keys.length > 0);
   return [sectionHeader(title, matches.length), gridHeader(), ...matches.map(whichKeyRow)];
 }
 
@@ -549,8 +522,6 @@ function padCell(value: string, width: number): string {
 function detailEntryLine(entry: VimActionEntry): string {
   const target = actionIdDisplay(entry);
   const keys = entry.keys.length > 0 ? entry.keys.join(",") : "unbound";
-  if (entry.bindable === false)
-    return `${target} metadata-only not bindable -> ${keys} — ${entry.description}`;
   return `${target} -> ${keys} [${modeDisplay(entry)}] — ${entry.description}`;
 }
 

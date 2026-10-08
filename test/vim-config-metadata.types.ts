@@ -147,7 +147,7 @@ type PropertyValueCoverage = Assert<
   >
 >;
 
-type PublicMetadata = Extract<VimPublicActionMetadata, { bindable: true }>;
+type PublicMetadata = VimPublicActionMetadata;
 type MetadataActionIds = PublicMetadata["id"];
 type DeclaredActionIds =
   | "escape"

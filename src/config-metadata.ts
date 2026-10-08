@@ -3,7 +3,6 @@ import type { VimFiniteActionId } from "./types.ts";
 import { TRUSTED_JS_OPTION_PATHS, type TrustedJsOptionPath } from "./config-property-paths.ts";
 import { DEFAULT_VIM_OPTIONS, VIM_MOTION_OPERATOR_ACTIONS } from "./config.ts";
 import { PROTECTED_SHORTCUTS } from "./customization.ts";
-import { DIAGNOSTIC_ACTIONS } from "./diagnostic-actions.ts";
 import {
   KEYMAP_COMMAND_DESCRIPTORS,
   KEYMAP_INSERT_DESCRIPTORS,
@@ -23,14 +22,13 @@ import {
 
 export { VIM_MAPPING_SCOPES, type VimMappingScope } from "./mapping-scopes.ts";
 
-type ActionSource = "keymap-descriptor" | "diagnostic-registry" | "trusted-config-api";
+type ActionSource = "keymap-descriptor" | "trusted-config-api";
 
 export type VimActionMetadata = {
   id: string;
   source: ActionSource;
   defaults: readonly string[];
   scopes: readonly VimMappingScope[];
-  bindable: boolean;
   factoryPath?: string;
   publicScopes?: readonly VimMappingScope[];
   aliases?: readonly string[];
@@ -96,11 +94,9 @@ type PublicActionScopes<Id extends VimFiniteActionId> = Id extends "escape"
 
 type VimPublicActionMetadataFor<Id extends VimFiniteActionId> = Omit<
   VimActionMetadata,
-  "id" | "source" | "bindable" | "factoryPath" | "publicScopes" | "aliases" | "anchor"
+  "id" | "factoryPath" | "publicScopes" | "aliases" | "anchor"
 > & {
   id: Id;
-  source: Exclude<ActionSource, "diagnostic-registry">;
-  bindable: true;
   factoryPath: ActionFactoryPath<Id>;
   publicScopes: PublicActionScopes<Id>;
   aliases: ActionAliases<Id>;
@@ -110,11 +106,6 @@ type VimPublicActionMetadataFor<Id extends VimFiniteActionId> = Omit<
 export type VimPublicActionMetadata = {
   [Id in VimFiniteActionId]: VimPublicActionMetadataFor<Id>;
 }[VimFiniteActionId];
-
-type VimDiagnosticActionMetadata = Omit<VimActionMetadata, "source" | "bindable"> & {
-  source: "diagnostic-registry";
-  bindable: false;
-};
 
 function actionAnchor(id: string): string {
   return `config-action-${id.replaceAll(".", "-")}`;
@@ -151,7 +142,6 @@ function descriptorMetadata(
       source: "keymap-descriptor",
       defaults: descriptor.defaults,
       scopes: mappingScopesForKeymapEntry(family, action),
-      bindable: true as const,
       ...publicActionFields(
         id,
         mappingScopesForKeymapEntry(family, action).filter(
@@ -162,16 +152,12 @@ function descriptorMetadata(
   });
 }
 
-export const VIM_ACTION_METADATA: readonly (
-  | VimPublicActionMetadata
-  | VimDiagnosticActionMetadata
-)[] = [
+export const VIM_ACTION_METADATA: readonly VimPublicActionMetadata[] = [
   {
     id: "escape",
     source: "trusted-config-api",
     defaults: [],
     scopes: [],
-    bindable: true as const,
     ...publicActionFields(
       "escape",
       VIM_MAPPING_SCOPES.filter((scope) => scope !== "normal"),
@@ -185,13 +171,6 @@ export const VIM_ACTION_METADATA: readonly (
   ...descriptorMetadata("insert", KEYMAP_INSERT_DESCRIPTORS),
   ...descriptorMetadata("textObject.kind", KEYMAP_TEXT_OBJECT_KIND_DESCRIPTORS),
   ...descriptorMetadata("textObject.target", KEYMAP_TEXT_OBJECT_TARGET_DESCRIPTORS),
-  ...DIAGNOSTIC_ACTIONS.map(({ id }) => ({
-    id,
-    source: "diagnostic-registry" as const,
-    defaults: [],
-    scopes: [],
-    bindable: false as const,
-  })),
 ];
 
 type PropertyFacts = {

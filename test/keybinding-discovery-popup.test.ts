@@ -24,7 +24,6 @@ describe("keybinding discovery popups", () => {
     expect(text).toContain("▸ Commands");
     expect(text).toContain("Key            Mode        Action");
     expect(text).toContain("U              normal      command.redo");
-    expect(text).not.toContain("pi-vim.keybindings metadata-only not bindable");
     expect(text).toContain("ctrl+p");
     expect(text).toContain("protected for Pi command/model palette");
     expect(text).toContain("no runtime :map");

@@ -681,17 +681,10 @@ test("diagnostic Ex commands report info without editing state", () => {
     "a",
     "p",
     " ",
-    "p",
-    "i",
-    "-",
-    "v",
-    "i",
-    "m",
-    ".",
-    "h",
+    "r",
     "e",
-    "l",
-    "p",
+    "d",
+    "o",
     "\r",
   ]);
 
@@ -703,8 +696,8 @@ test("diagnostic Ex commands report info without editing state", () => {
   expect(result.state.searchHighlight).toEqual(initial.searchHighlight);
   expect(result.state.lastRepeatableChange).toEqual(initial.lastRepeatableChange);
   expect(result.state.exMessage).toBeUndefined();
-  expect(result.state.helpPopup?.title).toBe(":keymap pi-vim.help");
-  expect(result.state.helpPopup?.lines.join("\n")).toContain("pi-vim.help");
+  expect(result.state.helpPopup?.title).toBe(":keymap redo");
+  expect(result.state.helpPopup?.lines.join("\n")).toContain("command.redo");
 });
 
 test("visual diagnostic Ex commands preserve visual state", () => {
@@ -1008,13 +1001,9 @@ test("runtime help Ex commands report info without editing state", () => {
     "l",
     "p",
     " ",
-    "p",
-    "i",
-    "-",
     "v",
     "i",
     "m",
-    ".",
     "d",
     "o",
     "c",
@@ -1035,8 +1024,8 @@ test("runtime help Ex commands report info without editing state", () => {
   expect(result.state.searchHighlight).toEqual(initial.searchHighlight);
   expect(result.state.lastRepeatableChange).toEqual(initial.lastRepeatableChange);
   expect(result.state.exMessage).toBeUndefined();
-  expect(result.state.helpPopup?.title).toBe(":help pi-vim.doctor");
-  expect(result.state.helpPopup?.lines.join("\n")).toContain("pi-vim.doctor");
+  expect(result.state.helpPopup?.title).toBe(":help vimdoctor");
+  expect(result.state.helpPopup?.lines.join("\n")).toContain("customization");
 });
 
 test("visual keybindings popup restores visual state after marker deletion", () => {

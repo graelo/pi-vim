@@ -30,16 +30,10 @@ describe("vim customization helpers", () => {
     expect(keymapMessage(keymap, "missing-action")).toBe("keymap: no match for missing-action");
   });
 
-  test("classifies diagnostic help actions as metadata-only", () => {
-    expect(searchActions(keymap, "pi-vim.doctor")[0]).toMatchObject({
-      id: "pi-vim.doctor",
-      kind: "diagnostic",
-      keys: [],
-    });
-    expect(keymapMessage(keymap, "vimdoctor")).toContain("pi-vim.doctor");
-    expect(keymapMessage(keymap, "pi-vim.help")).toContain("runtimeHelp");
-    expect(keymapMessage(keymap, "pi-vim.dump")).toBe("keymap: no match for pi-vim.dump");
-    expect(keymapMessage(keymap, "pi-vim.doctor")).toContain("metadata-only not bindable");
+  test("does not list diagnostic Ex commands as actions", () => {
+    expect(searchActions(keymap, "pi-vim.")).toEqual([]);
+    expect(keymapMessage(keymap, "vimdoctor")).toBe("keymap: no match for vimdoctor");
+    expect(keymapMessage(keymap, "pi-vim.doctor")).toBe("keymap: no match for pi-vim.doctor");
   });
 
   test("hides disabled macro and mark actions from diagnostics", () => {
@@ -128,7 +122,6 @@ describe("vim customization helpers", () => {
     expect(lines).toContain(",q             normal      command.undo");
     expect(lines).not.toContain("<leader>");
     expect(lines).not.toContain(" → ");
-    expect(lines).not.toContain("pi-vim.help metadata-only not bindable");
     expect(lines).toContain("ctrl+p");
     expect(lines).toContain("protected for Pi command/model palette");
     expect(lines).toContain("ctrl+v");
