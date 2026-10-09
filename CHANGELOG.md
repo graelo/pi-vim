@@ -6,6 +6,8 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-09
+
 ### Fixed
 
 - Uppercase normal-mode keys such as `X`, `A`, `O`, `G` and `P` now work in

@@ -1,6 +1,6 @@
 {
   "name": "@graelo/pi-vim",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vim mode for the pi coding agent prompt editor",
   "type": "module",
   "main": "src/index.ts",
