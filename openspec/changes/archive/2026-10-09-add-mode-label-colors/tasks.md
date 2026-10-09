@@ -62,7 +62,7 @@
 - [x] 5.1 Run `npm test`, `npm run check`, `npm run lint`,
   `npm run check:config-reference` and `openspec validate --specs --strict`,
   and verify that all pass.
-- [ ] 5.2 Smoke-test in pi: add the Solarized example to
+- [x] 5.2 Smoke-test in pi: add the Solarized example to
   `~/.pi/agent/extensions/pi-vim/config.json`, run `pi -e ./src/index.ts`, and
   check that the normal, insert and visual labels show their colored blocks
   and `:vimdoctor` reports no warnings.
