@@ -88,20 +88,37 @@ export function appendMappingToken(
 }
 
 export function mappingSequencePrefixes(sequence: string): string[] {
+  const tokens = mappingSequenceTokens(sequence);
   if (sequence.includes(MAPPING_TOKEN_SEPARATOR)) {
-    const tokens = sequence.split(MAPPING_TOKEN_SEPARATOR);
     return tokens.slice(1).map((_, index) => encodeMappingTokens(tokens.slice(0, index + 1)));
   }
 
   const prefixes: string[] = [];
+  let prefix = "";
+  for (const token of tokens) {
+    prefix += token;
+    if (prefix.length < sequence.length) prefixes.push(prefix);
+  }
+  return prefixes;
+}
+
+function mappingSequenceTokens(sequence: string): string[] {
+  if (sequence.includes(MAPPING_TOKEN_SEPARATOR)) return sequence.split(MAPPING_TOKEN_SEPARATOR);
+  const tokens: string[] = [];
   let offset = 0;
   while (offset < sequence.length) {
     const tokenLength = mappingTokenLengthAt(sequence, offset);
     if (!tokenLength) break;
+    tokens.push(sequence.slice(offset, offset + tokenLength));
     offset += tokenLength;
-    if (offset < sequence.length) prefixes.push(sequence.slice(0, offset));
   }
-  return prefixes;
+  return tokens;
+}
+
+/** Shift+letter input resolves to the uppercase letter, so a `shift+x` token never matches. */
+export function shiftedLetterToken(tokens: string | readonly string[]): string | undefined {
+  const list = typeof tokens === "string" ? mappingSequenceTokens(tokens) : tokens;
+  return list.find((token) => /^shift\+[a-z]$/i.test(token));
 }
 
 export function isAtomicMappingSequence(sequence: string): boolean {

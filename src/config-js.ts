@@ -26,6 +26,7 @@ import {
 import {
   encodeMappingTokens,
   mappingScopesForKeymapEntry,
+  shiftedLetterToken,
   VIM_MAPPING_SCOPES,
   type VimMappingFamily,
   type VimMappingScope,
@@ -337,7 +338,10 @@ function tokenizeMappingKeys(value: string): string[] | undefined {
 function tokenizeReplayInputs(value: string): string[] | undefined {
   const keys = tokenizeKeys(value);
   if (!keys) return undefined;
-  return keys.map((key) => RHS_INPUT_ALIASES[key] ?? key);
+  // Shift+letter input resolves to the uppercase letter, so replay `<S-x>` as `X`.
+  return keys.map(
+    (key) => /^shift\+([a-z])$/.exec(key)?.[1]?.toUpperCase() ?? RHS_INPUT_ALIASES[key] ?? key,
+  );
 }
 
 type MappingOptions = { allowProtected?: boolean; desc?: string };
@@ -432,6 +436,13 @@ function compileMapping(
   const mappingKeys = tokenizeMappingKeys(keys);
   if (!mappingKeys || mappingKeys.length === 0) {
     session.warning("keymap keys must contain supported key syntax");
+    return;
+  }
+  const shifted = shiftedLetterToken(mappingKeys);
+  if (shifted) {
+    session.warning(
+      `keymap keys contain ${shifted}; use ${shifted.slice(-1).toUpperCase()} instead`,
+    );
     return;
   }
   const key = encodeMappingTokens(mappingKeys);

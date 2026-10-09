@@ -1326,6 +1326,46 @@ export default (vim) => {
   }
 });
 
+test("shift+letter lhs warns without registering", async () => {
+  const f = fixture();
+  try {
+    f.write(`
+export default (vim) => {
+  vim.keymap.set("n", "<S-x>", vim.action.command.deleteChar());
+  vim.keymap.set("n", "g<S-q>", "j");
+};
+`);
+    const result = await loadVimJsConfig(f.path);
+    expect(operations(result)).toEqual([]);
+    expect(result.warnings).toEqual([
+      expect.stringContaining("keymap keys contain shift+x; use X instead"),
+      expect.stringContaining("keymap keys contain shift+q; use Q instead"),
+    ]);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test("shift+letter rhs replays the uppercase letter", async () => {
+  const f = fixture();
+  try {
+    f.write(`
+export default (vim) => {
+  vim.keymap.set("n", "zq", "<S-x><S-tab>x");
+};
+`);
+    const result = await loadVimJsConfig(f.path);
+    expect(operations(result)).toEqual([
+      {
+        kind: "map",
+        mapping: { kind: "remap", key: "zq", inputs: ["X", "shift+tab", "x"], modes: ["normal"] },
+      },
+    ]);
+  } finally {
+    f.cleanup();
+  }
+});
+
 test("invalid default export and rhs warn without throwing", async () => {
   const f = fixture();
   try {

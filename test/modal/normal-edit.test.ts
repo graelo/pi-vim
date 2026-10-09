@@ -136,6 +136,21 @@ test("normal mode supports delete before cursor", () => {
   expect(noOp.state.register).toEqual({ type: "char", text: "keep" });
 });
 
+test.each([
+  ["Kitty without shifted key", "\x1b[120;2u"],
+  ["modifyOtherKeys uppercase", "\x1b[27;2;88~"],
+  ["modifyOtherKeys lowercase", "\x1b[27;2;120~"],
+])("normal mode deletes before cursor for shift+x as %s", (_, shiftX) => {
+  const deleted = applyModalKeys({ mode: "normal" }, "abcd", p(0, 2), [shiftX]);
+  expect(deleted.text).toBe("acd");
+  expect(deleted.state.register).toEqual({ type: "char", text: "b" });
+});
+
+test("character targets receive the uppercase letter for shift+letter events", () => {
+  const moved = applyModalKeys({ mode: "normal" }, "axbXc", p(0, 0), ["f", "\x1b[120;2u"]);
+  expect(moved.cursor).toEqual(p(0, 3));
+});
+
 test("normal delete before cursor dot-repeat and ctrl-x numeric decrement stay distinct", () => {
   const deleted = applyModalKeys({ mode: "normal" }, "abcde", p(0, 4), ["2", "X"]);
   const repeated = applyModalKeys(deleted.state, deleted.text, p(0, 2), ["."]);

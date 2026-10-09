@@ -242,6 +242,26 @@ test("protected leader suffixes are rejected without dropping valid siblings", (
   ).toHaveLength(2);
 });
 
+test("shift+letter bindings warn without dropping valid siblings", () => {
+  const result = resolveVimOptions({
+    keymap: {
+      commands: { deleteCharBefore: ["<S-x>", "shift+X", "Z"] },
+      operators: { delete: ["gshift+d"] },
+      insert: { openLineBelow: ["shift+o"] },
+    },
+  });
+  expect(result.options.keymap?.commands.deleteCharBefore).toEqual(["Z"]);
+  expect(result.options.keymap?.operators.delete).toEqual(["d"]);
+  expect(result.warnings).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining("commands.deleteCharBefore contains shift+x; use X instead"),
+      expect.stringContaining("commands.deleteCharBefore contains shift+X; use X instead"),
+      expect.stringContaining("operators.delete contains shift+d; use D instead"),
+      expect.stringContaining("insert.openLineBelow contains shift+o; use O instead"),
+    ]),
+  );
+});
+
 test("rejected insert and text-object leader keys do not reserve normal grammar", () => {
   const result = resolveVimOptions({
     leader: ",",

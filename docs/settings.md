@@ -164,6 +164,9 @@ Rules:
   - `<S-tab>` / `<Shift-tab>` -> `shift+tab`
   - `<D-x>` / `<Cmd-x>` / `<Super-x>` -> `super+x`
 - Prefer lowercase normalized names such as `ctrl+a` for raw modifier strings.
+- Write Shift+letter as the uppercase letter: `"X"`, not `"<S-x>"` or
+    `"shift+x"`. Shift+letter input always resolves to the uppercase letter,
+    so a `shift+<letter>` binding warns and is ignored.
 - A mapping may begin with case-insensitive `<leader>` when `leader`
     is configured. `<leader><leader>` is valid; a lone `<leader>` or
     `g<leader>x` is rejected.
