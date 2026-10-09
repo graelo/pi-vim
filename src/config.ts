@@ -575,18 +575,18 @@ function normalizeVimKeySequence(value: unknown): string | undefined {
     : normalizeModifiedKeySequence(value);
 }
 
-function booleanField(value: unknown, label: string, warnings: string[]): boolean | undefined {
+function booleanField(value: unknown, warning: string, warnings: string[]): boolean | undefined {
   if (value === undefined) return undefined;
   if (typeof value === "boolean") return value;
-  warnings.push(`${label} must be a boolean`);
+  warnings.push(warning);
   return undefined;
 }
 
 function enumField<T extends string>(
   value: unknown,
-  allowed: ReadonlySet<string>,
   warning: string,
   warnings: string[],
+  allowed: ReadonlySet<string>,
 ): T | undefined {
   if (value === undefined) return undefined;
   if (typeof value === "string" && allowed.has(value)) return value as T;
@@ -1059,15 +1059,15 @@ function parseUiStatus(
   const status: Partial<ResolvedVimUi["status"]> = {};
   const statusEnabled = booleanField(
     value.enabled,
-    `${sourceLabel}: piVim.ui.status.enabled`,
+    `${sourceLabel}: piVim.ui.status.enabled must be a boolean`,
     warnings,
   );
   if (statusEnabled !== undefined) status.enabled = statusEnabled;
   const position = enumField<"left" | "right">(
     value.position,
-    UI_STATUS_POSITIONS,
     `${sourceLabel}: piVim.ui.status.position must be "left" or "right"`,
     warnings,
+    UI_STATUS_POSITIONS,
   );
   if (position) status.position = position;
   if (value.items !== undefined) {
@@ -1095,7 +1095,7 @@ function parseUiMode(
   const mode: NonNullable<PartialUiOptions["mode"]> = {};
   const modeEnabled = booleanField(
     value.enabled,
-    `${sourceLabel}: piVim.ui.mode.enabled`,
+    `${sourceLabel}: piVim.ui.mode.enabled must be a boolean`,
     warnings,
   );
   if (modeEnabled !== undefined) mode.enabled = modeEnabled;
@@ -1117,7 +1117,7 @@ function parseUiSelection(
   const selection: Partial<ResolvedVimUi["selection"]> = {};
   const selectionEnabled = booleanField(
     value.enabled,
-    `${sourceLabel}: piVim.ui.selection.enabled`,
+    `${sourceLabel}: piVim.ui.selection.enabled must be a boolean`,
     warnings,
   );
   if (selectionEnabled !== undefined) selection.enabled = selectionEnabled;
@@ -1144,7 +1144,7 @@ function parseUiCursorPosition(
   const cursorPosition: Partial<ResolvedVimUi["cursorPosition"]> = {};
   const cursorPositionEnabled = booleanField(
     value.enabled,
-    `${sourceLabel}: piVim.ui.cursorPosition.enabled`,
+    `${sourceLabel}: piVim.ui.cursorPosition.enabled must be a boolean`,
     warnings,
   );
   if (cursorPositionEnabled !== undefined) cursorPosition.enabled = cursorPositionEnabled;
@@ -1230,7 +1230,11 @@ function parseMacros(
     return { warnings };
   }
 
-  const enabled = booleanField(value.enabled, `${sourceLabel}: piVim.macros.enabled`, warnings);
+  const enabled = booleanField(
+    value.enabled,
+    `${sourceLabel}: piVim.macros.enabled must be a boolean`,
+    warnings,
+  );
   if (enabled !== undefined) partial.enabled = enabled;
 
   if (value.slots !== undefined) {
@@ -1267,7 +1271,11 @@ function parseSearch(
     "clearOnCancel",
     "clearOnInsert",
   ] as const) {
-    const enabled = booleanField(value[field], `${sourceLabel}: piVim.search.${field}`, warnings);
+    const enabled = booleanField(
+      value[field],
+      `${sourceLabel}: piVim.search.${field} must be a boolean`,
+      warnings,
+    );
     if (enabled !== undefined) partial[field] = enabled;
   }
 
@@ -1296,9 +1304,9 @@ function parseFeedback(
 
   const noop = enumField<VimFeedbackOptions["noop"]>(
     value.noop,
-    NOOP_FEEDBACK_VALUES,
     `${sourceLabel}: piVim.feedback.noop must be off or status`,
     warnings,
+    NOOP_FEEDBACK_VALUES,
   );
   if (noop) partial.noop = noop;
 
@@ -1322,7 +1330,7 @@ function parseExCommand(
   const partial: PartialExCommandOptions = {};
   const autocomplete = booleanField(
     value.autocomplete,
-    `${sourceLabel}: piVim.exCommand.autocomplete`,
+    `${sourceLabel}: piVim.exCommand.autocomplete must be a boolean`,
     warnings,
   );
   if (autocomplete !== undefined) partial.autocomplete = autocomplete;
@@ -1365,7 +1373,11 @@ function parseMarks(
     return { warnings };
   }
 
-  const enabled = booleanField(value.enabled, `${sourceLabel}: piVim.marks.enabled`, warnings);
+  const enabled = booleanField(
+    value.enabled,
+    `${sourceLabel}: piVim.marks.enabled must be a boolean`,
+    warnings,
+  );
   if (enabled !== undefined) partial.enabled = enabled;
 
   if (value.slots !== undefined) {
@@ -1390,7 +1402,7 @@ function parsePromptStructures(
 
   const enabled = booleanField(
     value.enabled,
-    `${sourceLabel}: piVim.promptStructures.enabled`,
+    `${sourceLabel}: piVim.promptStructures.enabled must be a boolean`,
     warnings,
   );
   if (enabled !== undefined) partial.enabled = enabled;
@@ -1420,9 +1432,9 @@ function parseCursorStyles(
   for (const mode of VIM_MODES) {
     const style = enumField<CursorStyle>(
       value[mode],
-      CURSOR_STYLES,
       `${sourceLabel}: unsupported piVim.cursor.${mode}`,
       warnings,
+      CURSOR_STYLES,
     );
     if (style) cursor[mode] = style;
   }
@@ -1448,17 +1460,17 @@ function parsePiVim(
 
   const preset = enumField<VimPreset>(
     value.preset,
-    VIM_PRESET_SET,
     `${sourceLabel}: unsupported piVim.preset`,
     warnings,
+    VIM_PRESET_SET,
   );
   if (preset) partial.preset = preset;
 
   const startMode = enumField<StartupMode>(
     value.startMode,
-    START_MODES,
     `${sourceLabel}: unsupported piVim.startMode`,
     warnings,
+    START_MODES,
   );
   if (startMode) partial.startMode = startMode;
 
