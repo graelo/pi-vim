@@ -26,6 +26,7 @@ import {
 import {
   encodeMappingTokens,
   mappingScopesForKeymapEntry,
+  shiftedLetterToken,
   VIM_MAPPING_SCOPES,
   type VimMappingFamily,
   type VimMappingScope,
@@ -432,6 +433,13 @@ function compileMapping(
   const mappingKeys = tokenizeMappingKeys(keys);
   if (!mappingKeys || mappingKeys.length === 0) {
     session.warning("keymap keys must contain supported key syntax");
+    return;
+  }
+  const shifted = shiftedLetterToken(mappingKeys);
+  if (shifted) {
+    session.warning(
+      `keymap keys contain ${shifted}; use ${shifted.slice(-1).toUpperCase()} instead`,
+    );
     return;
   }
   const key = encodeMappingTokens(mappingKeys);

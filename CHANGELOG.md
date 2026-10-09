@@ -12,6 +12,9 @@ project uses [Semantic Versioning](https://semver.org/).
   terminals that send Shift+letter as a Kitty event without the shifted key
   or as an xterm modifyOtherKeys event (pi's fallback under tmux). Before,
   `X` acted like `x` or did nothing.
+- A keymap binding written as `<S-x>` or `shift+x` now warns and is ignored,
+  in JSON and trusted JS config, because Shift+letter input resolves to the
+  uppercase letter. Bind `X` instead.
 
 ## [1.0.0] - 2026-10-09
 

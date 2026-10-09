@@ -1,5 +1,9 @@
 import { protectedShortcutForKey } from "../customization.ts";
-import { isAtomicMappingSequence, MAPPING_TOKEN_SEPARATOR } from "../mapping-scopes.ts";
+import {
+  isAtomicMappingSequence,
+  MAPPING_TOKEN_SEPARATOR,
+  shiftedLetterToken,
+} from "../mapping-scopes.ts";
 
 import { normalizeVimKeySequence } from "./key-normalization.ts";
 
@@ -78,6 +82,11 @@ export function parseStringArray(
     const protectedShortcut = protectedShortcutForKey(sequence);
     if (protectedShortcut && !options.allowProtectedKey?.(sequence)) {
       warnings.push(`${label} contains protected key ${sequence} (${protectedShortcut.reason})`);
+      continue;
+    }
+    const shifted = shiftedLetterToken(sequence);
+    if (shifted) {
+      warnings.push(`${label} contains ${shifted}; use ${shifted.slice(-1).toUpperCase()} instead`);
       continue;
     }
     if (options.singleKeyOnly && sequence.length !== 1) {

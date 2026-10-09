@@ -104,6 +104,25 @@ export function mappingSequencePrefixes(sequence: string): string[] {
   return prefixes;
 }
 
+function mappingSequenceTokens(sequence: string): string[] {
+  if (sequence.includes(MAPPING_TOKEN_SEPARATOR)) return sequence.split(MAPPING_TOKEN_SEPARATOR);
+  const tokens: string[] = [];
+  let offset = 0;
+  while (offset < sequence.length) {
+    const tokenLength = mappingTokenLengthAt(sequence, offset);
+    if (!tokenLength) break;
+    tokens.push(sequence.slice(offset, offset + tokenLength));
+    offset += tokenLength;
+  }
+  return tokens;
+}
+
+/** Shift+letter input resolves to the uppercase letter, so a `shift+x` token never matches. */
+export function shiftedLetterToken(tokens: string | readonly string[]): string | undefined {
+  const list = typeof tokens === "string" ? mappingSequenceTokens(tokens) : tokens;
+  return list.find((token) => /^shift\+[a-z]$/i.test(token));
+}
+
 export function isAtomicMappingSequence(sequence: string): boolean {
   return (
     (/^(?:(?:shift|ctrl|alt|super)\+)+/.test(sequence) &&
