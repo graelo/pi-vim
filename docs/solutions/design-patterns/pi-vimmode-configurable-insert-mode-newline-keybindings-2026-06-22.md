@@ -23,17 +23,27 @@ tags:
 
 ## Context
 
-pi-vimmode users could not insert blank lines while staying in insert mode. All insert-mode input was delegated to Pi; there was no way to intercept a key chord, perform a buffer edit, and remain in insert mode. The existing `openLineBelow` (`o`) and `openLineAbove` (`O`) commands transitioned from normal mode into insert mode — they were unusable from insert mode itself.
+pi-vimmode users could not insert blank lines while staying in insert mode. All
+insert-mode input was delegated to Pi; there was no way to intercept a key
+chord, perform a buffer edit, and remain in insert mode. The existing
+`openLineBelow` (`o`) and `openLineAbove` (`O`) commands transitioned from
+normal mode into insert mode — they were unusable from insert mode itself.
 
-The request: allow users to configure chords like `Ctrl+J` / `Ctrl+K` (or `Enter`, or other modified keys) that insert blank lines below/above the current line while staying in insert mode, matching behavior found in VS Code, Neovim, JetBrains, and other editors.
+The request: allow users to configure chords like `Ctrl+J` / `Ctrl+K` (or
+`Enter`, or other modified keys) that insert blank lines below/above the current
+line while staying in insert mode, matching behavior found in VS Code, Neovim,
+JetBrains, and other editors.
 
 ## Guidance
 
-The implementation follows a three-layer pattern: **types → config → dispatch**. Each layer is isolated, testable, and follows existing conventions.
+The implementation follows a three-layer pattern: **types → config → dispatch**.
+Each layer is isolated, testable, and follows existing conventions.
 
 ### 1. Types: user-facing vs resolved
 
-Two interfaces keep the config parsing contract clean. `VimInsertKeymapOptions` accepts angle-bracket notation (e.g., `<C-j>`); `ResolvedVimInsertKeymap` always contains normalized plain-key identifiers (e.g., `"ctrl+j"`).
+Two interfaces keep the config parsing contract clean. `VimInsertKeymapOptions`
+accepts angle-bracket notation (e.g., `<C-j>`); `ResolvedVimInsertKeymap` always
+contains normalized plain-key identifiers (e.g., `"ctrl+j"`).
 
 ```typescript
 // src/types.ts — VimInsertKeymapOptions (user-facing, angle-bracket OK)
@@ -63,7 +73,8 @@ export interface ResolvedVimKeymap {
 
 ### 2. Keymap descriptors: register the namespace
 
-Descriptors define the defaults and validation metadata. Empty defaults (`[]`) ensure opt-in — no breaking change for existing users.
+Descriptors define the defaults and validation metadata. Empty defaults (`[]`)
+ensure opt-in — no breaking change for existing users.
 
 ```typescript
 // src/keymap-descriptors.ts
@@ -73,22 +84,29 @@ export const KEYMAP_INSERT_DESCRIPTORS = {
 } as const satisfies Record<string, KeymapDescriptor>;
 ```
 
-**Important**: `openLineBelow`/`openLineAbove` are registered in _two_ descriptor groups with different defaults:
+**Important**: `openLineBelow`/`openLineAbove` are registered in _two_
+descriptor groups with different defaults:
 
 - `KEYMAP_INSERT_DESCRIPTORS` — defaults `[]`, dispatch in insert mode only
-- `KEYMAP_COMMAND_DESCRIPTORS` — defaults `["o"]`/`["O"]`, dispatch in normal/visual mode only
+- `KEYMAP_COMMAND_DESCRIPTORS` — defaults `["o"]`/`["O"]`, dispatch in
+    normal/visual mode only
 
-This is by design. The same semantic action (`openLineBelow`) operates differently depending on the current mode.
+This is by design. The same semantic action (`openLineBelow`) operates
+differently depending on the current mode.
 
 ### 3. Config parsing: `parseInsertBindings`
 
-The parser lives alongside `parseInsertEscapeArray` in `src/config.ts`. Key behaviors:
+The parser lives alongside `parseInsertEscapeArray` in `src/config.ts`. Key
+behaviors:
 
 - Validates the value is an object
 - Rejects unknown action names (only `openLineBelow`/`openLineAbove` allowed)
-- Validates key strings through `parseStringArray` (angle-bracket → plain-key normalization, duplicate detection)
-- Filters out printable text sequences — single letters/digits like `"j"` or `"oo"` are rejected with a warning
-- Supports the same `allowProtectedKey` callback as other keymap groups (for `allowProtectedOverrides`)
+- Validates key strings through `parseStringArray` (angle-bracket → plain-key
+    normalization, duplicate detection)
+- Filters out printable text sequences — single letters/digits like `"j"` or
+    `"oo"` are rejected with a warning
+- Supports the same `allowProtectedKey` callback as other keymap groups (for
+    `allowProtectedOverrides`)
 
 ```typescript
 const INSERT_ACTION_SET = new Set<string>(["openLineBelow", "openLineAbove"]);
@@ -138,7 +156,14 @@ partial.insert = parseInsertBindings(value.insert, sourceLabel, warnings, {
 
 #### `isPrintableTextSequence` fix
 
-The existing `isPrintableTextSequence` function only checked for the absence of `"+"` (modifier). During this work, it was improved to also reject known non-printable key names (`enter`, `tab`, `escape`, `backspace`, `space`, etc.) using a `NON_PRINTABLE_KEY_NAMES` set. Without this fix, a config like `openLineBelow: ["enter"]` would pass the printable-text filter and reach the protected-key check only if `allowProtectedOverrides` was set — but `"enter"` was never printable text. The fix makes the filter correct for both escape alias validation and insert binding validation.
+The existing `isPrintableTextSequence` function only checked for the absence of
+`"+"` (modifier). During this work, it was improved to also reject known
+non-printable key names (`enter`, `tab`, `escape`, `backspace`, `space`, etc.)
+using a `NON_PRINTABLE_KEY_NAMES` set. Without this fix, a config like
+`openLineBelow: ["enter"]` would pass the printable-text filter and reach the
+protected-key check only if `allowProtectedOverrides` was set — but `"enter"`
+was never printable text. The fix makes the filter correct for both escape alias
+validation and insert binding validation.
 
 ### 4. Merge, clone, and defaults
 
@@ -199,13 +224,19 @@ if (key) {
 }
 ```
 
-The key matching uses `keySequence(data)` which calls `parseKey` from pi-tui to normalize the raw terminal input to a key identifier string (e.g., `"\u001b[106;5u"` → `"ctrl+j"`).
+The key matching uses `keySequence(data)` which calls `parseKey` from pi-tui to
+normalize the raw terminal input to a key identifier string (e.g.,
+`"\u001b[106;5u"` → `"ctrl+j"`).
 
-Insert bindings placed _after_ autocomplete check and escape alias matching, but _before_ default delegation. This ordering is critical:
+Insert bindings placed _after_ autocomplete check and escape alias matching, but
+_before_ default delegation. This ordering is critical:
 
-- Escape aliases must win (user configured `<C-j>` as escape → escape always wins)
-- Autocomplete-open input must still delegate to Pi even if the key matches an insert binding
-- Insert dispatch fires before search highlight clearing, so `editState` clears highlights naturally
+- Escape aliases must win (user configured `<C-j>` as escape → escape always
+    wins)
+- Autocomplete-open input must still delegate to Pi even if the key matches an
+    insert binding
+- Insert dispatch fires before search highlight clearing, so `editState`
+    clears highlights naturally
 
 ### 6. Buffer helpers: `openLineBelow` / `openLineAbove`
 
@@ -237,7 +268,9 @@ export function openLineAbove(text: string, cursor: Position): EditResult {
 }
 ```
 
-Both return `changed: false` for empty buffers. The modal dispatch handles this gracefully: `editState` runs `clearSearchHighlight` only when `result.changed` is true, and the edit effect is emitted regardless.
+Both return `changed: false` for empty buffers. The modal dispatch handles this
+gracefully: `editState` runs `clearSearchHighlight` only when `result.changed`
+is true, and the edit effect is emitted regardless.
 
 ### 7. No state side effects
 
@@ -249,26 +282,50 @@ Insert-mode line opening does **not** modify:
 - **Macro slots**: No macro recording or replay — unlike `.` repeat
 - **Dot-repeat**: No dot-repeat state — unlike normal-mode edits
 
-The `editState` call handles search highlight clearing (when `changed: true`) but writes no register state because `EditResult` from the buffer helpers has no `register` property.
+The `editState` call handles search highlight clearing (when `changed: true`)
+but writes no register state because `EditResult` from the buffer helpers has no
+`register` property.
 
 ## Why This Matters
 
-1. **Insert-mode par with other editors**: Users can now insert blank lines while staying in insert mode, matching VS Code's `editor.action.insertLineAfter`, Neovim's `inoremap`, and JetBrains' Ctrl+Enter behavior.
+1. **Insert-mode par with other editors**: Users can now insert blank lines
+    while staying in insert mode, matching VS Code's
+    `editor.action.insertLineAfter`, Neovim's `inoremap`, and JetBrains'
+    Ctrl+Enter behavior.
 
-2. **Follows the established pattern**: Types → descriptors → parse → merge → dispatch is the same pipeline used by normal-mode commands, motion aliases, and escape aliases. Adding to it required no new architectural patterns — just extending the existing one.
+2. **Follows the established pattern**: Types → descriptors → parse → merge →
+    dispatch is the same pipeline used by normal-mode commands, motion aliases,
+    and escape aliases. Adding to it required no new architectural patterns —
+    just extending the existing one.
 
-3. **Safety by default**: The printable-text filter (single letters rejected) and protected-key validation (enter/tab/escape blocked unless allow-listed) ensure users cannot accidentally break insert-mode typing. Every guardrail that protects normal-mode bindings applies equally.
+3. **Safety by default**: The printable-text filter (single letters rejected)
+    and protected-key validation (enter/tab/escape blocked unless allow-listed)
+    ensure users cannot accidentally break insert-mode typing. Every guardrail
+    that protects normal-mode bindings applies equally.
 
-4. **`isPrintableTextSequence` fix uncovered**: The function now correctly rejects named non-printable keys (`"enter"`, `"tab"`, `"escape"` etc.) in addition to checking for modifier prefixes. This makes it correct for both escape alias validation and insert binding validation. Previously, a key like `"enter"` would pass the printable-text check because it has no `"+"` sign, only to be caught by the downstream protected-key check. Now the filter is self-consistent.
+4. **`isPrintableTextSequence` fix uncovered**: The function now correctly
+    rejects named non-printable keys (`"enter"`, `"tab"`, `"escape"` etc.) in
+    addition to checking for modifier prefixes. This makes it correct for both
+    escape alias validation and insert binding validation. Previously, a key
+    like `"enter"` would pass the printable-text check because it has no `"+"`
+    sign, only to be caught by the downstream protected-key check. Now the
+    filter is self-consistent.
 
-5. **Pattern for future insert bindings**: Any future insert-mode keybinding (autocomplete accept, snippet expand, tab navigation) follows this exact architecture: add to types → add descriptor → wire in `handleInsertInput` → test.
+5. **Pattern for future insert bindings**: Any future insert-mode keybinding
+    (autocomplete accept, snippet expand, tab navigation) follows this exact
+    architecture: add to types → add descriptor → wire in `handleInsertInput` →
+    test.
 
 ## When to Apply
 
-- Adding any new insert-mode keybinding that must perform a pi-vimmode operation and remain in insert mode (not delegate to Pi).
-- Extending the keymap system with a new named action group. Follow the same `KEYMAP_*_DESCRIPTORS` + `parse*Bindings` + `mergeKeymap` pattern.
-- Implementing similar "stay-in-mode" operations for custom modal modes (same dispatch architecture with different `handle*Input` functions).
-- Avoid this pattern for operations that should delegate to Pi (text input, autocomplete navigation, undo/redo).
+- Adding any new insert-mode keybinding that must perform a pi-vimmode
+    operation and remain in insert mode (not delegate to Pi).
+- Extending the keymap system with a new named action group. Follow the same
+    `KEYMAP_*_DESCRIPTORS` + `parse*Bindings` + `mergeKeymap` pattern.
+- Implementing similar "stay-in-mode" operations for custom modal modes (same
+    dispatch architecture with different `handle*Input` functions).
+- Avoid this pattern for operations that should delegate to Pi (text input,
+    autocomplete navigation, undo/redo).
 
 ## Examples
 
@@ -317,7 +374,10 @@ The `editState` call handles search highlight clearing (when `changed: true`) bu
 }
 ```
 
-**Note**: `Ctrl+Shift+O` requires a Kitty-compatible terminal that sends distinct escape sequences. Legacy terminals send the same byte for Ctrl+O and Ctrl+Shift+O. Use `<C-S-o>` (not `<C-O>`) in angle-bracket notation — our normalizer lowercases the key.
+**Note**: `Ctrl+Shift+O` requires a Kitty-compatible terminal that sends
+distinct escape sequences. Legacy terminals send the same byte for Ctrl+O and
+Ctrl+Shift+O. Use `<C-S-o>` (not `<C-O>`) in angle-bracket notation — our
+normalizer lowercases the key.
 
 ### Config test: printable text rejection
 
@@ -383,24 +443,34 @@ test("canFastDelegateInsertInput keeps configured insert newline keys on modal p
 
 ### Direct source files
 
-- `src/types.ts` — `VimInsertKeymapOptions` and `ResolvedVimInsertKeymap` type definitions
+- `src/types.ts` — `VimInsertKeymapOptions` and `ResolvedVimInsertKeymap` type
+    definitions
 - `src/keymap-descriptors.ts` — `KEYMAP_INSERT_DESCRIPTORS` registration
-- `src/config.ts` — `parseInsertBindings`, `INSERT_ACTION_SET`, clone/merge/overlay handling
+- `src/config.ts` — `parseInsertBindings`, `INSERT_ACTION_SET`,
+    clone/merge/overlay handling
 - `src/config.ts` — `isPrintableTextSequence` and `NON_PRINTABLE_KEY_NAMES` fix
-- `src/buffer.ts` (lines 2152–2174) — `openLineBelow`/`openLineAbove` buffer helpers
-- `src/modal/engine.ts` (lines 224–242) — Insert newline dispatch in `handleInsertInput`
-- `src/modal/normal.ts` (lines 406–416) — Normal-mode `openLineBelow`/`openLineAbove` dispatch (for comparison)
+- `src/buffer.ts` (lines 2152–2174) — `openLineBelow`/`openLineAbove` buffer
+    helpers
+- `src/modal/engine.ts` (lines 224–242) — Insert newline dispatch in
+    `handleInsertInput`
+- `src/modal/normal.ts` (lines 406–416) — Normal-mode
+    `openLineBelow`/`openLineAbove` dispatch (for comparison)
 - `docs/settings.md` — Insert mode newline bindings documentation section
 - `docs/features.md` — Insert-mode newline behavior paragraph
 
 ### Related docs in this project
 
-- `docs/solutions/developer-experience/pi-vimmode-ctrl-p-insert-mode-delegates-to-pi-2026-06-22.md` — Core reference for how insert mode routes keys, same dispatch order
-- `docs/solutions/developer-experience/pi-vimmode-ctrl-d-ctrl-u-half-page-scroll-2026-06-18.md` — Mode-aware control-key ownership pattern
-- `docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md` — Buffer helper architecture and `openLineBelow`/`openLineAbove` implementation
-- `docs/solutions/design-patterns/pi-vimmode-actionable-keybinding-catalog-2026-06-10.md` — Mode ownership in keybinding catalog
-- `docs/solutions/logic-errors/pi-vimmode-config-keymap-precedence-2026-05-26.md` — Keymap precedence with same action names in different groups
-- `docs/solutions/architecture-patterns/pi-vimmode-typed-action-registry-keybindings-2026-06-09.md` — Semantic action registry for keybindings
+- `docs/solutions/developer-experience/pi-vimmode-ctrl-p-insert-mode-delegates-to-pi-2026-06-22.md`
+    — Core reference for how insert mode routes keys, same dispatch order
+- `docs/solutions/developer-experience/pi-vimmode-ctrl-d-ctrl-u-half-page-scroll-2026-06-18.md`
+    — Mode-aware control-key ownership pattern
+- `docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md`
+    — Buffer helper architecture and `openLineBelow`/`openLineAbove`
+    implementation
+- `docs/solutions/design-patterns/pi-vimmode-actionable-keybinding-catalog-2026-06-10.md`
+    — Mode ownership in keybinding catalog
+- `docs/solutions/logic-errors/pi-vimmode-config-keymap-precedence-2026-05-26.md`
+    — Keymap precedence with same action names in different groups
 
 ### Tests
 

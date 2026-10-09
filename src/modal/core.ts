@@ -85,16 +85,6 @@ function isKeyUnmapped(keymap: ResolvedVimKeymap, key: string, mode?: VimMode | 
   );
 }
 
-function acceptsKey(
-  bindings: readonly { key: string; modes?: readonly (VimMode | "operatorPending")[] }[],
-  key: string,
-  mode?: VimMode | "operatorPending",
-) {
-  return bindings.some(
-    (binding) => binding.key === key && (!binding.modes || binding.modes.includes(mode as never)),
-  );
-}
-
 function acceptsKeyPrefix(
   bindings: readonly { key: string; modes?: readonly (VimMode | "operatorPending")[] }[],
   key: string,
@@ -124,7 +114,6 @@ export function keymapHasBinding(
   if (hasKeyInMap(keymap.textObjects.kinds as Record<string, readonly string[]>, key)) return true;
   if (hasKeyInMap(keymap.textObjects.targets as Record<string, readonly string[]>, key))
     return true;
-  if (acceptsKey(keymap.actions.accepted, key, mode)) return true;
   if (acceptsKeyPrefix(keymap.remaps.accepted, key, mode)) return true;
   return keymap.scoped.some(
     (binding) =>
@@ -212,6 +201,7 @@ export function clearCommandPending(state: ModalState): ModalState {
     pending: _pending,
     pendingMacro: _pendingMacro,
     pendingMark: _pendingMark,
+    pendingSurround: _pendingSurround,
     pendingSearch: _pendingSearch,
     pendingEx: _pendingEx,
     pendingInsertEscape: _pendingInsertEscape,

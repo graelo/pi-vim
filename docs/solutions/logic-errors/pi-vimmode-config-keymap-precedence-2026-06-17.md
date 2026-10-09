@@ -27,39 +27,57 @@ tags: [pi-vimmode, config, keymap, precedence, clone-helpers, typescript, arrow-
 
 ## Problem
 
-Explicit user or project keymap bindings must beat lower-priority defaults. The resolver merged configured groups over default groups, but it did not remove the same key sequence from other top-level default groups first.
+Explicit user or project keymap bindings must beat lower-priority defaults. The
+resolver merged configured groups over default groups, but it did not remove the
+same key sequence from other top-level default groups first.
 
-That made exact top-level overrides unsafe. For example, mapping `q` as a motion could still collide with the default macro-record binding on `q`.
+That made exact top-level overrides unsafe. For example, mapping `q` as a motion
+could still collide with the default macro-record binding on `q`.
 
 ## Symptoms
 
-- A configured key such as `q` could still be owned by `macros.record` in the resolved keymap.
-- Duplicate binding warnings were not the right behavior for explicit user/project overrides: the configured binding should win over defaults.
-- Live editor option cloning had a second hand-written field list, so new nested option branches could drift between config resolution and `VimEditor` construction.
+- A configured key such as `q` could still be owned by `macros.record` in the
+    resolved keymap.
+- Duplicate binding warnings were not the right behavior for explicit
+    user/project overrides: the configured binding should win over defaults.
+- Live editor option cloning had a second hand-written field list, so new
+    nested option branches could drift between config resolution and `VimEditor`
+    construction.
 
 ## What Didn't Work
 
 - Plain object merging only replaced the configured group:
 
-  ```ts
-  target.motions = { ...target.motions, ...partial.motions };
-  target.commands = { ...target.commands, ...partial.commands };
-  target.macros = { ...target.macros, ...partial.macros };
-  ```
+    ```ts
+    target.motions = { ...target.motions, ...partial.motions };
+    target.commands = { ...target.commands, ...partial.commands };
+    target.macros = { ...target.macros, ...partial.macros };
+    ```
 
-  This leaves unrelated default groups untouched. A configured motion on `q` can coexist with default macro record on `q`.
+    This leaves unrelated default groups untouched. A configured motion on `q`
+    can coexist with default macro record on `q`.
 
-- Treating every duplicate as a conflict was too strict. Explicit user/project top-level keymap settings are a priority override, not an invalid duplicate, when the duplicate comes from lower-priority defaults.
+- Treating every duplicate as a conflict was too strict. Explicit user/project
+    top-level keymap settings are a priority override, not an invalid duplicate,
+    when the duplicate comes from lower-priority defaults.
 
-- Duplicating deep-clone logic in the editor adapter was fragile. Earlier docs already captured adapter drift as a recurring failure mode: `docs/solutions/logic-errors/vim-behavior-contract-drift-2026-05-28.md`.
+- Duplicating deep-clone logic in the editor adapter was fragile. Earlier docs
+    already captured adapter drift as a recurring failure mode:
+    `docs/solutions/logic-errors/vim-behavior-contract-drift-2026-05-28.md`.
 
-Session history search found no directly relevant prior attempts for this exact precedence fix.
+Session history search found no directly relevant prior attempts for this exact
+precedence fix.
 
 ## Solution
 
-Centralize resolved option cloning, then make `mergeKeymap` remove explicit top-level sequences from lower-priority resolved defaults before applying the partial config.
+Centralize resolved option cloning, then make `mergeKeymap` remove explicit
+top-level sequences from lower-priority resolved defaults before applying the
+partial config.
 
-`src/config.ts` now collects explicit top-level keymap sequences from configured operators, motions, macros, marks, and commands. It deliberately skips `commands.showKeybindings` because that command has its own conflict rejection path.
+`src/config.ts` now collects explicit top-level keymap sequences from configured
+operators, motions, macros, marks, and commands. It deliberately skips
+`commands.showKeybindings` because that command has its own conflict rejection
+path.
 
 ```ts
 function configuredTopLevelKeymapSequences(partial: PartialKeymapOptions): Set<string> {
@@ -77,7 +95,8 @@ function configuredTopLevelKeymapSequences(partial: PartialKeymapOptions): Set<s
 }
 ```
 
-The resolver filters those sequences out of every top-level resolved keymap group before merging the explicit partial:
+The resolver filters those sequences out of every top-level resolved keymap
+group before merging the explicit partial:
 
 ```ts
 function removeTopLevelKeymapSequences(target: ResolvedVimKeymap, sequences: Set<string>): void {
@@ -107,7 +126,11 @@ function mergeKeymap(target: ResolvedVimKeymap, partial: PartialKeymapOptions): 
 }
 ```
 
-A later refactor data-drove default keymaps from `src/keymap-descriptors.ts`, but exposed a second precedence edge case: applying global and project keymap layers sequentially made a lower-priority global conflict permanently delete a default binding before the higher-priority project layer could override it. Example:
+A later refactor data-drove default keymaps from `src/keymap-descriptors.ts`,
+but exposed a second precedence edge case: applying global and project keymap
+layers sequentially made a lower-priority global conflict permanently delete a
+default binding before the higher-priority project layer could override it.
+Example:
 
 ```ts
 resolveVimOptions(
@@ -123,7 +146,8 @@ motions.wordForward === ["e"];
 macros.record === ["q"];
 ```
 
-The fix was to overlay configured keymap layers first, then replay the final effective overlay onto a fresh default keymap once:
+The fix was to overlay configured keymap layers first, then replay the final
+effective overlay onto a fresh default keymap once:
 
 ```ts
 function mergeKeymapOverlay(target: PartialKeymapOptions, partial: PartialKeymapOptions): void {
@@ -145,9 +169,15 @@ function resolveKeymapFromLayers(layers: PartialKeymapOptions[]): ResolvedVimKey
 }
 ```
 
-The same precedence model also needs to handle explicit single-key bindings that are prefixes of lower-priority default multi-key bindings. Checking only exact sequence conflicts leaves defaults such as `gg`, `ge`, and `gE` in place when a user maps `g` directly. The normal parser then treats `g` as a pending prefix instead of dispatching the configured action.
+The same precedence model also needs to handle explicit single-key bindings that
+are prefixes of lower-priority default multi-key bindings. Checking only exact
+sequence conflicts leaves defaults such as `gg`, `ge`, and `gE` in place when a
+user maps `g` directly. The normal parser then treats `g` as a pending prefix
+instead of dispatching the configured action.
 
-`removeTopLevelKeymapSequences` now removes lower-priority default bindings when the configured explicit binding equals the default binding, or when both bindings are plain key sequences and either sequence prefixes the other:
+`removeTopLevelKeymapSequences` now removes lower-priority default bindings when
+the configured explicit binding equals the default binding, or when both
+bindings are plain key sequences and either sequence prefixes the other:
 
 ```ts
 next[action] = record[action].filter(
@@ -160,9 +190,15 @@ next[action] = record[action].filter(
 );
 ```
 
-The `+` guard is intentional. Chords such as `ctrl+c`, `alt+x`, and `ctrl+v` are atomic normalized key names, not multi-key prefix sequences. Treating those as plain strings would create false prefix conflicts.
+The `+` guard is intentional. Chords such as `ctrl+c`, `alt+x`, and `ctrl+v` are
+atomic normalized key names, not multi-key prefix sequences. Treating those as
+plain strings would create false prefix conflicts.
 
-A later arrow-key regression showed the same distinction matters for terminal-derived semantic key names. The parser normalizes arrow escape sequences into `left`, `down`, `up`, and `right`, but the default motion descriptors only bound printable Vim keys. Adding semantic aliases fixes normal-mode arrows without adding a modal-engine special case:
+A later arrow-key regression showed the same distinction matters for
+terminal-derived semantic key names. The parser normalizes arrow escape
+sequences into `left`, `down`, `up`, and `right`, but the default motion
+descriptors only bound printable Vim keys. Adding semantic aliases fixes
+normal-mode arrows without adding a modal-engine special case:
 
 ```ts
 left: { defaults: ["h", "left"], legacy: "h" },
@@ -171,7 +207,8 @@ up: { defaults: ["k", "up"], legacy: "k" },
 right: { defaults: ["l", "right"], legacy: "l" },
 ```
 
-Those aliases are atomic: users cannot type arrow-key terminal events character-by-character. Normal-parser prefix generation skips them:
+Those aliases are atomic: users cannot type arrow-key terminal events
+character-by-character. Normal-parser prefix generation skips them:
 
 ```ts
 function isAtomicKeySequence(sequence: string): boolean {
@@ -179,9 +216,17 @@ function isAtomicKeySequence(sequence: string): boolean {
 }
 ```
 
-Config shadow validation has a matching inline skip for longer `left`/`down`/`up`/`right` bindings. This keeps `l` and `left` from producing a bogus shadow warning while still letting `resolveNormalCommand("left", undefined, DEFAULT_VIM_KEYMAP)` dispatch the `left` motion.
+Config shadow validation has a matching inline skip for longer
+`left`/`down`/`up`/`right` bindings. This keeps `l` and `left` from producing a
+bogus shadow warning while still letting
+`resolveNormalCommand("left", undefined, DEFAULT_VIM_KEYMAP)` dispatch the
+`left` motion.
 
-The defaults and validation sets are now descriptor-derived from `src/keymap-descriptors.ts`, so command, motion, macro, mark, and text-object defaults have one descriptor module instead of duplicated literal arrays. Descriptor-derived exported action arrays keep readonly API shape in `src/config.ts`:
+The defaults and validation sets are now descriptor-derived from
+`src/keymap-descriptors.ts`, so command, motion, macro, mark, and text-object
+defaults have one descriptor module instead of duplicated literal arrays.
+Descriptor-derived exported action arrays keep readonly API shape in
+`src/config.ts`:
 
 ```ts
 export const VIM_MOTION_ACTIONS = deriveActionKeys(
@@ -189,7 +234,8 @@ export const VIM_MOTION_ACTIONS = deriveActionKeys(
 ) as readonly VimMotionAction[];
 ```
 
-Regression coverage now includes `test/config.test.ts` asserting that project override restores defaults removed by global-only conflicts:
+Regression coverage now includes `test/config.test.ts` asserting that project
+override restores defaults removed by global-only conflicts:
 
 ```ts
 expect(result.options.keymap?.motions.wordForward).toEqual(["e"]);
@@ -233,46 +279,85 @@ function cloneOptions(options: ResolvedVimEditorOptions): ResolvedVimEditorOptio
 
 Regression coverage was added at both resolver and runtime boundaries:
 
-- `test/config.test.ts` verifies explicit keymap bindings override lower-priority default top-level bindings and leave `macros.record` empty when `q` is reassigned.
-- `test/config.test.ts` verifies an explicit `motions.left: ["g"]` binding removes lower-priority default `g*` prefixes without warning.
-- `test/commands.test.ts` verifies an explicit motion binding wins over default macro record binding.
-- `test/commands.test.ts` verifies `resolveNormalCommand("g", undefined, keymap)` dispatches the configured motion rather than entering pending-prefix state.
-- `test/vim-editor.test.ts` verifies live editor option cloning propagates configured keymap and prompt transform branches.
-- `test/commands.test.ts` verifies default arrow-key aliases and counted arrow-key motions resolve through the normal command path.
-- `test/modal.test.ts` verifies normal-mode arrows move like `h/j/k/l`, counts work, visual selections extend, and operator motions accept arrows.
+- `test/config.test.ts` verifies explicit keymap bindings override
+    lower-priority default top-level bindings and leave `macros.record` empty
+    when `q` is reassigned.
+- `test/config.test.ts` verifies an explicit `motions.left: ["g"]` binding
+    removes lower-priority default `g*` prefixes without warning.
+- `test/commands.test.ts` verifies an explicit motion binding wins over
+    default macro record binding.
+- `test/commands.test.ts` verifies
+    `resolveNormalCommand("g", undefined, keymap)` dispatches the configured
+    motion rather than entering pending-prefix state.
+- `test/vim-editor.test.ts` verifies live editor option cloning propagates
+    configured keymap and prompt transform branches.
+- `test/commands.test.ts` verifies default arrow-key aliases and counted
+    arrow-key motions resolve through the normal command path.
+- `test/modal.test.ts` verifies normal-mode arrows move like `h/j/k/l`, counts
+    work, visual selections extend, and operator motions accept arrows.
 
 ## Why This Works
 
 The resolver now matches the intended priority model:
 
 1. Parse user and project config into partial keymap settings.
-2. Overlay partial settings by priority so higher-priority project settings replace lower-priority global settings before default conflict removal runs.
+2. Overlay partial settings by priority so higher-priority project settings
+    replace lower-priority global settings before default conflict removal runs.
 3. Start with cloned defaults.
-4. For each explicit top-level sequence in the final effective overlay, remove that sequence from lower-priority default top-level groups.
+4. For each explicit top-level sequence in the final effective overlay, remove
+    that sequence from lower-priority default top-level groups.
 5. Merge the final effective overlay into the target.
 
-So a sequence cannot remain both a default macro and a configured motion or command. A lower-priority conflict also cannot permanently remove a default that should be restored when a higher-priority layer moves away from that key. `q` correctly returns to macro recording when no final effective binding claims `q`.
+So a sequence cannot remain both a default macro and a configured motion or
+command. A lower-priority conflict also cannot permanently remove a default that
+should be restored when a higher-priority layer moves away from that key. `q`
+correctly returns to macro recording when no final effective binding claims `q`.
 
-For prefix bindings, the parser only sees the final resolved keymap. Removing lower-priority plain-key prefix conflicts during resolution means the parser no longer has two plausible interpretations for `g`: it resolves the configured single-key action instead of waiting for default `g*` continuations. Modifier chords stay safe because they are excluded from config prefix-conflict removal, and terminal arrow aliases stay safe because parser prefix generation and resolved-keymap shadow warnings treat them as atomic.
+For prefix bindings, the parser only sees the final resolved keymap. Removing
+lower-priority plain-key prefix conflicts during resolution means the parser no
+longer has two plausible interpretations for `g`: it resolves the configured
+single-key action instead of waiting for default `g*` continuations. Modifier
+chords stay safe because they are excluded from config prefix-conflict removal,
+and terminal arrow aliases stay safe because parser prefix generation and
+resolved-keymap shadow warnings treat them as atomic.
 
-Centralizing cloning also means config resolution and live editor construction use the same nested-field semantics. New option branches only need to be added to `cloneResolvedVimOptions`, not to separate adapter-local clone lists.
+Centralizing cloning also means config resolution and live editor construction
+use the same nested-field semantics. New option branches only need to be added
+to `cloneResolvedVimOptions`, not to separate adapter-local clone lists.
 
 ## Prevention
 
-- When adding a new top-level keymap group, update `mergeKeymapOverlay`, `configuredTopLevelKeymapSequences`, and `removeTopLevelKeymapSequences` together.
-- Prefer descriptor-derived defaults and validation sets over duplicated literal action arrays. Add descriptor tests when introducing a new keymap family.
-- Add regression tests for any default single-key binding that can also be used as a configured prefix (`q`, `g`, `z`, `@`). Include both “configured binding wins” and “higher-priority override restores default” cases.
-- When removing lower-priority prefix conflicts, distinguish plain multi-key sequences from atomic normalized inputs such as modifier chords containing `+` and terminal arrow aliases (`left`, `down`, `up`, `right`).
-- Test both resolved config shape and runtime input parsing. Config shape proves precedence; runtime tests prove parser branches obey it.
-- Preserve readonly exported action-list API shapes when deriving arrays from descriptors; type-level API drift can be caught by `tsgo --noEmit`.
-- Keep resolved option cloning centralized in `cloneResolvedVimOptions`; do not reintroduce adapter-local field-by-field clone lists.
-- Preserve special-case validation for `showKeybindings` separately from general precedence removal.
+- When adding a new top-level keymap group, update `mergeKeymapOverlay`,
+    `configuredTopLevelKeymapSequences`, and `removeTopLevelKeymapSequences`
+    together.
+- Prefer descriptor-derived defaults and validation sets over duplicated
+    literal action arrays. Add descriptor tests when introducing a new keymap
+    family.
+- Add regression tests for any default single-key binding that can also be
+    used as a configured prefix (`q`, `g`, `z`, `@`). Include both “configured
+    binding wins” and “higher-priority override restores default” cases.
+- When removing lower-priority prefix conflicts, distinguish plain multi-key
+    sequences from atomic normalized inputs such as modifier chords containing
+    `+` and terminal arrow aliases (`left`, `down`, `up`, `right`).
+- Test both resolved config shape and runtime input parsing. Config shape
+    proves precedence; runtime tests prove parser branches obey it.
+- Preserve readonly exported action-list API shapes when deriving arrays from
+    descriptors; type-level API drift can be caught by `tsc --noEmit`.
+- Keep resolved option cloning centralized in `cloneResolvedVimOptions`; do
+    not reintroduce adapter-local field-by-field clone lists.
+- Preserve special-case validation for `showKeybindings` separately from
+    general precedence removal.
 
 ## Related Issues
 
-- `docs/solutions/logic-errors/vim-behavior-contract-drift-2026-05-28.md` — prior live-adapter clone drift pattern.
-- `docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md` — parser precedence failures around keybinding dispatch.
-- `docs/solutions/tooling-decisions/pi-vimmode-ui-config-single-source-of-truth-2026-05-27.md` — config surface source-of-truth guidance.
-- `docs/solutions/architecture-patterns/pi-vimmode-typed-action-registry-keybindings-2026-06-09.md` — prompt transform/action keybinding registry context.
-- `docs/solutions/developer-experience/pi-vimmode-ctrl-d-ctrl-u-half-page-scroll-2026-06-18.md` — semantic motion binding pattern for terminal-owned keys.
-- `docs/solutions/architecture-patterns/pi-vimmode-final-leader-resolution-2026-07-14.md` — extends final-overlay precedence with symbolic leader expansion and accepted-prefix ownership.
+- `docs/solutions/logic-errors/vim-behavior-contract-drift-2026-05-28.md` —
+    prior live-adapter clone drift pattern.
+- `docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md`
+    — parser precedence failures around keybinding dispatch.
+- `docs/solutions/tooling-decisions/pi-vimmode-ui-config-single-source-of-truth-2026-05-27.md`
+    — config surface source-of-truth guidance.
+- `docs/solutions/developer-experience/pi-vimmode-ctrl-d-ctrl-u-half-page-scroll-2026-06-18.md`
+    — semantic motion binding pattern for terminal-owned keys.
+- `docs/solutions/architecture-patterns/pi-vimmode-final-leader-resolution-2026-07-14.md`
+    — extends final-overlay precedence with symbolic leader expansion and
+    accepted-prefix ownership.

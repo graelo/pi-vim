@@ -272,7 +272,7 @@ export function handleBlockInsertInput(
   }
 
   const key = keySequence(data);
-  if (!key || key.length !== 1) return invalidate(state);
+  if (key?.length !== 1) return invalidate(state);
   return withEffects(
     {
       ...state,

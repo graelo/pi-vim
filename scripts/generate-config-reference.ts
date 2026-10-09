@@ -29,7 +29,6 @@ export const ACTION_MARKERS = {
 type PublicActionMetadata = VimActionMetadata & {
   factoryPath: string;
   publicScopes: readonly string[];
-  args: readonly { name: string; type: string; required: boolean; description: string }[];
   aliases: readonly string[];
   anchor: string;
 };
@@ -66,11 +65,7 @@ function expectedPropertyPaths(): string[] {
 }
 
 function expectedActionIds(): string[] {
-  return VIM_ACTION_METADATA.filter(({ bindable }) => bindable).map(({ id }) => id);
-}
-
-function expectedJsonPaths(): Set<string> {
-  return new Set(VIM_CONFIG_PROPERTY_METADATA.map(({ configPath }) => `piVimMode.${configPath}`));
+  return VIM_ACTION_METADATA.map(({ id }) => id);
 }
 
 function addDuplicateErrors(errors: string[], label: string, values: readonly string[]): void {
@@ -93,15 +88,12 @@ function addSetDifferenceErrors(
 function addPropertyErrors(
   errors: string[],
   properties: readonly VimConfigPropertyMetadata[],
-  jsonPaths: ReadonlySet<string>,
 ): void {
   for (const property of properties) {
     const path = property.path;
     if (!property.acceptedShape) errors.push(`missing accepted shape: ${path}`);
     if (!property.assignment) errors.push(`missing assignment semantics: ${path}`);
     if (!property.anchor) errors.push(`missing property anchor: ${path}`);
-    for (const jsonPath of property.jsonPaths)
-      if (!jsonPaths.has(jsonPath)) errors.push(`unsupported JSON crosswalk: ${jsonPath}`);
   }
 }
 
@@ -109,10 +101,6 @@ function addActionErrors(errors: string[], actions: readonly PublicActionMetadat
   for (const action of actions) {
     if (!action.factoryPath) errors.push(`missing factory path: ${action.id}`);
     if (!action.publicScopes) errors.push(`missing public scopes: ${action.id}`);
-    if (!action.args) errors.push(`missing argument metadata: ${action.id}`);
-    if (action.args)
-      for (const name of duplicates(action.args.map(({ name }) => name)))
-        errors.push(`duplicate argument name for ${action.id}: ${name}`);
     if (!action.anchor) errors.push(`missing action anchor: ${action.id}`);
   }
 }
@@ -122,7 +110,7 @@ export function validateMetadata(
   actions: readonly VimActionMetadata[] = VIM_ACTION_METADATA,
 ): void {
   const propertyPaths = properties.map(({ path }) => path);
-  const publicActions = actions.filter(({ bindable }) => bindable) as PublicActionMetadata[];
+  const publicActions = actions as readonly PublicActionMetadata[];
   const actionIds = publicActions.map(({ id }) => id);
   const errors: string[] = [];
   addDuplicateErrors(errors, "property path", propertyPaths);
@@ -151,12 +139,8 @@ export function validateMetadata(
     "missing public action metadata",
     "unknown public action metadata",
   );
-  addPropertyErrors(errors, properties, expectedJsonPaths());
+  addPropertyErrors(errors, properties);
   addActionErrors(errors, publicActions);
-  for (const id of actions
-    .filter(({ source }) => source === "diagnostic-registry")
-    .map(({ id }) => id))
-    if (actionIds.includes(id)) errors.push(`non-bindable diagnostic exposed as action: ${id}`);
   if (errors.length > 0)
     throw new Error(`Config reference metadata invalid:\n- ${errors.join("\n- ")}`);
 }
@@ -200,7 +184,7 @@ ${entries
 - Accepted shape: \`${property.acceptedShape}\`
 - Built-in default: \`${stableValue(property.defaultValue)}\`
 - Assignment semantics: ${property.assignment}
-- JSON crosswalk: ${property.jsonPaths.length ? property.jsonPaths.map((path) => `\`${path}\``).join(", ") : "none"}
+- JSON crosswalk: \`${property.configPath}\`
 - Compatibility aliases: ${renderAliases(property.aliases, property.anchor)}
 `,
   )
@@ -209,20 +193,13 @@ ${entries
     .join("\n");
 }
 
-function renderArguments(action: PublicActionMetadata): string {
-  if (action.args.length === 0) return "none";
-  return action.args
-    .map((arg) => `\`${arg.name}${arg.required ? "" : "?"}: ${arg.type}\` — ${arg.description}`)
-    .join("; ");
-}
-
 export function renderActionReference(
   actions: readonly VimActionMetadata[] = VIM_ACTION_METADATA,
 ): string {
-  const bindable = (actions.filter(({ bindable }) => bindable) as PublicActionMetadata[]).sort(
-    (left, right) => left.id.localeCompare(right.id),
+  const sorted = ([...actions] as PublicActionMetadata[]).sort((left, right) =>
+    left.id.localeCompare(right.id),
   );
-  return [...groupByCategory(bindable, (action) => action.id.split(".")[0] ?? "action")]
+  return [...groupByCategory(sorted, (action) => action.id.split(".")[0] ?? "action")]
     .sort(([left], [right]) => left.localeCompare(right))
     .map(
       ([category, entries]) => `### \`vim.action.${category}\`
@@ -235,7 +212,6 @@ ${entries
 
 - Canonical factory: \`${action.factoryPath}\`
 - Supported mapping scopes: ${action.publicScopes.map((scope) => `\`${scope}\``).join(", ") || "none"}
-- Arguments: ${renderArguments(action)}
 - Default keys: ${action.defaults.length === 0 ? "none" : action.defaults.map(inlineCode).join(", ")}
 - Compatibility aliases: ${renderAliases(action.aliases, action.anchor)}
 `,
@@ -304,7 +280,7 @@ export function generateConfigReference(
   if (options.check) {
     if (expected !== current) {
       throw new Error(
-        `Generated config reference is stale. Run bun run generate:config-reference (${filePath})`,
+        `Generated config reference is stale. Run npm run generate:config-reference (${filePath})`,
       );
     }
     return;

@@ -1,5 +1,5 @@
 import { CURSOR_MARKER, visibleWidth } from "@earendil-works/pi-tui";
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 
 import type { CursorStyle, VimMode } from "../src/types.ts";
 

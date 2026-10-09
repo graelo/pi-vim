@@ -32,24 +32,38 @@ tags:
 
 ## Problem
 
-`pi-vimmode` customization diagnostics drifted from the effective runtime configuration in two places. `:mapcheck <C-r>` failed to identify the redo binding because the diagnostic path understood `ctrl+r` but not Vim angle notation, and the `minimal` preset still exposed macro/mark actions through `:keymap` and `:actions` even though those feature families were disabled.
+`pi-vimmode` customization diagnostics drifted from the effective runtime
+configuration in two places. `:mapcheck <C-r>` failed to identify the redo
+binding because the diagnostic path understood `ctrl+r` but not Vim angle
+notation, and the `minimal` preset still exposed macro/mark actions through
+`:keymap` and `:actions` even though those feature families were disabled.
 
 ## Symptoms
 
-- `:mapcheck <C-r>` reported no useful match instead of `mapcheck: ctrl+r -> command.redo`.
-- `:keymap macro` under `piVimMode.preset: "minimal"` still showed macro bindings such as `q` and `@`.
-- `:actions mark` under `minimal` still surfaced mark actions even though marks were disabled.
-- Diagnostic commands described the raw keymap table, not the effective action surface available to the user.
+- `:mapcheck <C-r>` reported no useful match instead of
+    `mapcheck: ctrl+r -> command.redo`.
+- `:keymap macro` under `piVimMode.preset: "minimal"` still showed macro
+    bindings such as `q` and `@`.
+- `:actions mark` under `minimal` still surfaced mark actions even though
+    marks were disabled.
+- Diagnostic commands described the raw keymap table, not the effective action
+    surface available to the user.
 
 ## What Didn't Work
 
-- Lowercasing and trimming shortcut text was not enough. It preserved `<C-r>` as `<c-r>`, which could never match the canonical keymap entry `ctrl+r`.
-- Treating the keymap as the complete action registry was too broad. The resolved keymap still contains macro and mark binding tables even when `macros.enabled` or `marks.enabled` disables behavior.
-- Testing only default diagnostics missed preset-specific drift. The default config has macros and marks enabled, so `:keymap macro` looked correct until tested under `minimal`.
+- Lowercasing and trimming shortcut text was not enough. It preserved `<C-r>`
+    as `<c-r>`, which could never match the canonical keymap entry `ctrl+r`.
+- Treating the keymap as the complete action registry was too broad. The
+    resolved keymap still contains macro and mark binding tables even when
+    `macros.enabled` or `marks.enabled` disables behavior.
+- Testing only default diagnostics missed preset-specific drift. The default
+    config has macros and marks enabled, so `:keymap macro` looked correct until
+    tested under `minimal`.
 
 ## Solution
 
-Normalize Vim angle modifier notation before matching shortcuts. Existing aliases remain in the helper, but the important fix is the angle-notation path:
+Normalize Vim angle modifier notation before matching shortcuts. Existing
+aliases remain in the helper, but the important fix is the angle-notation path:
 
 ```ts
 const normalized = key.trim().toLowerCase();
@@ -62,7 +76,8 @@ const canonical = angleMatch?.[1]
   : normalized;
 ```
 
-Make diagnostic action registry functions accept the resolved macro and mark settings, not just the keymap:
+Make diagnostic action registry functions accept the resolved macro and mark
+settings, not just the keymap:
 
 ```ts
 export function actionEntriesForKeymap(
@@ -119,27 +134,41 @@ expect(actionsMessage(resolvedKeymap, "mark", undefined, options.macros, options
 
 ## Why This Works
 
-`mapcheckMessage()` compares the queried key against canonical keymap entries. Converting Vim notation into the same canonical form (`<C-r>` → `ctrl+r`) makes user-facing Vim syntax and internal config syntax converge before lookup.
+`mapcheckMessage()` compares the queried key against canonical keymap entries.
+Converting Vim notation into the same canonical form (`<C-r>` → `ctrl+r`) makes
+user-facing Vim syntax and internal config syntax converge before lookup.
 
-`keymapMessage()` and `actionsMessage()` are not raw config dumps; they are runtime diagnostics. Passing `ResolvedVimMacros` and `ResolvedVimMarks` lets them reflect what the user can actually do after presets and explicit config are resolved. This keeps diagnostic commands aligned with behavior instead of leaking disabled implementation tables.
+`keymapMessage()` and `actionsMessage()` are not raw config dumps; they are
+runtime diagnostics. Passing `ResolvedVimMacros` and `ResolvedVimMarks` lets
+them reflect what the user can actually do after presets and explicit config are
+resolved. This keeps diagnostic commands aligned with behavior instead of
+leaking disabled implementation tables.
 
 ## Prevention
 
 - Treat diagnostics as effective-runtime views, not raw configuration views.
-- When adding a preset that disables a feature family, assert both `:actions <feature>` and `:keymap <feature>` return no match.
-- When accepting user-entered key names, test both canonical config syntax (`ctrl+r`) and common Vim notation (`<C-r>`).
-- Keep the Ex diagnostic path wired to every resolved option branch it summarizes.
+- When adding a preset that disables a feature family, assert both
+    `:actions <feature>` and `:keymap <feature>` return no match.
+- When accepting user-entered key names, test both canonical config syntax
+    (`ctrl+r`) and common Vim notation (`<C-r>`).
+- Keep the Ex diagnostic path wired to every resolved option branch it
+    summarizes.
 - Run focused checks after customization changes:
 
 ```sh
-bun test test/customization.test.ts test/modal.test.ts
-bun run check-types
-bun run format:check
+npm test -- test/customization.test.ts test/modal.test.ts
+npm run check
+npm run lint
 ```
 
 ## Related Issues
 
-- `docs/solutions/logic-errors/vim-behavior-contract-drift-2026-05-28.md` — related live-config drift pattern where parsed/resolved options did not fully reach runtime behavior.
-- `docs/solutions/architecture-patterns/pi-vimmode-prompt-local-linear-redo-2026-06-04.md` — related `ctrl+r` redo binding and adapter-owned redo behavior.
-- `docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md` — related finite keybinding parser and semantic keymap architecture.
-- `docs/solutions/tooling-decisions/pi-vimmode-ui-config-single-source-of-truth-2026-05-27.md` — related config source-of-truth and diagnostic consistency guidance.
+- `docs/solutions/logic-errors/vim-behavior-contract-drift-2026-05-28.md` —
+    related live-config drift pattern where parsed/resolved options did not
+    fully reach runtime behavior.
+- `docs/solutions/architecture-patterns/pi-vimmode-prompt-local-linear-redo-2026-06-04.md`
+    — related `ctrl+r` redo binding and adapter-owned redo behavior.
+- `docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md`
+    — related finite keybinding parser and semantic keymap architecture.
+- `docs/solutions/tooling-decisions/pi-vimmode-ui-config-single-source-of-truth-2026-05-27.md`
+    — related config source-of-truth and diagnostic consistency guidance.

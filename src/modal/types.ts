@@ -6,7 +6,6 @@ import type {
   LineRange,
   PendingOperator,
   Position,
-  TextRange,
   StartupMode,
   ResolvedVimEditorOptions,
   VimMode,
@@ -17,7 +16,6 @@ import type {
   VimRegister,
   VimTextObject,
 } from "../types.ts";
-import type { PendingWorkbench } from "./workbench.ts";
 
 export type ModalOptions = ResolvedVimEditorOptions;
 
@@ -104,15 +102,6 @@ export type LastExSubstitution = {
   matcherMode: "literal" | "regex";
 };
 
-export type ExSubstitutionPreview = {
-  command: string;
-  matches: number;
-  ranges: TextRange[];
-  edit: EditResult;
-  message: string;
-  repeatSource?: LastExSubstitution;
-};
-
 export type PendingExCommand = {
   command: string;
   cursor?: number;
@@ -120,7 +109,6 @@ export type PendingExCommand = {
   visualAnchor?: Position;
   visualCursor?: Position;
   visualRange?: LineRange;
-  preview?: ExSubstitutionPreview;
   historyIndex?: number;
   historyDraft?: string;
   selectedSuggestion?: number;
@@ -131,7 +119,32 @@ export type ExMessage = {
   text: string;
 };
 
+/** What a normal-mode surround addresses; `line` is the `yss` form. */
+export type SurroundTarget =
+  | { type: "motion"; motion: VimMotionAction; count?: number }
+  | { type: "textObject"; textObject: VimTextObject }
+  | {
+      type: "charSearch";
+      command: Extract<
+        VimCommandAction,
+        "findCharForward" | "findCharBackward" | "tillCharForward" | "tillCharBackward"
+      >;
+      char: string;
+      count?: number;
+    }
+  | { type: "line"; count?: number };
+
+/** Surround waiting for its character(s); `keys` is shown as the pending status. */
+export type PendingSurround =
+  | { kind: "add"; target: SurroundTarget; keys: string }
+  | { kind: "addSelection"; start: number; end: number; linewise: boolean; keys: string }
+  | { kind: "delete"; count?: number; keys: string }
+  | { kind: "change"; count?: number; from?: string; keys: string };
+
 export type RepeatableChange =
+  | { type: "surround"; target: SurroundTarget; char: string }
+  | { type: "deleteSurround"; char: string; count?: number }
+  | { type: "changeSurround"; from: string; to: string; count?: number }
   | { type: "command"; command: VimCommandAction; count?: number; char?: string }
   | { type: "lineCommand"; operator: VimOperatorAction; count?: number }
   | {
@@ -172,7 +185,7 @@ export type ModalState = {
   pendingRegister?: PendingRegisterTarget;
   marks?: MarkStore;
   pendingMark?: PendingMarkTarget;
-  pendingWorkbench?: PendingWorkbench;
+  pendingSurround?: PendingSurround;
   pendingSearch?: PendingSearchTarget;
   pendingEx?: PendingExCommand;
   pendingInsertEscape?: string;
@@ -237,6 +250,7 @@ export type ModalEffect =
       register: ClipboardRegisterSlot;
       placement: "after" | "before";
       fallback?: VimRegister;
+      count?: number;
     }
   | { type: "invalidate" }
   | { type: "terminalCursor"; style: CursorStyle }

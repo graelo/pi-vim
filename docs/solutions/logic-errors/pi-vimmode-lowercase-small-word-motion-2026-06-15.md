@@ -27,7 +27,10 @@ tags:
 
 ## Problem
 
-`pi-vimmode` lowercase word motions drifted from Vim small-word behavior. Uppercase `W` behaved correctly as a whitespace-delimited WORD motion, but lowercase `w` behaved too much like a native editor or WORD motion in punctuation-heavy text.
+`pi-vimmode` lowercase word motions drifted from Vim small-word behavior.
+Uppercase `W` behaved correctly as a whitespace-delimited WORD motion, but
+lowercase `w` behaved too much like a native editor or WORD motion in
+punctuation-heavy text.
 
 The concrete repro was:
 
@@ -50,20 +53,32 @@ f -> b(baz) -> q(qux)
 ## Symptoms
 
 - `W` worked as expected for WORD movement.
-- Lowercase `w` did not behave like Vim small-word movement over `foo/bar baz qux`.
-- Punctuation-heavy tokens such as paths, flags, and slash-delimited text could skip important small-word stops.
-- Normal motion and operator-motion semantics were at risk of diverging because lowercase normal motions used adapter commands while newer WORD and previous-end motions used pure buffer helpers.
+- Lowercase `w` did not behave like Vim small-word movement over
+    `foo/bar baz qux`.
+- Punctuation-heavy tokens such as paths, flags, and slash-delimited text
+    could skip important small-word stops.
+- Normal motion and operator-motion semantics were at risk of diverging
+    because lowercase normal motions used adapter commands while newer WORD and
+    previous-end motions used pure buffer helpers.
 
 ## What Didn't Work
 
-- Delegating lowercase `wordForward` / `wordBackward` to adapter-native commands (`wordRight` / `wordLeft`) was too broad. The host editor's word model is not Vim's small-word model.
-- Adding uppercase `W`, `B`, `E`, `gE` support alone did not protect lowercase behavior. The first tests proved the new WORD paths worked, while manual testing exposed lowercase `w` still drifting.
-- Pure parser and keymap tests were insufficient by themselves. The command could parse correctly while runtime cursor restoration still used the wrong movement implementation.
-- Prior session history search found no directly relevant prior sessions for this exact lowercase-vs-WORD regression.
+- Delegating lowercase `wordForward` / `wordBackward` to adapter-native
+    commands (`wordRight` / `wordLeft`) was too broad. The host editor's word
+    model is not Vim's small-word model.
+- Adding uppercase `W`, `B`, `E`, `gE` support alone did not protect lowercase
+    behavior. The first tests proved the new WORD paths worked, while manual
+    testing exposed lowercase `w` still drifting.
+- Pure parser and keymap tests were insufficient by themselves. The command
+    could parse correctly while runtime cursor restoration still used the wrong
+    movement implementation.
+- Prior session history search found no directly relevant prior sessions for
+    this exact lowercase-vs-WORD regression.
 
 ## Solution
 
-Keep lowercase Vim word semantics in `src/buffer.ts`, and keep adapter-native movement out of lowercase `w` / `b`.
+Keep lowercase Vim word semantics in `src/buffer.ts`, and keep adapter-native
+movement out of lowercase `w` / `b`.
 
 ### Split small-word and WORD classifiers
 
@@ -113,7 +128,9 @@ return previousWordStartOffset(text, offset);
 
 ### Stop delegating lowercase word motion to adapter commands
 
-`src/modal/normal.ts` no longer maps lowercase semantic motions to native adapter commands. Remove prior `wordForward -> wordRight` and `wordBackward -> wordLeft` adapter mappings for Vim lowercase word semantics.
+`src/modal/normal.ts` no longer maps lowercase semantic motions to native
+adapter commands. Remove prior `wordForward -> wordRight` and
+`wordBackward -> wordLeft` adapter mappings for Vim lowercase word semantics.
 
 Instead, it restores the cursor using pure buffer motion helpers:
 
@@ -145,37 +162,56 @@ expect(wordForwardPosition(text, p(0, 4))).toEqual(p(0, 8)); // baz
 expect(wordForwardPosition(text, p(0, 8))).toEqual(p(0, 12)); // qux
 ```
 
-The same fixture covers backward and end motions for `b` and `e`; adjacent previous-end tests cover `ge` so it cannot silently reuse WORD semantics.
+The same fixture covers backward and end motions for `b` and `e`; adjacent
+previous-end tests cover `ge` so it cannot silently reuse WORD semantics.
 
 ## Why This Works
 
 Vim has two word models:
 
-- `word` (`w`, `b`, `e`, `ge`) moves across keyword-word runs, punctuation runs, and whitespace.
-- `WORD` (`W`, `B`, `E`, `gE`) moves across whitespace-delimited non-whitespace spans.
+- `word` (`w`, `b`, `e`, `ge`) moves across keyword-word runs, punctuation
+    runs, and whitespace.
+- `WORD` (`W`, `B`, `E`, `gE`) moves across whitespace-delimited
+    non-whitespace spans.
 
-Native editor word commands are not a stable contract for either model. They may treat punctuation, paths, and whitespace differently from Vim. Moving the semantics into pure buffer helpers makes normal, visual, and operator motions share one implementation and keeps adapter behavior limited to generic cursor commands such as arrows and line start/end.
+Native editor word commands are not a stable contract for either model. They may
+treat punctuation, paths, and whitespace differently from Vim. Moving the
+semantics into pure buffer helpers makes normal, visual, and operator motions
+share one implementation and keeps adapter behavior limited to generic cursor
+commands such as arrows and line start/end.
 
-This also preserves the layering used elsewhere in `pi-vimmode`: parser resolves finite semantic commands, `src/buffer.ts` owns text semantics, modal code emits cursor/edit effects, and the adapter applies those effects.
+This also preserves the layering used elsewhere in `pi-vimmode`: parser resolves
+finite semantic commands, `src/buffer.ts` owns text semantics, modal code emits
+cursor/edit effects, and the adapter applies those effects.
 
 ## Prevention
 
-- Test lowercase `w/b/e/ge` and uppercase `W/B/E/gE` side-by-side whenever word motion behavior changes.
+- Test lowercase `w/b/e/ge` and uppercase `W/B/E/gE` side-by-side whenever
+    word motion behavior changes.
 - Include punctuation-heavy fixtures, not only prose:
   - `foo/bar baz qux`
   - `--flag value`
   - `/tmp/a-b next`
   - `alpha beta.gamma /tmp/file`
-- Do not delegate Vim-specific word semantics to editor-native `wordRight` / `wordLeft` commands.
+- Do not delegate Vim-specific word semantics to editor-native `wordRight` /
+    `wordLeft` commands.
 - Add seam coverage only where behavior crosses that seam:
   - parser/keymap tests for binding changes,
   - buffer tests for cursor/range semantics,
   - modal or live editor tests for runtime effect wiring changes,
   - operator-motion tests when `d`, `c`, or `y` can use the motion.
-- When manual testing finds a cursor-position bug, preserve the exact typed example as a small regression test before broadening fixtures.
+- When manual testing finds a cursor-position bug, preserve the exact typed
+    example as a small regression test before broadening fixtures.
 
 ## Related Documentation
 
-- [`docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md`](../architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md) — broader parser/buffer/helper layering pattern. This fix is a concrete example of why Vim text semantics belong in pure buffer helpers.
-- [`docs/solutions/architecture-patterns/pi-vimmode-prompt-buffer-operation-api-2026-05-27.md`](../architecture-patterns/pi-vimmode-prompt-buffer-operation-api-2026-05-27.md) — broader operation-level buffer API guidance. This fix adds another operation-level boundary: word motion helpers, not adapter-native word movement.
-- [`docs/solutions/logic-errors/vim-behavior-contract-drift-2026-05-28.md`](vim-behavior-contract-drift-2026-05-28.md) — related drift pattern where pure tests passed while live runtime behavior diverged.
+- [`docs/solutions/architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md`](../architecture-patterns/finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md)
+    — broader parser/buffer/helper layering pattern. This fix is a concrete
+    example of why Vim text semantics belong in pure buffer helpers.
+- [`docs/solutions/architecture-patterns/pi-vimmode-prompt-buffer-operation-api-2026-05-27.md`](../architecture-patterns/pi-vimmode-prompt-buffer-operation-api-2026-05-27.md)
+    — broader operation-level buffer API guidance. This fix adds another
+    operation-level boundary: word motion helpers, not adapter-native word
+    movement.
+- [`docs/solutions/logic-errors/vim-behavior-contract-drift-2026-05-28.md`](vim-behavior-contract-drift-2026-05-28.md)
+    — related drift pattern where pure tests passed while live runtime behavior
+    diverged.

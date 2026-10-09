@@ -31,6 +31,7 @@ export const KEYMAP_OPERATOR_DESCRIPTORS = {
   lowercase: { defaults: ["gu"], motionOperator: true },
   uppercase: { defaults: ["gU"], motionOperator: true },
   toggleCase: { defaults: ["g~"], motionOperator: true },
+  surround: { defaults: ["ys"], motionOperator: true },
   indent: { defaults: [">"] },
   dedent: { defaults: ["<"] },
 } as const satisfies Record<VimOperatorAction, OperatorDescriptor>;
@@ -58,6 +59,8 @@ export const KEYMAP_MOTION_DESCRIPTORS = {
   halfPageUp: { defaults: ["ctrl+u"] },
   paragraphBackward: { defaults: ["{"], legacy: "{" },
   paragraphForward: { defaults: ["}"], legacy: "}" },
+  sentenceBackward: { defaults: ["("], legacy: "(" },
+  sentenceForward: { defaults: [")"], legacy: ")" },
 } as const satisfies Record<VimMotionAction, KeymapDescriptor>;
 
 export const KEYMAP_MACRO_DESCRIPTORS = {
@@ -91,12 +94,15 @@ export const KEYMAP_TEXT_OBJECT_KIND_DESCRIPTORS = {
 
 export const KEYMAP_TEXT_OBJECT_TARGET_DESCRIPTORS = {
   word: { defaults: ["w"] },
+  bigWord: { defaults: ["W"] },
   singleQuote: { defaults: ["'"] },
   doubleQuote: { defaults: ['"'] },
+  backtick: { defaults: ["`"] },
   paren: { defaults: ["(", ")"] },
   bracket: { defaults: ["[", "]"] },
   brace: { defaults: ["{", "}"] },
   paragraph: { defaults: ["p"] },
+  sentence: { defaults: ["s"] },
   codeFence: { defaults: ["f"] },
   headingSection: { defaults: ["h"] },
   listItem: { defaults: ["l"] },
@@ -147,6 +153,9 @@ export const KEYMAP_COMMAND_DESCRIPTORS = {
   showKeybindings: { defaults: [] },
   reselectVisual: { defaults: ["gv"] },
   easymotion: { defaults: [] },
+  deleteSurround: { defaults: ["ds"] },
+  changeSurround: { defaults: ["cs"] },
+  surroundSelection: { defaults: ["S"] },
 } as const satisfies Record<VimCommandAction, CommandDescriptor>;
 
 export function deriveActionKeys<T extends Record<string, KeymapDescriptor>>(

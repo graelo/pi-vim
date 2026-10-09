@@ -1,6 +1,6 @@
-/** @type {import("./npm/node_modules/pi-vimmode/config").VimConfig} */
+/** @type {import("../../npm/node_modules/@graelo/pi-vim/config").VimConfig} */
 export default async (vim) => {
-  const preferredWidth = await Promise.resolve(88);
-  vim.promptTransforms.enabled = true;
-  vim.keymap.set("n", "gq", vim.prompt.reflow({ width: preferredWidth }));
+  const maxHighlights = await Promise.resolve(50);
+  vim.search.maxHighlights = maxHighlights;
+  vim.keymap.set("n", "gl", vim.action.motion.lineEnd());
 };

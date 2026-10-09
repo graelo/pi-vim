@@ -39,8 +39,6 @@ type DeclaredPropertyPaths =
   | `exCommand.${keyof VimConfigApi["exCommand"] & string}`
   | `feedback.${keyof VimConfigApi["feedback"] & string}`
   | `promptStructures.${keyof VimConfigApi["promptStructures"] & string}`
-  | `promptTransforms.${keyof VimConfigApi["promptTransforms"] & string}`
-  | "keymap.actionPresets"
   | "keymap.operatorMotions";
 type PropertyCoverage = Assert<Equal<MetadataPropertyPaths, DeclaredPropertyPaths>>;
 
@@ -56,37 +54,33 @@ type ExpectedPropertyShape<Path extends DeclaredPropertyPaths> = Path extends "p
       ? '"insert" | "normal"'
       : Path extends `cursor.${string}`
         ? '"block" | "bar" | "underline"'
-        : Path extends "keymap.actionPresets"
-          ? 'readonly ("paragraph-editing" | "markdown-wrapping")[]'
-          : Path extends "keymap.operatorMotions"
-            ? "partial record of operator names to motion-name arrays"
-            : Path extends "ui.status.position"
-              ? '"left" | "right"'
-              : Path extends "ui.status.items"
-                ? 'readonly ("mode" | "pendingOperator" | "selection" | "cursorPosition")[]'
-                : Path extends "ui.selection.previewMaxChars" | "search.maxHighlights"
-                  ? "non-negative integer"
-                  : Path extends "ui.cursorPosition.base"
-                    ? "0 | 1"
-                    : Path extends "ui.workbench.reservedRows"
-                      ? "integer from 0 through 5"
-                      : Path extends "macros.slots" | "marks.slots"
-                        ? "readonly lowercase register-name[]"
-                        : Path extends "macros.maxReplaySteps"
-                          ? "positive integer"
-                          : Path extends "feedback.noop"
-                            ? '"off" | "status"'
-                            : Path extends "ui.mode.labels" | "ui.mode.narrowLabels"
-                              ? "partial record of Vim modes to strings"
+        : Path extends "keymap.operatorMotions"
+          ? "partial record of operator names to motion-name arrays"
+          : Path extends "ui.status.position"
+            ? '"left" | "right"'
+            : Path extends "ui.status.items"
+              ? 'readonly ("mode" | "pendingOperator" | "selection" | "cursorPosition")[]'
+              : Path extends "ui.selection.previewMaxChars" | "search.maxHighlights"
+                ? "non-negative integer"
+                : Path extends "ui.cursorPosition.base"
+                  ? "0 | 1"
+                  : Path extends "ui.workbench.reservedRows"
+                    ? "integer from 0 through 5"
+                    : Path extends "macros.slots" | "marks.slots"
+                      ? "readonly lowercase register-name[]"
+                      : Path extends "macros.maxReplaySteps"
+                        ? "positive integer"
+                        : Path extends "feedback.noop"
+                          ? '"off" | "status"'
+                          : Path extends "ui.mode.labels" | "ui.mode.narrowLabels"
+                            ? "partial record of Vim modes to strings"
+                            : Path extends "ui.mode.colors"
+                              ? 'partial record of Vim modes to { bg?, fg? } palette indices 0-255 or "#rrggbb"'
                               : Path extends "promptStructures.targets"
                                 ? "partial record of prompt-structure targets to booleans"
-                                : Path extends "promptTransforms.actions"
-                                  ? "partial record of prompt-transform actions to booleans"
-                                  : Path extends "promptTransforms.commands"
-                                    ? "partial record of prompt-transform actions to string arrays"
-                                    : Path extends "ui.cursorPosition.format"
-                                      ? "string"
-                                      : "boolean";
+                                : Path extends "ui.cursorPosition.format"
+                                  ? "string"
+                                  : "boolean";
 type ExpectedPropertyAliases<Path extends DeclaredPropertyPaths> = Path extends "leader"
   ? readonly [`vim.g.${keyof VimConfigApi["g"] & string}`]
   : readonly [];
@@ -124,7 +118,6 @@ type PropertyValueCoverage = Assert<
       "cursor.visual": VimConfigApi["cursor"]["visual"];
       "cursor.visualLine": VimConfigApi["cursor"]["visualLine"];
       "cursor.visualBlock": VimConfigApi["cursor"]["visualBlock"];
-      "keymap.actionPresets": VimConfigApi["keymap"]["actionPresets"];
       "keymap.operatorMotions": VimConfigApi["keymap"]["operatorMotions"];
       "ui.status.enabled": boolean;
       "ui.status.position": VimConfigApi["ui"]["status"]["position"];
@@ -132,6 +125,7 @@ type PropertyValueCoverage = Assert<
       "ui.mode.enabled": boolean;
       "ui.mode.labels": VimConfigApi["ui"]["mode"]["labels"];
       "ui.mode.narrowLabels": VimConfigApi["ui"]["mode"]["narrowLabels"];
+      "ui.mode.colors": VimConfigApi["ui"]["mode"]["colors"];
       "ui.selection.enabled": boolean;
       "ui.selection.previewMaxChars": number;
       "ui.cursorPosition.enabled": boolean;
@@ -152,14 +146,11 @@ type PropertyValueCoverage = Assert<
       "feedback.noop": VimConfigApi["feedback"]["noop"];
       "promptStructures.enabled": boolean;
       "promptStructures.targets": VimConfigApi["promptStructures"]["targets"];
-      "promptTransforms.enabled": boolean;
-      "promptTransforms.actions": VimConfigApi["promptTransforms"]["actions"];
-      "promptTransforms.commands": VimConfigApi["promptTransforms"]["commands"];
     }
   >
 >;
 
-type PublicMetadata = Extract<VimPublicActionMetadata, { bindable: true }>;
+type PublicMetadata = VimPublicActionMetadata;
 type MetadataActionIds = PublicMetadata["id"];
 type DeclaredActionIds =
   | "escape"
@@ -170,8 +161,7 @@ type DeclaredActionIds =
   | `mark.${keyof VimActionApi["mark"] & string}`
   | `insert.${keyof VimActionApi["insert"] & string}`
   | `textObject.kind.${keyof VimActionApi["textObject"]["kind"] & string}`
-  | `textObject.target.${keyof VimActionApi["textObject"]["target"] & string}`
-  | `prompt.transform.${keyof VimActionApi["prompt"]["transform"] & string}`;
+  | `textObject.target.${keyof VimActionApi["textObject"]["target"] & string}`;
 type ActionCoverage = Assert<Equal<MetadataActionIds, DeclaredActionIds>>;
 type MetadataAction<Id extends MetadataActionIds> = Extract<PublicMetadata, { id: Id }>;
 type ExpectedFactory<Id extends DeclaredActionIds> = Id extends "command.easymotion"
@@ -179,15 +169,10 @@ type ExpectedFactory<Id extends DeclaredActionIds> = Id extends "command.easymot
   : `vim.action.${Id}()`;
 type ExpectedAlias<Id extends DeclaredActionIds> = Id extends "command.easymotion"
   ? readonly ["vim.action.command.easymotion()"]
-  : Id extends `insert.${infer Action}` | `prompt.transform.${infer Action}`
+  : Id extends `insert.${infer Action}`
     ? Action extends keyof VimPromptApi & string
       ? readonly [`vim.prompt.${Action}()`]
       : readonly []
-    : readonly [];
-type ExpectedArgs<Id extends DeclaredActionIds> = Id extends "prompt.transform.fence"
-  ? readonly [{ name: "language"; type: "string"; required: false; description: string }]
-  : Id extends "prompt.transform.reflow"
-    ? readonly [{ name: "width"; type: "integer"; required: false; description: string }]
     : readonly [];
 type NormalVisualScopes = readonly ["normal", "visual", "visualLine", "visualBlock"];
 type ExpectedScopes<Id extends DeclaredActionIds> = Id extends "escape"
@@ -253,12 +238,6 @@ type MetadataPromptAliases = Extract<
   `vim.prompt.${string}()`
 >;
 type PromptAliasCoverage = Assert<Equal<MetadataPromptAliases, DeclaredPromptAliases>>;
-type ArgumentCoverage = Assert<
-  Equal<
-    { [Id in DeclaredActionIds]: MetadataAction<Id>["args"] },
-    { [Id in DeclaredActionIds]: ExpectedArgs<Id> }
-  >
->;
 type ScopeCoverage = Assert<
   Equal<
     { [Id in DeclaredActionIds]: MetadataAction<Id>["publicScopes"] },
@@ -268,19 +247,6 @@ type ScopeCoverage = Assert<
 type ScopeCompatibility = Assert<
   PublicMetadata["publicScopes"][number] extends VimMappingMode | "operatorPending" ? true : false
 >;
-
-type PromptArgumentDeclarationCoverage = Assert<
-  Equal<
-    NonNullable<Parameters<VimActionApi["prompt"]["transform"]["fence"]>[0]>,
-    { language?: string }
-  >
-> &
-  Assert<
-    Equal<
-      NonNullable<Parameters<VimActionApi["prompt"]["transform"]["reflow"]>[0]>,
-      { width?: number }
-    >
-  >;
 
 declare const metadataPropertyValues: {
   [Path in MetadataPropertyPaths]: ValueAtPath<VimConfigApi, Path>;
@@ -297,10 +263,8 @@ void (null as unknown as
   | FactoryCoverage
   | AliasCoverage
   | PromptAliasCoverage
-  | ArgumentCoverage
   | ScopeCoverage
-  | ScopeCompatibility
-  | PromptArgumentDeclarationCoverage);
+  | ScopeCompatibility);
 void (null as unknown as VimFiniteActionId);
 void VIM_ACTION_METADATA;
 void VIM_CONFIG_PROPERTY_METADATA;

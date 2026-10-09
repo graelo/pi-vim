@@ -1,3 +1,4 @@
+import { positionToOffset } from "./text-position.ts";
 import type { Position, PromptStructureTarget, VimTextObjectKind } from "./types.ts";
 
 export type PromptStructureRequest = {
@@ -35,14 +36,6 @@ function lineInfos(text: string): LineInfo[] {
     start += line.length + 1;
   }
   return infos;
-}
-
-function positionToOffset(text: string, position: Position): number {
-  const infos = lineInfos(text);
-  const line = Math.max(0, Math.min(position.line, infos.length - 1));
-  const info = infos[line] ?? { text: "", start: 0, end: 0 };
-  const col = Math.max(0, Math.min(position.col, info.text.length));
-  return info.start + col;
 }
 
 function cursorLine(text: string, cursor: Position): number {
@@ -260,7 +253,7 @@ function resolveTag(
   return isNonEmpty(range) ? range : undefined;
 }
 
-export function isErrorBlockLine(line: string): boolean {
+function isErrorBlockLine(line: string): boolean {
   return (
     /(?:error|exception|traceback|panic|fatal|failed|failure)/i.test(line) ||
     /^\s+at\s+\S+/.test(line) ||

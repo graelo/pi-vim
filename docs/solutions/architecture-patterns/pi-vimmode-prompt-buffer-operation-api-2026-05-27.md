@@ -28,9 +28,13 @@ tags:
 
 ## Context
 
-`pi-vimmode` prompt editing had buffer mechanics leaking across layers. Modal code, render code, adapter code, and tests composed low-level helpers such as splitting text, clamping cursors, normalizing ranges, and extracting selections.
+`pi-vimmode` prompt editing had buffer mechanics leaking across layers. Modal
+code, render code, adapter code, and tests composed low-level helpers such as
+splitting text, clamping cursors, normalizing ranges, and extracting selections.
 
-That worked while behavior was small, but it made every caller know prompt-buffer invariants. The fix was to make `src/buffer.ts` expose operation-level APIs and keep low-level text mechanics private.
+That worked while behavior was small, but it made every caller know
+prompt-buffer invariants. The fix was to make `src/buffer.ts` expose
+operation-level APIs and keep low-level text mechanics private.
 
 ## Guidance
 
@@ -85,7 +89,9 @@ const selected = visualSelectionText(text, anchor, cursor, "line").replace(/\n/g
 
 ## Why This Matters
 
-Operation-level APIs reduce coupling. Callers no longer need to know line splitting, cursor clamping, inclusive visual selection rules, or range normalization details.
+Operation-level APIs reduce coupling. Callers no longer need to know line
+splitting, cursor clamping, inclusive visual selection rules, or range
+normalization details.
 
 Benefits:
 
@@ -95,17 +101,21 @@ Benefits:
 - Editor adapter restores cursors through buffer API, not helper internals.
 - Tests lock public contracts, not private helper implementation.
 
-Prevention rule: if multiple production callers repeat the same low-level helper composition for one Vim behavior, add one buffer operation instead.
+Prevention rule: if multiple production callers repeat the same low-level helper
+composition for one Vim behavior, add one buffer operation instead.
 
 ## When to Apply
 
-- Multiple modules import text, range, or cursor helpers from one utility module.
+- Multiple modules import text, range, or cursor helpers from one utility
+    module.
 - Tests depend on helper internals more than user-facing behavior.
 - Rendering or adapter code duplicates domain logic.
 - Refactor goal is sharper module boundaries without changing UX.
-- Vim commands need consistent behavior across normal, visual, linewise, and operator-motion flows.
+- Vim commands need consistent behavior across normal, visual, linewise, and
+    operator-motion flows.
 
-Avoid exporting helper internals unless they represent stable domain concepts, not implementation steps.
+Avoid exporting helper internals unless they represent stable domain concepts,
+not implementation steps.
 
 ## Examples
 
@@ -159,11 +169,18 @@ const target = normalizeBufferPosition(this.getText(), position);
 
 Cover operation contracts, not helper internals:
 
-- Navigation operations distinguish infallible targets from `matchingPair` misses.
+- Navigation operations distinguish infallible targets from `matchingPair`
+    misses.
 - Visual operations cover charwise and linewise selection behavior.
-- Edit operations preserve edge cases such as empty prompts, last-line joins, and empty registers.
+- Edit operations preserve edge cases such as empty prompts, last-line joins,
+    and empty registers.
 
 ## Related
 
-- [Finite Vim keybinding parser with pure buffer helpers](./finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md) — earlier architecture pattern for parser, buffer helper, modal engine, and adapter separation. This doc deepens the buffer boundary into operation-level public APIs.
-- [Vim behavior contracts drifted from live adapter behavior](../logic-errors/vim-behavior-contract-drift-2026-05-28.md) — concrete boundary failures, including gating `a` movement from logical line state before emitting native Right.
+- [Finite Vim keybinding parser with pure buffer helpers](./finite-vim-keybinding-parser-buffer-helpers-2026-05-26.md)
+    — earlier architecture pattern for parser, buffer helper, modal engine, and
+    adapter separation. This doc deepens the buffer boundary into
+    operation-level public APIs.
+- [Vim behavior contracts drifted from live adapter behavior](../logic-errors/vim-behavior-contract-drift-2026-05-28.md)
+    — concrete boundary failures, including gating `a` movement from logical
+    line state before emitting native Right.

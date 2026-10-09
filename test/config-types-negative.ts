@@ -8,8 +8,8 @@ vim.unknown = true;
 vim.startMode = "visual";
 // @ts-expect-error mode must be finite VimModeAlias
 vim.keymap.set("replace", "x", null);
-// @ts-expect-error reflow width must be numeric
-vim.prompt.reflow({ width: "wide" });
+// @ts-expect-error prompt transforms were removed in 1.0.0
+vim.prompt.reflow();
 // @ts-expect-error mapping options are finite
 vim.keymap.set("n", "x", null, { recursive: true });
 

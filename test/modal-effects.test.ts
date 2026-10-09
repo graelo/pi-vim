@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 
 import type { ModalEffect, ModalOptions, ModalState } from "../src/modal/types.ts";
 
@@ -87,12 +87,6 @@ function normalizeState(state: ModalState): Record<string, unknown> {
       ? {
           command: state.pendingEx.command,
           sourceMode: state.pendingEx.sourceMode,
-          preview: state.pendingEx.preview
-            ? {
-                matches: state.pendingEx.preview.matches,
-                ranges: state.pendingEx.preview.ranges.length,
-              }
-            : undefined,
         }
       : undefined,
     visualAnchor: state.visualAnchor,
@@ -157,7 +151,7 @@ describe("golden modal effects", () => {
     });
   });
 
-  test("Ex substitution previews then applies with stable edit effect", () => {
+  test("Ex substitution applies on Enter with stable edit effect", () => {
     const result = runGolden({ mode: "normal" }, "old old\nold", p(0, 0), [
       ":",
       "%",
@@ -172,7 +166,6 @@ describe("golden modal effects", () => {
       "w",
       "/",
       "g",
-      "\r",
       "\r",
     ]);
 
@@ -242,7 +235,6 @@ describe("golden modal effects", () => {
           moveLineStart: [],
           moveLineEnd: [],
         },
-        actions: { accepted: [] },
       },
     };
     const result = runGolden({ mode: "normal" }, "abc", p(0, 0), ["\x10"], allowOptions);
@@ -269,7 +261,6 @@ describe("golden modal effects", () => {
           moveLineStart: [],
           moveLineEnd: [],
         },
-        actions: { accepted: [] },
       },
     };
     const result = runGolden(

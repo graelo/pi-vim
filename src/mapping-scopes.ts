@@ -144,6 +144,7 @@ const COMMAND_SCOPES: Readonly<Record<string, readonly VimMappingScope[]>> = {
   insertLineStart: ["normal", "visualBlock"],
   insertLineEnd: ["normal", "visualBlock"],
   pasteAfter: ["normal", "visualLine"],
+  surroundSelection: VISUAL_SCOPES,
 };
 
 function commandScopes(action: string): readonly VimMappingScope[] {
@@ -173,6 +174,8 @@ export function mappingScopesForKeymapEntry(
   action: string,
 ): readonly VimMappingScope[] {
   if (family === "motion") return motionScopes(action);
+  // Visual surround is the `surroundSelection` command, so `ys` stays a normal-mode operator.
+  if (family === "operator" && action === "surround") return ["normal"];
   if (family === "command") return commandScopes(action);
   if (family === "mark") return action === "set" ? ["normal"] : OPERATOR_PENDING_SCOPES;
   return FAMILY_SCOPES[family]!;

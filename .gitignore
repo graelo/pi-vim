@@ -1,40 +1,45 @@
-# dependencies (bun install)
-node_modules
+# Dependencies
+node_modules/
 
-# output
-out
-dist
+# Build output
+dist/
+build/
 *.tgz
 
-# code coverage
-coverage
-*.lcov
+# Logs
+*.log
+npm-debug.log*
 
-# logs
-logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
-
-# dotenv environment variable files
+# Environment variables
 .env
-.env.development.local
-.env.test.local
-.env.production.local
 .env.local
+.env.*.local
 
-# caches
-.eslintcache
-.cache
+# IDE
+.vscode/
+.zed/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+
+# Cache
+.cache/
 *.tsbuildinfo
 
-# IntelliJ based IDEs
-.idea
-
-# Finder (MacOS) folder config
-.DS_Store
-
+# Pi
 .pi-subagents/
 
-# benchmark-generated profiles and ad-hoc result snapshots
+# Benchmark-generated profiles and ad-hoc result snapshots
 *.cpuprofile
 benchmark/results/*.json
+
+# TODO
+TODO.md

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 
 import { resolvePromptStructureRange } from "../src/prompt-structures.ts";
 

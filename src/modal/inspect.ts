@@ -34,7 +34,7 @@ export function runtimeMessagesMessage(messages: readonly { text: string }[] | u
   return `messages: ${messages.length} retained; latest: ${redact(latest.text)}`;
 }
 
-export function vimmodeInspectMessage(input: InspectInput): string {
+export function vimInspectMessage(input: InspectInput): string {
   const { state, snapshot, options, diagnostics, render } = input;
   const parts = [
     `mode=${state.mode}`,
@@ -119,7 +119,6 @@ function searchSummary(state: ModalState): string | undefined {
 function exSummary(state: ModalState): string | undefined {
   const parts = [
     state.exHistory ? `history=${state.exHistory.length}` : undefined,
-    state.pendingEx?.preview ? `preview=${state.pendingEx.preview.matches}` : undefined,
     state.exMessage ? `message=${state.exMessage.kind}:${redact(state.exMessage.text)}` : undefined,
     state.messageHistory ? `messages=${state.messageHistory.length}` : undefined,
   ].filter(Boolean);
@@ -137,7 +136,6 @@ function optionsSummary(options: ResolvedVimEditorOptions): string {
     options.marks?.enabled === false ? "marks" : undefined,
     options.search?.highlight === false ? "search-highlight" : undefined,
     options.ui?.status?.enabled === false ? "status" : undefined,
-    options.promptTransforms?.enabled === false ? "transforms" : undefined,
   ].filter(Boolean);
   return disabled.length > 0 ? `disabled=${disabled.join(",")}` : "features=default";
 }
@@ -145,8 +143,7 @@ function optionsSummary(options: ResolvedVimEditorOptions): string {
 function renderSummary(state: ModalState, render: InspectRenderSummary | undefined): string {
   const visual =
     render?.visualRenderActive ?? Boolean(state.visualAnchor && state.mode.startsWith("visual"));
-  const search =
-    render?.searchRenderActive ?? Boolean(state.searchHighlight || state.pendingEx?.preview);
+  const search = render?.searchRenderActive ?? Boolean(state.searchHighlight);
   const workbench =
     render?.workbenchRowActive ??
     Boolean(state.pendingSearch || state.pendingEx || state.exMessage);

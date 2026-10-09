@@ -1,25 +1,6 @@
 import type { BlockRange } from "./range.ts";
+import { clampPosition, comparePositions, splitText } from "./text-position.ts";
 import type { LineRange, Position, TextRange } from "./types.ts";
-
-// ── text primitives (ponytail: local copies; general text layer stays in buffer.ts) ──
-
-function splitText(text: string): string[] {
-  const lines = text.split("\n");
-  return lines.length === 0 ? [""] : lines;
-}
-
-function clampPosition(lines: string[], position: Position): Position {
-  const safeLines = lines.length === 0 ? [""] : lines;
-  const line = Math.max(0, Math.min(position.line, safeLines.length - 1));
-  const length = safeLines[line]?.length ?? 0;
-  const col = Math.max(0, Math.min(position.col, length));
-  return { line, col };
-}
-
-function comparePositions(a: Position, b: Position): number {
-  if (a.line !== b.line) return a.line - b.line;
-  return a.col - b.col;
-}
 
 // ── range normalization ──
 

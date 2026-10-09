@@ -1,27 +1,37 @@
-# pi-vimmode trusted JavaScript config
+# pi-vim trusted JavaScript config
 
 <a id="basic-setup"></a>
 
 ## Basic setup
 
-> **Warning:** `~/.pi/agent/pi-vimmode.config.js` is unsandboxed trusted code. It runs with full Pi process privileges. Only put code and imports you trust in this file.
+> **Warning:** the JS config is unsandboxed trusted code that runs with
+> full Pi process privileges. Only put code and imports you trust in this file.
 
-Create exactly `~/.pi/agent/pi-vimmode.config.js`:
+Create exactly `~/.pi/agent/extensions/pi-vim/config.js` (under
+`PI_CODING_AGENT_DIR` instead of `~/.pi/agent` when that is set):
 
 ```js
-/** @type {import("./npm/node_modules/pi-vimmode/config").VimConfig} */
+/** @type {import("../../npm/node_modules/@graelo/pi-vim/config").VimConfig} */
 export default (vim) => {
   vim.startMode = "normal";
 };
 ```
 
-`vim.startMode` is validated: only `"insert"` or `"normal"` is accepted. Run `/vimmode reload` after editing root config. See checked [`examples/pi-vimmode.config.js`](../examples/pi-vimmode.config.js) for a larger basic workflow.
+`vim.startMode` is validated: only `"insert"` or `"normal"` is accepted. Run
+`/vim reload` after editing root config. See checked
+[`examples/pi-vim.config.js`](../examples/pi-vim.config.js) for a larger
+basic workflow.
 
-Generated reference blocks below come from canonical source metadata. Regenerate with `bun run generate:config-reference`; check committed output with `bun run check:config-reference`. Corresponding JSON behavior remains canonical in [`docs/settings.md`](settings.md).
+Generated reference blocks below come from canonical source metadata. Regenerate
+with `npm run generate:config-reference`; check committed output with
+`npm run check:config-reference`. Corresponding JSON behavior remains canonical
+in [`docs/settings.md`](settings.md).
 
 <a id="generated-properties"></a>
 
 ## Properties
+
+<!-- rumdl-disable MD013 -->
 
 <!-- BEGIN GENERATED CONFIG PROPERTIES -->
 
@@ -34,7 +44,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `one printable character or null`
 - Built-in default: `unset`
 - Assignment semantics: replaces leader; null clears it
-- JSON crosswalk: `piVimMode.leader`
+- JSON crosswalk: `leader`
 - Compatibility aliases: [`vim.g.mapleader`](#config-property-leader)
 
 #### `vim.preset`
@@ -44,7 +54,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `"minimal" | "prompt-safe" | "vim-heavy"`
 - Built-in default: `unset`
 - Assignment semantics: applies selected preset baseline, then replaces preset value
-- JSON crosswalk: `piVimMode.preset`
+- JSON crosswalk: `preset`
 - Compatibility aliases: none
 
 #### `vim.startMode`
@@ -54,7 +64,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `"insert" | "normal"`
 - Built-in default: `"insert"`
 - Assignment semantics: replaces startup mode
-- JSON crosswalk: `piVimMode.startMode`
+- JSON crosswalk: `startMode`
 - Compatibility aliases: none
 
 ### `vim.cursor`
@@ -66,7 +76,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `"block" | "bar" | "underline"`
 - Built-in default: `"bar"`
 - Assignment semantics: replaces cursor style
-- JSON crosswalk: `piVimMode.cursor.insert`
+- JSON crosswalk: `cursor.insert`
 - Compatibility aliases: none
 
 #### `vim.cursor.normal`
@@ -76,7 +86,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `"block" | "bar" | "underline"`
 - Built-in default: `"block"`
 - Assignment semantics: replaces cursor style
-- JSON crosswalk: `piVimMode.cursor.normal`
+- JSON crosswalk: `cursor.normal`
 - Compatibility aliases: none
 
 #### `vim.cursor.visual`
@@ -86,7 +96,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `"block" | "bar" | "underline"`
 - Built-in default: `"block"`
 - Assignment semantics: replaces cursor style
-- JSON crosswalk: `piVimMode.cursor.visual`
+- JSON crosswalk: `cursor.visual`
 - Compatibility aliases: none
 
 #### `vim.cursor.visualBlock`
@@ -96,7 +106,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `"block" | "bar" | "underline"`
 - Built-in default: `"block"`
 - Assignment semantics: replaces cursor style
-- JSON crosswalk: `piVimMode.cursor.visualBlock`
+- JSON crosswalk: `cursor.visualBlock`
 - Compatibility aliases: none
 
 #### `vim.cursor.visualLine`
@@ -106,7 +116,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `"block" | "bar" | "underline"`
 - Built-in default: `"block"`
 - Assignment semantics: replaces cursor style
-- JSON crosswalk: `piVimMode.cursor.visualLine`
+- JSON crosswalk: `cursor.visualLine`
 - Compatibility aliases: none
 
 ### `vim.exCommand`
@@ -118,7 +128,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.exCommand.autocomplete`
+- JSON crosswalk: `exCommand.autocomplete`
 - Compatibility aliases: none
 
 ### `vim.feedback`
@@ -130,29 +140,19 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `"off" | "status"`
 - Built-in default: `"off"`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.feedback.noop`
+- JSON crosswalk: `feedback.noop`
 - Compatibility aliases: none
 
 ### `vim.keymap`
-
-#### `vim.keymap.actionPresets`
-
-<a id="config-property-keymap-actionPresets"></a>
-
-- Accepted shape: `readonly ("paragraph-editing" | "markdown-wrapping")[]`
-- Built-in default: `unset`
-- Assignment semantics: replaces preset list
-- JSON crosswalk: `piVimMode.keymap.actionPresets`
-- Compatibility aliases: none
 
 #### `vim.keymap.operatorMotions`
 
 <a id="config-property-keymap-operatorMotions"></a>
 
 - Accepted shape: `partial record of operator names to motion-name arrays`
-- Built-in default: `{"change": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "delete": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "lowercase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "toggleCase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "uppercase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"], "yank": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward"]}`
+- Built-in default: `{"change": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward", "sentenceBackward", "sentenceForward"], "delete": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward", "sentenceBackward", "sentenceForward"], "lowercase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward", "sentenceBackward", "sentenceForward"], "surround": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward", "sentenceBackward", "sentenceForward"], "toggleCase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward", "sentenceBackward", "sentenceForward"], "uppercase": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward", "sentenceBackward", "sentenceForward"], "yank": ["left", "down", "up", "right", "wordForward", "wordBackward", "wordEnd", "wordForwardBig", "wordBackwardBig", "wordEndBig", "wordPreviousEnd", "wordPreviousEndBig", "lineStart", "lineEnd", "firstNonBlank", "bufferStart", "bufferEnd", "matchingPair", "paragraphBackward", "paragraphForward", "sentenceBackward", "sentenceForward"]}`
 - Assignment semantics: replaces operator-motion allow-list
-- JSON crosswalk: `piVimMode.keymap.operatorMotions`
+- JSON crosswalk: `keymap.operatorMotions`
 - Compatibility aliases: none
 
 ### `vim.macros`
@@ -164,7 +164,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.macros.enabled`
+- JSON crosswalk: `macros.enabled`
 - Compatibility aliases: none
 
 #### `vim.macros.maxReplaySteps`
@@ -174,7 +174,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `positive integer`
 - Built-in default: `1000`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.macros.maxReplaySteps`
+- JSON crosswalk: `macros.maxReplaySteps`
 - Compatibility aliases: none
 
 #### `vim.macros.slots`
@@ -184,7 +184,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `readonly lowercase register-name[]`
 - Built-in default: `["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]`
 - Assignment semantics: replaces slot list
-- JSON crosswalk: `piVimMode.macros.slots`
+- JSON crosswalk: `macros.slots`
 - Compatibility aliases: none
 
 ### `vim.marks`
@@ -196,7 +196,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.marks.enabled`
+- JSON crosswalk: `marks.enabled`
 - Compatibility aliases: none
 
 #### `vim.marks.slots`
@@ -206,7 +206,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `readonly lowercase register-name[]`
 - Built-in default: `["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]`
 - Assignment semantics: replaces slot list
-- JSON crosswalk: `piVimMode.marks.slots`
+- JSON crosswalk: `marks.slots`
 - Compatibility aliases: none
 
 ### `vim.promptStructures`
@@ -218,7 +218,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.promptStructures.enabled`
+- JSON crosswalk: `promptStructures.enabled`
 - Compatibility aliases: none
 
 #### `vim.promptStructures.targets`
@@ -228,39 +228,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `partial record of prompt-structure targets to booleans`
 - Built-in default: `{"codeFence": true, "errorBlock": true, "headingSection": true, "listItem": true, "tag": true}`
 - Assignment semantics: replaces whole record; does not merge keys
-- JSON crosswalk: `piVimMode.promptStructures.targets`
-- Compatibility aliases: none
-
-### `vim.promptTransforms`
-
-#### `vim.promptTransforms.actions`
-
-<a id="config-property-promptTransforms-actions"></a>
-
-- Accepted shape: `partial record of prompt-transform actions to booleans`
-- Built-in default: `{"bulletize": true, "dedent": true, "fence": true, "indent": true, "quote": true, "reflow": true, "unquote": true}`
-- Assignment semantics: replaces whole record; does not merge keys
-- JSON crosswalk: `piVimMode.promptTransforms.actions`
-- Compatibility aliases: none
-
-#### `vim.promptTransforms.commands`
-
-<a id="config-property-promptTransforms-commands"></a>
-
-- Accepted shape: `partial record of prompt-transform actions to string arrays`
-- Built-in default: `{"bulletize": ["bulletize"], "dedent": ["dedent"], "fence": ["fence"], "indent": ["indent"], "quote": ["quote"], "reflow": ["reflow"], "unquote": ["unquote"]}`
-- Assignment semantics: replaces whole record; does not merge keys
-- JSON crosswalk: `piVimMode.promptTransforms.commands`
-- Compatibility aliases: none
-
-#### `vim.promptTransforms.enabled`
-
-<a id="config-property-promptTransforms-enabled"></a>
-
-- Accepted shape: `boolean`
-- Built-in default: `true`
-- Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.promptTransforms.enabled`
+- JSON crosswalk: `promptStructures.targets`
 - Compatibility aliases: none
 
 ### `vim.search`
@@ -272,7 +240,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.search.clearOnCancel`
+- JSON crosswalk: `search.clearOnCancel`
 - Compatibility aliases: none
 
 #### `vim.search.clearOnInsert`
@@ -282,7 +250,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.search.clearOnInsert`
+- JSON crosswalk: `search.clearOnInsert`
 - Compatibility aliases: none
 
 #### `vim.search.highlight`
@@ -292,7 +260,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.search.highlight`
+- JSON crosswalk: `search.highlight`
 - Compatibility aliases: none
 
 #### `vim.search.highlightCurrent`
@@ -302,7 +270,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.search.highlightCurrent`
+- JSON crosswalk: `search.highlightCurrent`
 - Compatibility aliases: none
 
 #### `vim.search.maxHighlights`
@@ -312,7 +280,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `non-negative integer`
 - Built-in default: `200`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.search.maxHighlights`
+- JSON crosswalk: `search.maxHighlights`
 - Compatibility aliases: none
 
 ### `vim.ui`
@@ -324,7 +292,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `0 | 1`
 - Built-in default: `1`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.cursorPosition.base`
+- JSON crosswalk: `ui.cursorPosition.base`
 - Compatibility aliases: none
 
 #### `vim.ui.cursorPosition.enabled`
@@ -334,7 +302,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.cursorPosition.enabled`
+- JSON crosswalk: `ui.cursorPosition.enabled`
 - Compatibility aliases: none
 
 #### `vim.ui.cursorPosition.format`
@@ -344,7 +312,17 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `string`
 - Built-in default: `"{line}:{column}"`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.cursorPosition.format`
+- JSON crosswalk: `ui.cursorPosition.format`
+- Compatibility aliases: none
+
+#### `vim.ui.mode.colors`
+
+<a id="config-property-ui-mode-colors"></a>
+
+- Accepted shape: `partial record of Vim modes to { bg?, fg? } palette indices 0-255 or "#rrggbb"`
+- Built-in default: `{}`
+- Assignment semantics: replaces whole record; does not merge keys
+- JSON crosswalk: `ui.mode.colors`
 - Compatibility aliases: none
 
 #### `vim.ui.mode.enabled`
@@ -354,7 +332,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.mode.enabled`
+- JSON crosswalk: `ui.mode.enabled`
 - Compatibility aliases: none
 
 #### `vim.ui.mode.labels`
@@ -364,7 +342,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `partial record of Vim modes to strings`
 - Built-in default: `{"insert": "INSERT", "normal": "NORMAL", "visual": "VISUAL", "visualBlock": "V-BLOCK", "visualLine": "V-LINE"}`
 - Assignment semantics: replaces whole record; does not merge keys
-- JSON crosswalk: `piVimMode.ui.mode.labels`
+- JSON crosswalk: `ui.mode.labels`
 - Compatibility aliases: none
 
 #### `vim.ui.mode.narrowLabels`
@@ -374,7 +352,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `partial record of Vim modes to strings`
 - Built-in default: `{"insert": "I", "normal": "N", "visual": "V", "visualBlock": "VB", "visualLine": "VL"}`
 - Assignment semantics: replaces whole record; does not merge keys
-- JSON crosswalk: `piVimMode.ui.mode.narrowLabels`
+- JSON crosswalk: `ui.mode.narrowLabels`
 - Compatibility aliases: none
 
 #### `vim.ui.selection.enabled`
@@ -384,7 +362,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.selection.enabled`
+- JSON crosswalk: `ui.selection.enabled`
 - Compatibility aliases: none
 
 #### `vim.ui.selection.previewMaxChars`
@@ -394,7 +372,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `non-negative integer`
 - Built-in default: `16`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.selection.previewMaxChars`
+- JSON crosswalk: `ui.selection.previewMaxChars`
 - Compatibility aliases: none
 
 #### `vim.ui.status.enabled`
@@ -404,7 +382,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `boolean`
 - Built-in default: `true`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.status.enabled`
+- JSON crosswalk: `ui.status.enabled`
 - Compatibility aliases: none
 
 #### `vim.ui.status.items`
@@ -414,7 +392,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `readonly ("mode" | "pendingOperator" | "selection" | "cursorPosition")[]`
 - Built-in default: `["mode", "pendingOperator", "selection", "cursorPosition"]`
 - Assignment semantics: replaces item list
-- JSON crosswalk: `piVimMode.ui.status.items`
+- JSON crosswalk: `ui.status.items`
 - Compatibility aliases: none
 
 #### `vim.ui.status.position`
@@ -424,7 +402,7 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `"left" | "right"`
 - Built-in default: `"left"`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.status.position`
+- JSON crosswalk: `ui.status.position`
 - Compatibility aliases: none
 
 #### `vim.ui.workbench.reservedRows`
@@ -434,18 +412,31 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 - Accepted shape: `integer from 0 through 5`
 - Built-in default: `0`
 - Assignment semantics: replaces value
-- JSON crosswalk: `piVimMode.ui.workbench.reservedRows`
+- JSON crosswalk: `ui.workbench.reservedRows`
 - Compatibility aliases: none
 
 <!-- END GENERATED CONFIG PROPERTIES -->
+
+<!-- rumdl-enable MD013 -->
 
 <a id="generated-actions"></a>
 
 ## Actions
 
+<!-- rumdl-disable MD013 -->
+
 <!-- BEGIN GENERATED CONFIG ACTIONS -->
 
 ### `vim.action.command`
+
+#### `command.changeSurround`
+
+<a id="config-action-command-changeSurround"></a>
+
+- Canonical factory: `vim.action.command.changeSurround()`
+- Supported mapping scopes: `normal`
+- Default keys: `cs`
+- Compatibility aliases: none
 
 #### `command.changeToLineEnd`
 
@@ -453,7 +444,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.changeToLineEnd()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `C`
 - Compatibility aliases: none
 
@@ -463,7 +453,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.decrementNumber()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `ctrl+x`
 - Compatibility aliases: none
 
@@ -473,7 +462,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.deleteChar()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `x`
 - Compatibility aliases: none
 
@@ -483,8 +471,16 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.deleteCharBefore()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `X`
+- Compatibility aliases: none
+
+#### `command.deleteSurround`
+
+<a id="config-action-command-deleteSurround"></a>
+
+- Canonical factory: `vim.action.command.deleteSurround()`
+- Supported mapping scopes: `normal`
+- Default keys: `ds`
 - Compatibility aliases: none
 
 #### `command.deleteToLineEnd`
@@ -493,7 +489,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.deleteToLineEnd()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `D`
 - Compatibility aliases: none
 
@@ -503,7 +498,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.easymotion.goToChar()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.action.command.easymotion()`](#config-action-command-easymotion)
 
@@ -513,7 +507,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.findCharBackward()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `F`
 - Compatibility aliases: none
 
@@ -523,7 +516,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.findCharForward()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `f`
 - Compatibility aliases: none
 
@@ -533,7 +525,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.incrementNumber()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `ctrl+a`
 - Compatibility aliases: none
 
@@ -543,7 +534,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.insertAfter()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `a`
 - Compatibility aliases: none
 
@@ -553,7 +543,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.insertBefore()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `i`
 - Compatibility aliases: none
 
@@ -563,7 +552,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.insertLineEnd()`
 - Supported mapping scopes: `normal`, `visualBlock`
-- Arguments: none
 - Default keys: `A`
 - Compatibility aliases: none
 
@@ -573,7 +561,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.insertLineStart()`
 - Supported mapping scopes: `normal`, `visualBlock`
-- Arguments: none
 - Default keys: `I`
 - Compatibility aliases: none
 
@@ -583,7 +570,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.joinLine()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `J`
 - Compatibility aliases: none
 
@@ -593,7 +579,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.openLineAbove()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `O`
 - Compatibility aliases: none
 
@@ -603,7 +588,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.openLineBelow()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `o`
 - Compatibility aliases: none
 
@@ -613,7 +597,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.pasteAfter()`
 - Supported mapping scopes: `normal`, `visualLine`
-- Arguments: none
 - Default keys: `p`
 - Compatibility aliases: none
 
@@ -623,7 +606,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.pasteBefore()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `P`
 - Compatibility aliases: none
 
@@ -633,7 +615,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.redo()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `ctrl+r`
 - Compatibility aliases: none
 
@@ -643,7 +624,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.repeatChange()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `.`
 - Compatibility aliases: none
 
@@ -653,7 +633,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.repeatCharSearch()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `;`
 - Compatibility aliases: none
 
@@ -663,7 +642,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.repeatCharSearchReverse()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `,`
 - Compatibility aliases: none
 
@@ -673,7 +651,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.repeatSearch()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `n`
 - Compatibility aliases: none
 
@@ -683,7 +660,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.repeatSearchReverse()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `N`
 - Compatibility aliases: none
 
@@ -693,7 +669,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.replaceChar()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `r`
 - Compatibility aliases: none
 
@@ -703,7 +678,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.reselectVisual()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `gv`
 - Compatibility aliases: none
 
@@ -713,7 +687,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.searchWordBackward()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `#`
 - Compatibility aliases: none
 
@@ -723,7 +696,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.searchWordForward()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `*`
 - Compatibility aliases: none
 
@@ -733,7 +705,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.showKeybindings()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: none
 
@@ -743,7 +714,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.startExCommand()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `:`
 - Compatibility aliases: none
 
@@ -753,7 +723,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.startSearch()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `/`
 - Compatibility aliases: none
 
@@ -763,7 +732,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.startSearchBackward()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `?`
 - Compatibility aliases: none
 
@@ -773,7 +741,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.substituteChar()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `s`
 - Compatibility aliases: none
 
@@ -783,7 +750,15 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.substituteLine()`
 - Supported mapping scopes: `normal`
-- Arguments: none
+- Default keys: `S`
+- Compatibility aliases: none
+
+#### `command.surroundSelection`
+
+<a id="config-action-command-surroundSelection"></a>
+
+- Canonical factory: `vim.action.command.surroundSelection()`
+- Supported mapping scopes: `visual`, `visualLine`, `visualBlock`
 - Default keys: `S`
 - Compatibility aliases: none
 
@@ -793,7 +768,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.tillCharBackward()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `T`
 - Compatibility aliases: none
 
@@ -803,7 +777,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.tillCharForward()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `t`
 - Compatibility aliases: none
 
@@ -813,7 +786,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.toggleCase()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `~`
 - Compatibility aliases: none
 
@@ -823,7 +795,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.undo()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `u`
 - Compatibility aliases: none
 
@@ -833,7 +804,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.visualBlock()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: none
 
@@ -843,7 +813,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.visualChar()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `v`
 - Compatibility aliases: none
 
@@ -853,7 +822,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.visualLine()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `V`
 - Compatibility aliases: none
 
@@ -863,7 +831,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.command.yankLine()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `Y`
 - Compatibility aliases: none
 
@@ -875,7 +842,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.escape()`
 - Supported mapping scopes: `visual`, `visualLine`, `visualBlock`, `insert`, `operatorPending`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: none
 
@@ -887,7 +853,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.insert.deleteLineBackward()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.deleteLineBackward()`](#config-action-insert-deleteLineBackward)
 
@@ -897,7 +862,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.insert.deleteLineForward()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.deleteLineForward()`](#config-action-insert-deleteLineForward)
 
@@ -907,7 +871,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.insert.deleteWordBackward()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.deleteWordBackward()`](#config-action-insert-deleteWordBackward)
 
@@ -917,7 +880,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.insert.deleteWordForward()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.deleteWordForward()`](#config-action-insert-deleteWordForward)
 
@@ -927,7 +889,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.insert.moveLineEnd()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.moveLineEnd()`](#config-action-insert-moveLineEnd)
 
@@ -937,7 +898,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.insert.moveLineStart()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.moveLineStart()`](#config-action-insert-moveLineStart)
 
@@ -947,7 +907,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.insert.moveWordBackward()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.moveWordBackward()`](#config-action-insert-moveWordBackward)
 
@@ -957,7 +916,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.insert.moveWordForward()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.moveWordForward()`](#config-action-insert-moveWordForward)
 
@@ -967,7 +925,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.insert.openLineAbove()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.openLineAbove()`](#config-action-insert-openLineAbove)
 
@@ -977,7 +934,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.insert.openLineBelow()`
 - Supported mapping scopes: `insert`
-- Arguments: none
 - Default keys: none
 - Compatibility aliases: [`vim.prompt.openLineBelow()`](#config-action-insert-openLineBelow)
 
@@ -989,7 +945,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.macro.play()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `@`
 - Compatibility aliases: none
 
@@ -999,7 +954,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.macro.record()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `q`
 - Compatibility aliases: none
 
@@ -1011,7 +965,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.mark.jumpExact()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `` ` ``
 - Compatibility aliases: none
 
@@ -1021,7 +974,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.mark.jumpLine()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `'`
 - Compatibility aliases: none
 
@@ -1031,7 +983,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.mark.set()`
 - Supported mapping scopes: `normal`
-- Arguments: none
 - Default keys: `m`
 - Compatibility aliases: none
 
@@ -1043,7 +994,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.bufferEnd()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `G`
 - Compatibility aliases: none
 
@@ -1053,7 +1003,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.bufferStart()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `gg`
 - Compatibility aliases: none
 
@@ -1063,7 +1012,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.down()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `j`, `down`
 - Compatibility aliases: none
 
@@ -1073,7 +1021,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.firstNonBlank()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `^`, `_`
 - Compatibility aliases: none
 
@@ -1083,7 +1030,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.halfPageDown()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `ctrl+d`
 - Compatibility aliases: none
 
@@ -1093,7 +1039,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.halfPageUp()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `ctrl+u`
 - Compatibility aliases: none
 
@@ -1103,7 +1048,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.left()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `h`, `left`
 - Compatibility aliases: none
 
@@ -1113,7 +1057,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.lineEnd()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `$`
 - Compatibility aliases: none
 
@@ -1123,7 +1066,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.lineStart()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `0`
 - Compatibility aliases: none
 
@@ -1133,7 +1075,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.matchingPair()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `%`
 - Compatibility aliases: none
 
@@ -1143,7 +1084,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.paragraphBackward()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `{`
 - Compatibility aliases: none
 
@@ -1153,7 +1093,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.paragraphForward()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `}`
 - Compatibility aliases: none
 
@@ -1163,8 +1102,25 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.right()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `l`, `right`
+- Compatibility aliases: none
+
+#### `motion.sentenceBackward`
+
+<a id="config-action-motion-sentenceBackward"></a>
+
+- Canonical factory: `vim.action.motion.sentenceBackward()`
+- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
+- Default keys: `(`
+- Compatibility aliases: none
+
+#### `motion.sentenceForward`
+
+<a id="config-action-motion-sentenceForward"></a>
+
+- Canonical factory: `vim.action.motion.sentenceForward()`
+- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
+- Default keys: `)`
 - Compatibility aliases: none
 
 #### `motion.up`
@@ -1173,7 +1129,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.up()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `k`, `up`
 - Compatibility aliases: none
 
@@ -1183,7 +1138,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.wordBackward()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `b`
 - Compatibility aliases: none
 
@@ -1193,7 +1147,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.wordBackwardBig()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `B`
 - Compatibility aliases: none
 
@@ -1203,7 +1156,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.wordEnd()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `e`
 - Compatibility aliases: none
 
@@ -1213,7 +1165,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.wordEndBig()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `E`
 - Compatibility aliases: none
 
@@ -1223,7 +1174,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.wordForward()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `w`
 - Compatibility aliases: none
 
@@ -1233,7 +1183,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.wordForwardBig()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `W`
 - Compatibility aliases: none
 
@@ -1243,7 +1192,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.wordPreviousEnd()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `ge`
 - Compatibility aliases: none
 
@@ -1253,7 +1201,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.motion.wordPreviousEndBig()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`, `operatorPending`
-- Arguments: none
 - Default keys: `gE`
 - Compatibility aliases: none
 
@@ -1265,7 +1212,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.operator.change()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `c`
 - Compatibility aliases: none
 
@@ -1275,7 +1221,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.operator.dedent()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `<`
 - Compatibility aliases: none
 
@@ -1285,7 +1230,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.operator.delete()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `d`
 - Compatibility aliases: none
 
@@ -1295,7 +1239,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.operator.indent()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `>`
 - Compatibility aliases: none
 
@@ -1305,8 +1248,16 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.operator.lowercase()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `gu`
+- Compatibility aliases: none
+
+#### `operator.surround`
+
+<a id="config-action-operator-surround"></a>
+
+- Canonical factory: `vim.action.operator.surround()`
+- Supported mapping scopes: `normal`
+- Default keys: `ys`
 - Compatibility aliases: none
 
 #### `operator.toggleCase`
@@ -1315,7 +1266,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.operator.toggleCase()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `g~`
 - Compatibility aliases: none
 
@@ -1325,7 +1275,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.operator.uppercase()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `gU`
 - Compatibility aliases: none
 
@@ -1335,81 +1284,8 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.operator.yank()`
 - Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
 - Default keys: `y`
 - Compatibility aliases: none
-
-### `vim.action.prompt`
-
-#### `prompt.transform.bulletize`
-
-<a id="config-action-prompt-transform-bulletize"></a>
-
-- Canonical factory: `vim.action.prompt.transform.bulletize()`
-- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
-- Default keys: none
-- Compatibility aliases: [`vim.prompt.bulletize()`](#config-action-prompt-transform-bulletize)
-
-#### `prompt.transform.dedent`
-
-<a id="config-action-prompt-transform-dedent"></a>
-
-- Canonical factory: `vim.action.prompt.transform.dedent()`
-- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
-- Default keys: none
-- Compatibility aliases: [`vim.prompt.dedent()`](#config-action-prompt-transform-dedent)
-
-#### `prompt.transform.fence`
-
-<a id="config-action-prompt-transform-fence"></a>
-
-- Canonical factory: `vim.action.prompt.transform.fence()`
-- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: `language?: string` — Optional code fence language without whitespace.
-- Default keys: none
-- Compatibility aliases: [`vim.prompt.fence()`](#config-action-prompt-transform-fence)
-
-#### `prompt.transform.indent`
-
-<a id="config-action-prompt-transform-indent"></a>
-
-- Canonical factory: `vim.action.prompt.transform.indent()`
-- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
-- Default keys: none
-- Compatibility aliases: [`vim.prompt.indent()`](#config-action-prompt-transform-indent)
-
-#### `prompt.transform.quote`
-
-<a id="config-action-prompt-transform-quote"></a>
-
-- Canonical factory: `vim.action.prompt.transform.quote()`
-- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
-- Default keys: none
-- Compatibility aliases: [`vim.prompt.quote()`](#config-action-prompt-transform-quote)
-
-#### `prompt.transform.reflow`
-
-<a id="config-action-prompt-transform-reflow"></a>
-
-- Canonical factory: `vim.action.prompt.transform.reflow()`
-- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: `width?: integer` — Optional prose width from 20 through 240 columns.
-- Default keys: none
-- Compatibility aliases: [`vim.prompt.reflow()`](#config-action-prompt-transform-reflow)
-
-#### `prompt.transform.unquote`
-
-<a id="config-action-prompt-transform-unquote"></a>
-
-- Canonical factory: `vim.action.prompt.transform.unquote()`
-- Supported mapping scopes: `normal`, `visual`, `visualLine`, `visualBlock`
-- Arguments: none
-- Default keys: none
-- Compatibility aliases: [`vim.prompt.unquote()`](#config-action-prompt-transform-unquote)
 
 ### `vim.action.textObject`
 
@@ -1419,7 +1295,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.textObject.kind.around()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `a`
 - Compatibility aliases: none
 
@@ -1429,8 +1304,25 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.textObject.kind.inner()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `i`
+- Compatibility aliases: none
+
+#### `textObject.target.backtick`
+
+<a id="config-action-textObject-target-backtick"></a>
+
+- Canonical factory: `vim.action.textObject.target.backtick()`
+- Supported mapping scopes: `operatorPending`
+- Default keys: `` ` ``
+- Compatibility aliases: none
+
+#### `textObject.target.bigWord`
+
+<a id="config-action-textObject-target-bigWord"></a>
+
+- Canonical factory: `vim.action.textObject.target.bigWord()`
+- Supported mapping scopes: `operatorPending`
+- Default keys: `W`
 - Compatibility aliases: none
 
 #### `textObject.target.brace`
@@ -1439,7 +1331,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.textObject.target.brace()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `{`, `}`
 - Compatibility aliases: none
 
@@ -1449,7 +1340,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.textObject.target.bracket()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `[`, `]`
 - Compatibility aliases: none
 
@@ -1459,7 +1349,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.textObject.target.codeFence()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `f`
 - Compatibility aliases: none
 
@@ -1469,7 +1358,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.textObject.target.doubleQuote()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `"`
 - Compatibility aliases: none
 
@@ -1479,7 +1367,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.textObject.target.errorBlock()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `e`
 - Compatibility aliases: none
 
@@ -1489,7 +1376,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.textObject.target.headingSection()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `h`
 - Compatibility aliases: none
 
@@ -1499,7 +1385,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.textObject.target.listItem()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `l`
 - Compatibility aliases: none
 
@@ -1509,7 +1394,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.textObject.target.paragraph()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `p`
 - Compatibility aliases: none
 
@@ -1519,8 +1403,16 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.textObject.target.paren()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `(`, `)`
+- Compatibility aliases: none
+
+#### `textObject.target.sentence`
+
+<a id="config-action-textObject-target-sentence"></a>
+
+- Canonical factory: `vim.action.textObject.target.sentence()`
+- Supported mapping scopes: `operatorPending`
+- Default keys: `s`
 - Compatibility aliases: none
 
 #### `textObject.target.singleQuote`
@@ -1529,7 +1421,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.textObject.target.singleQuote()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `'`
 - Compatibility aliases: none
 
@@ -1539,7 +1430,6 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.textObject.target.tag()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `t`
 - Compatibility aliases: none
 
@@ -1549,11 +1439,12 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 - Canonical factory: `vim.action.textObject.target.word()`
 - Supported mapping scopes: `operatorPending`
-- Arguments: none
 - Default keys: `w`
 - Compatibility aliases: none
 
 <!-- END GENERATED CONFIG ACTIONS -->
+
+<!-- rumdl-enable MD013 -->
 
 <a id="advanced-setup"></a>
 
@@ -1561,20 +1452,27 @@ Generated reference blocks below come from canonical source metadata. Regenerate
 
 ### Exports, async config, and imported presets
 
-Root config must default-export a synchronous or asynchronous function. Raw object exports and TypeScript config files are unsupported. Async exports commit only after their returned promise fulfills; thrown errors and rejected promises discard that evaluation.
+Root config must default-export a synchronous or asynchronous function. Raw
+object exports and TypeScript config files are unsupported. Async exports commit
+only after their returned promise fulfills; thrown errors and rejected promises
+discard that evaluation.
 
 Checked workflows:
 
-- [Basic properties](../examples/pi-vimmode.config.js)
+- [Basic properties](../examples/pi-vim.config.js)
 - [Keymaps](../examples/keymaps.config.js)
 - [Async config](../examples/async.config.js)
-- [Imported preset](../examples/imported-preset.config.js) using typed [`VimConfigApi` helper](../examples/presets/markdown.js)
+- [Imported preset](../examples/imported-preset.config.js) using typed
+    [`VimConfigApi` helper](../examples/presets/markdown.js)
 
-`/vimmode reload` always imports a fresh root module. Native ESM caching can retain imported helpers, including `examples/presets/markdown.js`; restart Pi after editing an imported helper. No file watcher reloads either file.
+`/vim reload` always imports a fresh root module. Native ESM caching can
+retain imported helpers, including `examples/presets/markdown.js`; restart Pi
+after editing an imported helper. No file watcher reloads either file.
 
 ### Keymaps
 
-`vim.keymap.set(mode, keys, target, options?)` accepts one mode or nested arrays of modes:
+`vim.keymap.set(mode, keys, target, options?)` accepts one mode or nested arrays
+of modes:
 
 - `"i"` / `"insert"`
 - `"n"` / `"normal"`
@@ -1582,13 +1480,27 @@ Checked workflows:
 - exact `"visualLine"` or `"visualBlock"`
 - `"o"` / `"operatorPending"` / `"operator-pending"`
 
-Targets are opaque [`vim.action.*`](#generated-actions) descriptors, compatible `vim.prompt.*` aliases, literal replay strings, or `null`. Action reference lists each factory's supported scopes and arguments. Existing `vim.prompt.*`, `vim.g.mapleader`, and three-argument `vim.keymap.set` calls remain supported.
+Targets are opaque [`vim.action.*`](#generated-actions) descriptors, compatible
+`vim.prompt.*` aliases, literal replay strings, or `null`. Action reference
+lists each factory's supported scopes and arguments. Existing `vim.prompt.*`,
+`vim.g.mapleader`, and three-argument `vim.keymap.set` calls remain supported.
 
-Mappings use source order. Exact later mappings replace earlier same-scope mappings. Executable same-scope prefix conflicts warn and reject conflicting mapping because no timeout exists. Literal replay works only in normal/visual scopes, stays within macro replay limit, and never recursively expands mappings. `null` unmaps exact keys in selected scopes.
+Mappings use source order. Exact later mappings replace earlier same-scope
+mappings. Executable same-scope prefix conflicts warn and reject conflicting
+mapping because no timeout exists. Literal replay works only in normal/visual
+scopes, stays within macro replay limit, and never recursively expands mappings.
+`null` unmaps exact keys in selected scopes.
 
-Options accept only `{ allowProtected?: boolean, desc?: string }`. Protected Pi shortcuts warn unless mapping sets `allowProtected: true`; override only claims pi-vimmode ownership and cannot make terminal or Pi deliver an indistinguishable key. Insert mappings accept finite insert actions only and defer to Pi while autocomplete is active.
+Options accept only `{ allowProtected?: boolean, desc?: string }`. Protected Pi
+shortcuts warn unless mapping sets `allowProtected: true`; override only claims
+pi-vim ownership and cannot make terminal or Pi deliver an indistinguishable
+key. Insert mappings accept finite insert actions only and defer to Pi while
+autocomplete is active.
 
-Set `vim.g.mapleader` or `vim.leader` to one printable character or `null`. `<leader>` is supported only at mapping-key start. Final leader resolves after project JSON, then expands every retained leader mapping. Replay targets never expand `<leader>`.
+Set `vim.g.mapleader` or `vim.leader` to one printable character or `null`.
+`<leader>` is supported only at mapping-key start. Final leader resolves after
+project JSON, then expands every retained leader mapping. Replay targets never
+expand `<leader>`.
 
 <a id="safety-semantics"></a>
 
@@ -1596,25 +1508,50 @@ Set `vim.g.mapleader` or `vim.leader` to one printable character or `null`. `<le
 
 ### Trust boundary and precedence
 
-Executable config is global-only at `~/.pi/agent/pi-vimmode.config.js`. Project-local executable config is never loaded. Resolution order:
+Executable config is global-only at `<agent-dir>/extensions/pi-vim/config.js`.
+Project-local executable config is never loaded. Resolution order:
 
 1. Built-in defaults
-2. Global `~/.pi/agent/settings.json`
+2. Global `<agent-dir>/extensions/pi-vim/config.json`
 3. Global trusted JavaScript operations
-4. Project `.pi/settings.json`
+4. Project `<repo-root>/.pi/extensions/pi-vim/config.json`, in trusted projects
+    only
 
-Getters initially expose frozen snapshots of defaults plus valid global JSON, never project JSON. Assignments stage source-ordered operations. Presets apply at assignment position; later leaf writes override preset values, while later presets can replace earlier leaves. Arrays and records replace whole values instead of merging through mutation. See [`docs/settings.md#settings-files-and-precedence`](settings.md#settings-files-and-precedence) for canonical JSON rules.
+Getters initially expose frozen snapshots of defaults plus valid global JSON,
+never project JSON. Assignments stage source-ordered operations. Presets apply
+at assignment position; later leaf writes override preset values, while later
+presets can replace earlier leaves. Arrays and records replace whole values
+instead of merging through mutation. See
+[`docs/settings.md#settings-files-and-precedence`](settings.md#settings-files-and-precedence)
+for canonical JSON rules.
 
 ### Warnings, failures, and reload
 
-Invalid known leaves and unknown writes produce field-local warnings: prior staged values and valid siblings survive. Syntax/import errors, invalid default exports, thrown errors, and rejected promises are fatal transactions; no JavaScript operation from failed evaluation commits.
+Invalid known leaves and unknown writes produce field-local warnings: prior
+staged values and valid siblings survive. Syntax/import errors, invalid default
+exports, thrown errors, and rejected promises are fatal transactions; no
+JavaScript operation from failed evaluation commits.
 
-Fresh startup with fatal JavaScript still compiles defaults plus valid global/project JSON. Fatal reload keeps last-known-good active plan and updates diagnostics. Successful reload compiles complete immutable plan before applying it. Generation guards prevent older async loads from replacing newer results.
+Fresh startup with fatal JavaScript still compiles defaults plus valid
+global/project JSON. Fatal reload keeps last-known-good active plan and updates
+diagnostics. Successful reload compiles complete immutable plan before applying
+it. Generation guards prevent older async loads from replacing newer results.
 
-Reload preserves prompt text, bounds-clamped cursor, stable mode, undo/redo, registers, marks, recorded macros, search/Ex history, and valid visual selection. It clears pending count, operator, key prefix, character target, register target, mark target, macro target, pending search/Ex/workbench input, partial insert escape, active macro recording, and EasyMotion labels. New keymaps, UI, diagnostics, and cursor style apply immediately.
+Reload preserves prompt text, bounds-clamped cursor, stable mode, undo/redo,
+registers, marks, recorded macros, search/Ex history, and valid visual
+selection. It clears pending count, operator, key prefix, character target,
+register target, mark target, macro target, pending search/Ex/workbench input,
+partial insert escape, active macro recording, and EasyMotion labels. New
+keymaps, UI, diagnostics, and cursor style apply immediately.
 
 ### Compatibility and non-goals
 
-Valid pre-0.9.0 `vim.g.mapleader`, `vim.prompt.*`, and three-argument `vim.keymap.set` calls remain compatible. Breaking trusted-config changes require a major release; removals should warn for at least one minor release when feasible.
+Valid pre-0.9.0 `vim.g.mapleader`, `vim.prompt.*`, and three-argument
+`vim.keymap.set` calls remain compatible. Breaking trusted-config changes
+require a major release; removals should warn for at least one minor release
+when feasible.
 
-No sandbox, project JavaScript config, TypeScript config, runtime `pi-vimmode/config` module, `defineConfig`, file watching, plugin discovery, arbitrary custom action execution, recursive mappings, timeout-based prefix resolution, Vimscript, `.vimrc`, Neovim Lua, or full Vim/Neovim parity.
+No sandbox, project JavaScript config, TypeScript config, runtime
+`@graelo/pi-vim/config` module, `defineConfig`, file watching, plugin
+discovery, arbitrary custom action execution, recursive mappings, timeout-based
+prefix resolution, Vimscript, `.vimrc`, Neovim Lua, or full Vim/Neovim parity.

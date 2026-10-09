@@ -15,11 +15,16 @@ tags: [javascript-config, transactions, keymaps, pi-vimmode]
 
 ## Context
 
-Trusted JavaScript config needs to expose the same mapping controls as JSON config without leaving partial state when evaluation throws. Scoped unmaps must also remove inherited mappings rather than only suppressing local writes.
+Trusted JavaScript config needs to expose the same mapping controls as JSON
+config without leaving partial state when evaluation throws. Scoped unmaps must
+also remove inherited mappings rather than only suppressing local writes.
 
 ## Guidance
 
-Stage every config mutation while evaluating user code. Commit staged preset, mapping, remap, and unmap operations only after evaluation succeeds. Close retained configuration APIs after evaluation so delayed calls cannot mutate active state.
+Stage every config mutation while evaluating user code. Commit staged preset,
+mapping, remap, and unmap operations only after evaluation succeeds. Close
+retained configuration APIs after evaluation so delayed calls cannot mutate
+active state.
 
 ```js
 export default (vim) => {
@@ -29,11 +34,15 @@ export default (vim) => {
 };
 ```
 
-Treat `null` in `vim.keymap.set()` as an unmap operation for its selected mode and scope. Preserve declaration order when applying staged operations.
+Treat `null` in `vim.keymap.set()` as an unmap operation for its selected mode
+and scope. Preserve declaration order when applying staged operations.
 
 ## Why This Matters
 
-Immediate mutation makes one config error produce a mixed old/new keymap. Transactional evaluation preserves last known-good configuration. Recording unmaps as operations makes inherited mappings removable and keeps JavaScript configuration behavior aligned with JSON configuration.
+Immediate mutation makes one config error produce a mixed old/new keymap.
+Transactional evaluation preserves last known-good configuration. Recording
+unmaps as operations makes inherited mappings removable and keeps JavaScript
+configuration behavior aligned with JSON configuration.
 
 ## When to Apply
 
@@ -52,9 +61,10 @@ export default (vim) => {
 };
 ```
 
-A successful config commits both operations together; a failed config commits neither.
+A successful config commits both operations together; a failed config commits
+neither.
 
 ## Related
 
-- `RELEASE.md`
+- `CHANGELOG.md`
 - Issue #36

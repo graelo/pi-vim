@@ -18,7 +18,6 @@ import type {
 } from "./types.ts";
 
 import {
-  applyPromptTransform,
   copyExLineRange,
   deleteExLineRange,
   joinExLineRange,
@@ -28,7 +27,7 @@ import {
   substituteLineRangeRegex,
   yankExLineRange,
 } from "../buffer.ts";
-import { keymapForOptions, promptTransformsForOptions } from "../config.ts";
+import { keymapForOptions } from "../config.ts";
 import {
   parseExCommand,
   suggestExCommands,
@@ -36,14 +35,13 @@ import {
   type ParsedExSubstitution,
 } from "../ex.ts";
 import {
-  changelogPopup,
   diagnosticPopup,
   inspectPopup,
   keybindingsPopup,
   runtimeHelpPopup,
 } from "../keybinding-discovery-popup.ts";
 import { parseExLineRange } from "../range.ts";
-import { type ReadOnlyPopup } from "../read-only-popup.ts";
+import type { ReadOnlyPopup } from "../read-only-popup.ts";
 import {
   clearPending,
   clearPendingEx,
@@ -231,36 +229,11 @@ function finishExEdit(
   return withEffects(finished, effects);
 }
 
-function finishExPreview(
-  state: ModalState,
-  pendingEx: NonNullable<ModalState["pendingEx"]>,
-): ModalUpdate | undefined {
-  if (pendingEx.preview?.command === pendingEx.command) {
-    const result = pendingEx.preview;
-    const source = result.repeatSource ?? state.lastExSubstitution;
-    const base = result.edit.changed ? clearSearchHighlight(state) : state;
-    const finished = finishExState(
-      source ? { ...base, lastExSubstitution: source } : base,
-      "success",
-      substitutionMessage(result.matches),
-    );
-    const effects: ModalEffect[] = result.edit.changed
-      ? [{ type: "edit", result: result.edit }]
-      : [{ type: "invalidate" }];
-    return withEffects(finished, effects);
-  }
-  return undefined;
-}
-
 function executeSubstitutionCommand(
   state: ModalState,
   snapshot: EditorSnapshot,
-  pendingEx: NonNullable<ModalState["pendingEx"]>,
   parsed: Extract<ExParseResult, { type: "substitute" | "repeatSubstitute" }>,
 ): ModalUpdate {
-  const previewUpdate = finishExPreview(state, pendingEx);
-  if (previewUpdate) return previewUpdate;
-
   const source =
     parsed.type === "substitute" ? substitutionSource(parsed) : state.lastExSubstitution;
   if (!source) return invalidate(finishExState(state, "error", "No previous substitution"));
@@ -291,21 +264,16 @@ function executeSubstitutionCommand(
     return invalidate(finishExState(state, "error", `Pattern not found: ${source.pattern}`));
   }
 
-  const message = `${result.matches} ${result.matches === 1 ? "match" : "matches"} found; Enter applies, Esc cancels`;
-  return invalidate({
-    ...state,
-    pendingEx: {
-      ...pendingEx,
-      preview: {
-        command: pendingEx.command,
-        matches: result.matches,
-        ranges: result.ranges,
-        edit: result.edit,
-        message,
-        repeatSource: source,
-      },
-    },
-  });
+  const base = result.edit.changed ? clearSearchHighlight(state) : state;
+  const finished = finishExState(
+    { ...base, lastExSubstitution: source },
+    "success",
+    substitutionMessage(result.matches),
+  );
+  const effects: ModalEffect[] = result.edit.changed
+    ? [{ type: "edit", result: result.edit }]
+    : [{ type: "invalidate" }];
+  return withEffects(finished, effects);
 }
 
 function executeExPopupCommand(
@@ -332,10 +300,6 @@ function executeExPopupCommand(
 
   if (parsed.type === "inspect") {
     return openReadOnlyPopup(state, inspectPopup({ state, snapshot, options, diagnostics }));
-  }
-
-  if (parsed.type === "changelog") {
-    return openReadOnlyPopup(state, changelogPopup());
   }
   return undefined;
 }
@@ -365,24 +329,6 @@ function executeExDirectCommand(
   return undefined;
 }
 
-function executeExTransformCommand(
-  state: ModalState,
-  snapshot: EditorSnapshot,
-  parsed: ExParseResult,
-): ModalUpdate | undefined {
-  if (parsed.type === "transform") {
-    const result = applyPromptTransform(
-      snapshot.text,
-      parsed.range,
-      parsed.transform,
-      snapshot.cursor,
-    );
-    if (!result.ok) return invalidate(finishExState(state, "error", result.message));
-    return finishExEdit(state, result, lineMessage(result.lines, "transformed"));
-  }
-  return undefined;
-}
-
 function executeExYankCommand(
   state: ModalState,
   snapshot: EditorSnapshot,
@@ -405,9 +351,6 @@ function executeExEditRangeCommand(
   snapshot: EditorSnapshot,
   parsed: ExParseResult,
 ): ModalUpdate | undefined {
-  const transformUpdate = executeExTransformCommand(state, snapshot, parsed);
-  if (transformUpdate) return transformUpdate;
-
   const yankUpdate = executeExYankCommand(state, snapshot, parsed);
   if (yankUpdate) return yankUpdate;
 
@@ -470,13 +413,12 @@ function executeExCommand(
     lineCount: snapshot.lines.length,
     cursorLine: snapshot.cursor.line,
     visualRange: pendingEx.visualRange,
-    promptTransforms: promptTransformsForOptions(options),
   });
   if (parsed.type === "empty") return invalidate(finishExState(state));
   if (parsed.type === "error") return invalidate(finishExState(state, "error", parsed.message));
 
   if (parsed.type === "substitute" || parsed.type === "repeatSubstitute")
-    return executeSubstitutionCommand(state, snapshot, pendingEx, parsed);
+    return executeSubstitutionCommand(state, snapshot, parsed);
 
   const directUpdate = executeExDirectCommand(state, snapshot, parsed);
   if (directUpdate) return directUpdate;
@@ -488,11 +430,6 @@ function executeExCommand(
   if (editUpdate) return editUpdate;
 
   return executeExMoveRangeCommand(state, snapshot, parsed);
-}
-
-function clearExPreview(pendingEx: NonNullable<ModalState["pendingEx"]>) {
-  const { preview: _preview, ...rest } = pendingEx;
-  return rest;
 }
 
 function exCursor(pendingEx: NonNullable<ModalState["pendingEx"]>): number {
@@ -534,7 +471,6 @@ function exCommandWordBoundaries(
 
 export function completePendingExCommand(
   pendingEx: NonNullable<ModalState["pendingEx"]>,
-  options: ModalOptions,
 ): { command: string; cursor: number } | undefined {
   const command = pendingEx.command;
   const cursor = exCursor(pendingEx);
@@ -545,7 +481,6 @@ export function completePendingExCommand(
     lineCount: 1,
     cursorLine: 0,
     visualRange: pendingEx.visualRange,
-    promptTransforms: promptTransformsForOptions(options),
   });
 
   let replacement: string | undefined;
@@ -553,7 +488,7 @@ export function completePendingExCommand(
     replacement = candidates[0];
   } else if (candidates.length > 1) {
     const common = candidates.reduce((shared, candidate) => {
-      let limit = Math.min(shared.length, candidate.length);
+      const limit = Math.min(shared.length, candidate.length);
       let index = 0;
       while (index < limit && shared[index] === candidate[index]) index++;
       return shared.slice(0, index);
@@ -570,10 +505,7 @@ export function completePendingExCommand(
   };
 }
 
-function suggestExCommandsForPending(
-  pendingEx: NonNullable<ModalState["pendingEx"]>,
-  options: ModalOptions,
-): string[] {
+function suggestExCommandsForPending(pendingEx: NonNullable<ModalState["pendingEx"]>): string[] {
   const command = pendingEx.command;
   if (!/^[A-Za-z&\s]*$/.test(command)) return [];
   const cursor = exCursor(pendingEx);
@@ -584,7 +516,6 @@ function suggestExCommandsForPending(
     lineCount: 1,
     cursorLine: 0,
     visualRange: pendingEx.visualRange,
-    promptTransforms: promptTransformsForOptions(options),
   });
 }
 
@@ -617,7 +548,7 @@ function editPendingEx(
   cursor: number,
 ): PendingExCommand {
   return {
-    ...clearExPreview(pendingEx),
+    ...pendingEx,
     command,
     cursor: Math.max(0, Math.min(cursor, command.length)),
     historyIndex: undefined,
@@ -645,7 +576,7 @@ function navigateExHistory(
     return {
       ...state,
       pendingEx: {
-        ...clearExPreview(pendingEx),
+        ...pendingEx,
         command: draft,
         cursor: draft.length,
         historyIndex: undefined,
@@ -656,7 +587,7 @@ function navigateExHistory(
   return {
     ...state,
     pendingEx: {
-      ...clearExPreview(pendingEx),
+      ...pendingEx,
       command: history[nextIndex] ?? draft,
       cursor: (history[nextIndex] ?? draft).length,
       historyIndex: nextIndex,
@@ -697,19 +628,19 @@ function handleExEditingNavigation(
   }
   if (keyMatches(data, "left")) {
     const cursor = Math.max(0, exCursor(pendingEx) - 1);
-    return invalidate({ ...state, pendingEx: { ...clearExPreview(pendingEx), cursor } });
+    return invalidate({ ...state, pendingEx: { ...pendingEx, cursor } });
   }
   if (keyMatches(data, "right")) {
     const cursor = Math.min(pendingEx.command.length, exCursor(pendingEx) + 1);
-    return invalidate({ ...state, pendingEx: { ...clearExPreview(pendingEx), cursor } });
+    return invalidate({ ...state, pendingEx: { ...pendingEx, cursor } });
   }
   if (keyMatches(data, "home")) {
-    return invalidate({ ...state, pendingEx: { ...clearExPreview(pendingEx), cursor: 0 } });
+    return invalidate({ ...state, pendingEx: { ...pendingEx, cursor: 0 } });
   }
   if (keyMatches(data, "end")) {
     return invalidate({
       ...state,
-      pendingEx: { ...clearExPreview(pendingEx), cursor: pendingEx.command.length },
+      pendingEx: { ...pendingEx, cursor: pendingEx.command.length },
     });
   }
   return undefined;
@@ -722,7 +653,7 @@ function exSuggestionNavigation(
   direction: "previous" | "next",
 ): ModalUpdate | undefined {
   if (options.exCommand?.autocomplete === false) return undefined;
-  const suggestions = suggestExCommandsForPending(pendingEx, options);
+  const suggestions = suggestExCommandsForPending(pendingEx);
   const hasHistory = (state.exHistory ?? []).length > 0;
   if (suggestions.length === 0 || (hasHistory && !pendingEx.command)) return undefined;
   const selected =
@@ -758,14 +689,13 @@ function handleExHistoryNavigation(
 function handleExWordNavigation(
   state: ModalState,
   pendingEx: NonNullable<ModalState["pendingEx"]>,
-  data: string,
   key: string | undefined,
 ): ModalUpdate | undefined {
   if (key === "alt+left") {
     return invalidate({
       ...state,
       pendingEx: {
-        ...clearExPreview(pendingEx),
+        ...pendingEx,
         cursor: wordLeft(pendingEx.command, exCursor(pendingEx)),
       },
     });
@@ -774,7 +704,7 @@ function handleExWordNavigation(
     return invalidate({
       ...state,
       pendingEx: {
-        ...clearExPreview(pendingEx),
+        ...pendingEx,
         cursor: wordRight(pendingEx.command, exCursor(pendingEx)),
       },
     });
@@ -799,7 +729,7 @@ function autocompleteExCommand(
   options: ModalOptions,
 ): string | undefined {
   if (options.exCommand?.autocomplete === false || !pendingEx.command) return undefined;
-  const suggestions = suggestExCommandsForPending(pendingEx, options);
+  const suggestions = suggestExCommandsForPending(pendingEx);
   if (suggestions.length === 0) return undefined;
   const selected = pendingEx.selectedSuggestion ?? 0;
   if (selected >= suggestions.length) return undefined;
@@ -821,7 +751,7 @@ function handleExTabInput(
   const command = autocompleteExCommand(pendingEx, options);
   if (command)
     return invalidate({ ...state, pendingEx: editPendingEx(pendingEx, command, command.length) });
-  const completed = completePendingExCommand(pendingEx, options);
+  const completed = completePendingExCommand(pendingEx);
   return completed
     ? invalidate({
         ...state,
@@ -854,10 +784,10 @@ export function handlePendingExInput(
   const navigationUpdate =
     handleExEditingNavigation(state, pendingEx, data, key) ??
     handleExHistoryNavigation(state, pendingEx, options, data) ??
-    handleExWordNavigation(state, pendingEx, data, key) ??
+    handleExWordNavigation(state, pendingEx, key) ??
     handleExTabInput(state, pendingEx, options, data);
   if (navigationUpdate) return navigationUpdate;
-  if (!key || key.length !== 1) return invalidate(state);
+  if (key?.length !== 1) return invalidate(state);
   const cursor = exCursor(pendingEx);
   return invalidate({
     ...state,

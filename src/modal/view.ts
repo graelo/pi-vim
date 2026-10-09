@@ -1,6 +1,6 @@
 import { truncateToWidth } from "@earendil-works/pi-tui";
 
-import type { Position, ResolvedVimUi, VimMode } from "../types.ts";
+import type { Position, ResolvedVimUi, VimMode, VimModeColor, VimModeColors } from "../types.ts";
 
 import { DEFAULT_VIM_UI } from "../config.ts";
 import {
@@ -45,6 +45,36 @@ export function modalModeLabel(mode: VimMode, width: number, ui?: ResolvedVimUi)
   return width < full.length + 4 ? narrow : full;
 }
 
+const SGR_RESET = "\x1b[0m";
+
+function colorParameters(color: VimModeColor, layer: 38 | 48): string {
+  if (typeof color === "number") return `${layer};5;${color}`;
+  const rgb = [1, 3, 5].map((start) => Number.parseInt(color.slice(start, start + 2), 16));
+  return `${layer};2;${rgb.join(";")}`;
+}
+
+/** SGR start sequence for mode label colors, or `undefined` when neither is set. */
+export function modeColorSequence(colors: VimModeColors | undefined): string | undefined {
+  const parameters = [
+    ...(colors?.bg === undefined ? [] : [colorParameters(colors.bg, 48)]),
+    ...(colors?.fg === undefined ? [] : [colorParameters(colors.fg, 38)]),
+  ];
+  return parameters.length > 0 ? `\x1b[${parameters.join(";")}m` : undefined;
+}
+
+function modeColors(mode: VimMode, ui: ResolvedVimUi): VimModeColors | undefined {
+  const colors = ui.mode.colors;
+  if (mode === "visualLine" || mode === "visualBlock") return colors[mode] ?? colors.visual;
+  return colors[mode];
+}
+
+/** Mode label for the status line, as a padded colored block when the mode has colors. */
+function styledModeLabel(mode: VimMode, width: number, ui: ResolvedVimUi): string {
+  const label = modalModeLabel(mode, width, ui);
+  const start = modeColorSequence(modeColors(mode, ui));
+  return start ? `${start} ${label} ${SGR_RESET}` : label;
+}
+
 function statusPartsForItem(
   item: ResolvedVimUi["status"]["items"][number],
   input: ModalStatusInput,
@@ -52,7 +82,7 @@ function statusPartsForItem(
 ): string[] {
   if (item === "mode") {
     return [
-      ...(ui.mode.enabled ? [modalModeLabel(input.mode, input.width, ui)] : []),
+      ...(ui.mode.enabled ? [styledModeLabel(input.mode, input.width, ui)] : []),
       ...(input.recordingSlot ? [`REC ${input.recordingSlot}`] : []),
     ];
   }

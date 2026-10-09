@@ -1,7 +1,5 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { readFileSync } from "node:fs";
-
-import type { VimActionMetadata, VimConfigPropertyMetadata } from "../src/config-metadata.ts";
 
 import {
   ACTION_MARKERS,
@@ -23,9 +21,9 @@ describe("generated config reference", () => {
     expect(renderConfigReference(first)).toBe(first);
     expect(first).toBe(guide);
     validateLocalLinks(first);
-    expect(first.match(/<a id="config-property-/g)).toHaveLength(39);
-    expect(first.match(/<a id="config-action-/g)).toHaveLength(109);
-    expect(first).not.toContain("vimmode.keybindings");
+    expect(first.match(/<a id="config-property-/g)).toHaveLength(36);
+    expect(first.match(/<a id="config-action-/g)).toHaveLength(111);
+    expect(first).not.toContain("pi-vim.keybindings");
     expect(first).toContain("- Default keys: `` ` ``");
   });
 
@@ -34,7 +32,7 @@ describe("generated config reference", () => {
     const actions = renderActionReference(VIM_ACTION_METADATA);
     expect(properties).toContain("### `vim`");
     expect(properties).toContain("### `vim.cursor`");
-    expect(properties).toContain("### `vim.promptTransforms`");
+    expect(properties).toContain("### `vim.promptStructures`");
     expect(properties).toContain("#### `vim.cursor.insert`");
     expect(properties.indexOf("vim.cursor.insert")).toBeLessThan(
       properties.indexOf("vim.cursor.normal"),
@@ -65,24 +63,6 @@ describe("generated config reference", () => {
         VIM_ACTION_METADATA.filter(({ id }) => id !== "escape"),
       ),
     ).toThrow(/missing public action metadata: escape/);
-    const duplicateArguments = VIM_ACTION_METADATA.map((action) =>
-      action.id === "prompt.transform.fence"
-        ? { ...action, args: [...(action.args ?? []), ...(action.args ?? [])] }
-        : action,
-    ) as VimActionMetadata[];
-    expect(() => validateMetadata(VIM_CONFIG_PROPERTY_METADATA, duplicateArguments)).toThrow(
-      /duplicate argument name for prompt\.transform\.fence: language/,
-    );
-    expect(() =>
-      validateMetadata(
-        VIM_CONFIG_PROPERTY_METADATA.map((property) =>
-          property.configPath === "leader"
-            ? { ...property, jsonPaths: ["piVimMode.notReal"] }
-            : property,
-        ) as VimConfigPropertyMetadata[],
-        VIM_ACTION_METADATA,
-      ),
-    ).toThrow(/unsupported JSON crosswalk: piVimMode\.notReal/);
   });
 
   test("rejects missing or duplicate marker pairs and unresolved links", () => {

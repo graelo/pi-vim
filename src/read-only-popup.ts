@@ -2,15 +2,12 @@ export const HELP_POPUP_BODY_ROWS = 10;
 
 export type ReadOnlyPopupSource =
   | "help"
-  | "features"
   | "keybindings"
-  | "actions"
   | "keymap"
   | "mapcheck"
   | "vimdoctor"
   | "messages"
-  | "inspect"
-  | "changelog";
+  | "inspect";
 
 export type ReadOnlyPopup = {
   title: string;
@@ -18,7 +15,6 @@ export type ReadOnlyPopup = {
   source: ReadOnlyPopupSource;
   query?: string;
   scrollOffset: number;
-  markdown?: string;
 };
 
 export type HelpPopup = ReadOnlyPopup;

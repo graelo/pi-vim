@@ -1,37 +1,41 @@
 ---
 name: Bug report
-about: Something broken in pi-vimmode
+about: Something broken in pi-vim
 title: "[BUG] "
 labels: bug
 assignees: ""
 ---
 
-**Describe the bug**
+## Describe the bug
 
 <!-- What happened? What did you expect? -->
 
-**Steps to reproduce**
+## Steps to reproduce
 
 1.
 2.
 3.
 
-**Expected behavior**
+## Expected behavior
 
-**Actual behavior**
+## Actual behavior
 
-**Environment**
+## Environment
 
-- pi-vimmode version:
+- pi-vim version (`@graelo/pi-vim`):
 - Pi version (`pi --version`):
-- OS:
+- OS / terminal:
 
-**Config (if relevant)**
+## Config (if relevant)
 
 ```json
-// piVimMode settings from Pi config
+// piVim settings from ~/.pi/agent/settings.json or .pi/settings.json
 ```
 
-**Additional context**
+```js
+// ~/.pi/agent/pi-vim.config.js, if you use trusted JavaScript config
+```
+
+## Additional context
 
 <!-- Vim mode, motion, command involved? Error messages? -->

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 
 import {
   buildCases,
@@ -52,13 +52,13 @@ describe("benchmark corpus", () => {
       ],
       {
         revision: "revision",
-        runtime: { bun: "1.0", os: "test", cpu: "test" },
+        runtime: { node: "24.0.0", os: "test", cpu: "test" },
         viewport: { columns: 80, rows: 40 },
       },
     );
     expect(output).toMatchObject({
       revision: "revision",
-      environment: { runtime: { bun: "1.0", os: "test", cpu: "test" } },
+      environment: { runtime: { node: "24.0.0", os: "test", cpu: "test" } },
       samples: 30,
       warmups: 10,
       results: [{ runs: 30, warmup: 10, correctness: "passed", milliseconds: { p50: 2, p95: 3 } }],

@@ -1,9 +1,9 @@
 import { existsSync, statSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import type { BindablePromptTransformActionId } from "./prompt-transform-actions.ts";
+import { getAgentDir } from "@earendil-works/pi-coding-agent";
+
 import type {
   VimActionBindingMode,
   VimFiniteActionId,
@@ -30,10 +30,16 @@ import {
   type VimMappingFamily,
   type VimMappingScope,
 } from "./mapping-scopes.ts";
-import { PROMPT_TRANSFORM_ACTIONS } from "./prompt-transform-actions.ts";
 import { VIM_PRESETS } from "./types.ts";
 
-export const DEFAULT_JS_CONFIG_PATH = join(homedir(), ".pi", "agent", "pi-vimmode.config.js");
+/** Directory name under `<agent-dir>/extensions/` and `<repo>/.pi/extensions/`. */
+export const VIM_EXTENSION_ID = "pi-vim";
+export const JS_CONFIG_FILE_NAME = "config.js";
+
+/** Trusted JS config path; `agentDir` defaults to Pi's agent directory. */
+export function defaultJsConfigPath(agentDir = getAgentDir()): string {
+  return join(agentDir, "extensions", VIM_EXTENSION_ID, JS_CONFIG_FILE_NAME);
+}
 
 type ActionDescriptor = {
   actionId: VimFiniteActionId;
@@ -56,15 +62,6 @@ export type VimJsConfigMapOperation =
       kind: "insert";
       action: VimInsertAction;
       key: string;
-      allowProtected?: boolean;
-      desc?: string;
-    }
-  | {
-      kind: "action";
-      actionId: BindablePromptTransformActionId;
-      key: string;
-      args?: Readonly<Record<string, unknown>>;
-      modes: readonly VimActionBindingMode[];
       allowProtected?: boolean;
       desc?: string;
     }
@@ -162,22 +159,11 @@ const ACTION_SCOPES = new Map<VimFiniteActionId, readonly VimMappingScope[]>([
         ] as const,
     ),
   ),
-  ...PROMPT_TRANSFORM_ACTIONS.map(({ id, modes }) => [id as VimFiniteActionId, modes] as const),
 ]);
 
-function hasValidDescriptorArguments(actionId: VimFiniteActionId, args: unknown): boolean {
-  if (args === undefined) return true;
-  if (!args || typeof args !== "object" || Array.isArray(args)) return false;
-  const record = args as Record<string, unknown>;
-  if (actionId === "prompt.transform.fence") {
-    return Object.keys(record).every(
-      (key) => key === "language" && typeof record.language === "string",
-    );
-  }
-  if (actionId === "prompt.transform.reflow") {
-    return Object.keys(record).every((key) => key === "width" && typeof record.width === "number");
-  }
-  return false;
+// No finite action takes arguments.
+function hasValidDescriptorArguments(args: unknown): boolean {
+  return args === undefined;
 }
 
 const VIM_PRESET_SET = new Set<VimPreset>(VIM_PRESETS);
@@ -301,10 +287,6 @@ function actionDescriptor(value: unknown): ActionDescriptor | undefined {
   return value && typeof value === "object" ? ACTION_DESCRIPTORS.get(value) : undefined;
 }
 
-function builtinPromptTransform(action: string, args?: unknown): object {
-  return descriptor(`prompt.transform.${action}` as VimFiniteActionId, args);
-}
-
 function builtinInsert(action: VimInsertAction): object {
   return descriptor(`insert.${action}`);
 }
@@ -398,25 +380,6 @@ function recordInsertDescriptor(
   return true;
 }
 
-function recordPromptTransformDescriptor(
-  session: ConfigSession,
-  key: string,
-  modes: readonly VimMappingScope[],
-  action: ActionDescriptor,
-  options: MappingOptions,
-): boolean {
-  if (!action.actionId.startsWith("prompt.transform.")) return false;
-  session.recordMap({
-    kind: "action",
-    actionId: action.actionId as BindablePromptTransformActionId,
-    key,
-    args: descriptorArguments(action),
-    modes: modes as VimActionBindingMode[],
-    ...descriptorOptions(options),
-  });
-  return true;
-}
-
 function recordDescriptorMapping(
   session: ConfigSession,
   key: string,
@@ -429,12 +392,11 @@ function recordDescriptorMapping(
     session.warning(`${action.actionId} does not support selected mode`);
     return;
   }
-  if (!hasValidDescriptorArguments(action.actionId, action.args)) {
+  if (!hasValidDescriptorArguments(action.args)) {
     session.warning(`${action.actionId} does not accept these arguments`);
     return;
   }
   if (recordInsertDescriptor(session, key, action.actionId, options)) return;
-  if (recordPromptTransformDescriptor(session, key, modes, action, options)) return;
   session.recordMap({
     kind: "descriptor",
     actionId: action.actionId,
@@ -539,13 +501,6 @@ export function isPrintableLeader(value: unknown): value is string {
 }
 
 const PROMPT_API = Object.freeze({
-  quote: () => builtinPromptTransform("quote"),
-  unquote: () => builtinPromptTransform("unquote"),
-  bulletize: () => builtinPromptTransform("bulletize"),
-  fence: (args: { language?: string } = {}) => builtinPromptTransform("fence", args),
-  indent: () => builtinPromptTransform("indent"),
-  dedent: () => builtinPromptTransform("dedent"),
-  reflow: (args: { width?: number } = {}) => builtinPromptTransform("reflow", args),
   openLineBelow: () => builtinInsert("openLineBelow"),
   openLineAbove: () => builtinInsert("openLineAbove"),
   deleteWordBackward: () => builtinInsert("deleteWordBackward"),
@@ -721,7 +676,7 @@ function isThenable(value: unknown): value is PromiseLike<unknown> {
 }
 
 export async function loadVimJsConfig(
-  configPath = DEFAULT_JS_CONFIG_PATH,
+  configPath = defaultJsConfigPath(),
   seed: Record<string, unknown> = {},
   rules?: VimJsConfigRules,
 ): Promise<VimJsConfigLoadResult> {

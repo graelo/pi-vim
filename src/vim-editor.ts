@@ -29,7 +29,12 @@ import type {
   VimRegister,
 } from "./types.ts";
 
-import { normalizeBufferPosition, pasteRegister, pasteRegisterBefore } from "./buffer.ts";
+import {
+  normalizeBufferPosition,
+  pasteRegister,
+  pasteRegisterBefore,
+  repeatRegister,
+} from "./buffer.ts";
 import { readClipboardText } from "./clipboard.ts";
 import { pendingDisplay } from "./commands.ts";
 import {
@@ -38,7 +43,6 @@ import {
   DEFAULT_VIM_OPTIONS,
   escapeAliasesForScope,
   keymapForOptions,
-  promptTransformsForOptions,
   searchForOptions,
   uiForOptions,
   easymotionForOptions,
@@ -88,11 +92,9 @@ function fitWidth(text: string, width: number): string {
 function workbenchText(state: ModalState): string | undefined {
   return state.pendingSearch
     ? `${state.pendingSearch.direction === "backward" ? "?" : "/"}${state.pendingSearch.query}`
-    : state.pendingEx?.preview
-      ? state.pendingEx.preview.message
-      : state.pendingEx
-        ? `:${state.pendingEx.command}`
-        : state.exMessage?.text;
+    : state.pendingEx
+      ? `:${state.pendingEx.command}`
+      : state.exMessage?.text;
 }
 
 const MAX_VISIBLE_SUGGESTIONS = 5;
@@ -101,7 +103,7 @@ function workbenchSuggestions(
   state: ModalState,
   options: ModalOptions,
 ): { items: { text: string; selected: boolean }[]; selectedIndex: number; total: number } {
-  if (!state.pendingEx || state.pendingEx.preview) return { items: [], selectedIndex: 0, total: 0 };
+  if (!state.pendingEx) return { items: [], selectedIndex: 0, total: 0 };
   if (options.exCommand?.autocomplete === false) return { items: [], selectedIndex: 0, total: 0 };
   const command = state.pendingEx.command;
   if (!/^[A-Za-z&\s]*$/.test(command)) return { items: [], selectedIndex: 0, total: 0 };
@@ -109,7 +111,6 @@ function workbenchSuggestions(
     lineCount: 1,
     cursorLine: 0,
     visualRange: state.pendingEx.visualRange,
-    promptTransforms: promptTransformsForOptions(options),
   });
   const selectedIndex = state.pendingEx.selectedSuggestion ?? 0;
   const items = suggestions.map((text, index) => ({
@@ -132,7 +133,7 @@ function renderSuggestion(
   width: number,
   theme?: WorkbenchTheme,
 ): string {
-  if (!item.selected || !theme?.selectList) return fitWidth("  " + item.text, width);
+  if (!item.selected || !theme?.selectList) return fitWidth(`  ${item.text}`, width);
   const prefix = theme.selectList.selectedPrefix?.("→ ") ?? "> ";
   const content = item.text.slice(0, Math.max(0, width - 2));
   return prefix + (theme.selectList.selectedText?.(content) ?? content);
@@ -420,15 +421,6 @@ export class VimEditor extends CustomEditor {
   private searchRenderInput() {
     const search = searchForOptions(this.options);
     if (!search.highlight) return undefined;
-    const preview = this.modalState.pendingEx?.preview;
-    if (preview) {
-      return {
-        query: "",
-        ranges: preview.ranges,
-        highlightCurrent: false,
-        maxHighlights: search.maxHighlights,
-      };
-    }
     if (!this.modalState.searchHighlight) return undefined;
     return {
       query: this.modalState.searchHighlight.query,
@@ -566,7 +558,12 @@ export class VimEditor extends CustomEditor {
         this.copyClipboard(effect.text);
         return;
       case "readClipboard":
-        this.readClipboardAndPaste(effect.register, effect.placement, effect.fallback);
+        this.readClipboardAndPaste(
+          effect.register,
+          effect.placement,
+          effect.fallback,
+          effect.count,
+        );
         return;
       case "terminalCursor":
         this.applyTerminalCursorStyle(effect.style);
@@ -590,15 +587,16 @@ export class VimEditor extends CustomEditor {
     slot: "+" | "*",
     placement: "after" | "before",
     fallback?: VimRegister,
+    count = 1,
   ): void {
     void readClipboardText()
       .then((text) => {
         const register: VimRegister = { type: "char", text };
-        this.pasteClipboardRegister(slot, placement, register);
+        this.pasteClipboardRegister(slot, placement, register, count);
       })
       .catch(() => {
         if (fallback) {
-          this.pasteClipboardRegister(slot, placement, fallback);
+          this.pasteClipboardRegister(slot, placement, fallback, count);
           return;
         }
         this.addRuntimeMessage({ kind: "error", text: "Clipboard paste failed" });
@@ -609,11 +607,13 @@ export class VimEditor extends CustomEditor {
     slot: "+" | "*",
     placement: "after" | "before",
     register: VimRegister,
+    count = 1,
   ): void {
+    const pasted = repeatRegister(register, count);
     const result =
       placement === "before"
-        ? pasteRegisterBefore(this.getText(), this.getCursor(), register)
-        : pasteRegister(this.getText(), this.getCursor(), register);
+        ? pasteRegisterBefore(this.getText(), this.getCursor(), pasted)
+        : pasteRegister(this.getText(), this.getCursor(), pasted);
     this.modalState = {
       ...this.modalState,
       clipboardRegisters: { ...this.modalState.clipboardRegisters, [slot]: register },

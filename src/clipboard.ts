@@ -1,6 +1,6 @@
-import { execFileSync } from "child_process";
-import { existsSync, readFileSync } from "fs";
-import { platform } from "os";
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { platform } from "node:os";
 
 export type ClipboardTextReader = () => Promise<string>;
 type ClipboardCommandRunner = (command: string, args: string[], input?: string) => string;

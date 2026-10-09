@@ -1,5 +1,4 @@
 import type { VimMappingScope } from "./mapping-scopes.ts";
-import type { BindablePromptTransformActionId } from "./prompt-transform-actions.ts";
 
 export type VimMode = "insert" | "normal" | "visual" | "visualLine" | "visualBlock";
 
@@ -28,7 +27,8 @@ export type VimMotionOperatorAction =
   | "yank"
   | "lowercase"
   | "uppercase"
-  | "toggleCase";
+  | "toggleCase"
+  | "surround";
 export type VimOperatorAction = VimMotionOperatorAction | "indent" | "dedent";
 
 export type VimMotionAction =
@@ -53,7 +53,9 @@ export type VimMotionAction =
   | "halfPageDown"
   | "halfPageUp"
   | "paragraphBackward"
-  | "paragraphForward";
+  | "paragraphForward"
+  | "sentenceBackward"
+  | "sentenceForward";
 
 export type VimCommandAction =
   | "insertBefore"
@@ -97,7 +99,10 @@ export type VimCommandAction =
   | "redo"
   | "showKeybindings"
   | "reselectVisual"
-  | "easymotion";
+  | "easymotion"
+  | "deleteSurround"
+  | "changeSurround"
+  | "surroundSelection";
 
 export type VimTextObjectKind = "inner" | "around";
 
@@ -110,12 +115,15 @@ export type PromptStructureTarget =
 
 export type VimTextObjectTarget =
   | "word"
+  | "bigWord"
   | "singleQuote"
   | "doubleQuote"
+  | "backtick"
   | "paren"
   | "bracket"
   | "brace"
   | "paragraph"
+  | "sentence"
   | PromptStructureTarget;
 
 export type VimTextObject = {
@@ -147,22 +155,6 @@ export type VimActionBindingMode = Extract<
   "normal" | "visual" | "visualLine" | "visualBlock"
 >;
 
-export type VimActionKeyBindingEntry =
-  | string
-  | {
-      key: string;
-      args?: Readonly<Record<string, unknown>>;
-      modes?: readonly VimActionBindingMode[];
-      allowProtected?: boolean;
-      desc?: string;
-      /** @internal Preserves trusted JavaScript operation order across mapping kinds. */
-      __sourceOrder?: number;
-    };
-
-export type VimActionKeymapOptions = Partial<
-  Record<BindablePromptTransformActionId, readonly VimActionKeyBindingEntry[]>
->;
-
 export type VimKeySequenceRemap = {
   key: string;
   inputs: readonly string[];
@@ -192,8 +184,6 @@ export type VimInsertKeymapOptions = {
 
 export type VimInsertAction = keyof VimInsertKeymapOptions;
 
-export type VimActionKeybindingPreset = "paragraph-editing" | "markdown-wrapping";
-
 export type VimKeymapOptions = {
   escape?: readonly string[];
   operators?: Partial<Record<VimOperatorAction, readonly string[]>>;
@@ -204,8 +194,6 @@ export type VimKeymapOptions = {
   textObjects?: VimTextObjectKeymapOptions;
   operatorMotions?: Partial<Record<VimMotionOperatorAction, readonly VimMotionAction[]>>;
   insert?: VimInsertKeymapOptions;
-  actionPresets?: readonly VimActionKeybindingPreset[];
-  actions?: VimActionKeymapOptions;
   remaps?: VimKeySequenceRemapOptions;
   allowProtectedOverrides?: readonly string[];
 };
@@ -215,21 +203,6 @@ export type ResolvedVimMarkKeymap = Required<VimMarkKeymapOptions>;
 export type ResolvedVimTextObjectKeymap = {
   kinds: Record<VimTextObjectKind, readonly string[]>;
   targets: Record<VimTextObjectTarget, readonly string[]>;
-};
-
-export type ResolvedVimActionBinding = {
-  key: string;
-  actionId: BindablePromptTransformActionId;
-  args: PromptTransform;
-  modes?: readonly VimActionBindingMode[];
-  allowProtected?: boolean;
-  desc?: string;
-  /** @internal Preserves trusted JavaScript operation order across mapping kinds. */
-  __sourceOrder?: number;
-};
-
-export type ResolvedVimActionKeymap = {
-  accepted: readonly ResolvedVimActionBinding[];
 };
 
 export type ResolvedVimInsertKeymap = {
@@ -254,8 +227,7 @@ export type VimFiniteActionId =
   | `mark.${keyof ResolvedVimMarkKeymap}`
   | `insert.${keyof ResolvedVimInsertKeymap}`
   | `textObject.kind.${VimTextObjectKind}`
-  | `textObject.target.${VimTextObjectTarget}`
-  | BindablePromptTransformActionId;
+  | `textObject.target.${VimTextObjectTarget}`;
 
 export type VimScopedKeymapBinding = {
   actionId: VimFiniteActionId;
@@ -279,7 +251,6 @@ export type ResolvedVimKeymap = {
   textObjects: ResolvedVimTextObjectKeymap;
   operatorMotions: Record<VimMotionOperatorAction, readonly VimMotionAction[]>;
   insert: ResolvedVimInsertKeymap;
-  actions: ResolvedVimActionKeymap;
   remaps: VimKeySequenceRemapOptions;
   scoped: readonly VimScopedKeymapBinding[];
   /** Compiler tombstones. Keep scope-local unmaps from erasing sibling grammar. */
@@ -304,6 +275,12 @@ export type ResolvedVimEasymotion = VimEasymotionOptions;
 
 export type PartialVimEasymotionOptions = Partial<ResolvedVimEasymotion>;
 
+/** A 256-color palette index (`0`-`255`) or a `#rrggbb` hex string. */
+export type VimModeColor = number | `#${string}`;
+
+/** Mode label colors; a mode with neither color renders as plain text. */
+export type VimModeColors = { bg?: VimModeColor; fg?: VimModeColor };
+
 export type VimUiOptions = {
   status: {
     enabled: boolean;
@@ -314,6 +291,7 @@ export type VimUiOptions = {
     enabled: boolean;
     labels: Record<VimMode, string>;
     narrowLabels: Record<VimMode, string>;
+    colors: Partial<Record<VimMode, VimModeColors>>;
   };
   selection: {
     enabled: boolean;
@@ -335,6 +313,7 @@ export type VimUiEditorOptions = {
     enabled?: boolean;
     labels?: Partial<Record<VimMode, string>>;
     narrowLabels?: Partial<Record<VimMode, string>>;
+    colors?: Partial<Record<VimMode, VimModeColors>>;
   };
   selection?: Partial<VimUiOptions["selection"]>;
   cursorPosition?: Partial<VimUiOptions["cursorPosition"]>;
@@ -371,23 +350,9 @@ export type VimPromptStructureOptions = {
 
 export type ResolvedVimPromptStructures = VimPromptStructureOptions;
 
-export type VimPromptTransformOptions = {
-  enabled: boolean;
-  actions: Record<PromptTransformAction, boolean>;
-  commands: Record<PromptTransformAction, readonly string[]>;
-};
-
-export type ResolvedVimPromptTransforms = VimPromptTransformOptions;
-
 export type VimPromptStructureEditorOptions = {
   enabled?: boolean;
   targets?: Partial<Record<PromptStructureTarget, boolean>>;
-};
-
-export type VimPromptTransformEditorOptions = {
-  enabled?: boolean;
-  actions?: Partial<Record<PromptTransformAction, boolean>>;
-  commands?: Partial<Record<PromptTransformAction, readonly string[]>>;
 };
 
 export type VimEditorOptions = {
@@ -403,7 +368,6 @@ export type VimEditorOptions = {
   easymotion?: PartialVimEasymotionOptions;
   feedback?: Partial<VimFeedbackOptions>;
   promptStructures?: VimPromptStructureEditorOptions;
-  promptTransforms?: VimPromptTransformEditorOptions;
 };
 
 export type ResolvedVimEditorOptions = {
@@ -420,7 +384,6 @@ export type ResolvedVimEditorOptions = {
   exCommand?: ResolvedVimExCommand;
   feedback?: VimFeedbackOptions;
   promptStructures?: ResolvedVimPromptStructures;
-  promptTransforms?: ResolvedVimPromptTransforms;
 };
 
 export type Position = {
@@ -458,21 +421,6 @@ export type EditResult = {
   changed: boolean;
 };
 
-export type PromptTransformAction =
-  | "quote"
-  | "unquote"
-  | "bulletize"
-  | "fence"
-  | "indent"
-  | "dedent"
-  | "reflow";
-
-export type PromptTransform = {
-  action: PromptTransformAction;
-  language?: string;
-  width?: number;
-};
-
 export type VimOperator = "d" | "c" | "y";
 
 export type VimMotion =
@@ -495,7 +443,9 @@ export type VimMotion =
   | "G"
   | "%"
   | "{"
-  | "}";
+  | "}"
+  | "("
+  | ")";
 
 export type PendingOperator = string;
 

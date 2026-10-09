@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "vitest";
 
 import {
   isMacroSlot,
@@ -177,9 +177,7 @@ test("pending key type guard", () => {
 });
 
 test("explicit motion binding wins over default macro record binding", () => {
-  const keymap = resolveVimOptions({
-    piVimMode: { keymap: { motions: { wordForward: ["q"] } } },
-  }).options.keymap;
+  const keymap = resolveVimOptions({ keymap: { motions: { wordForward: ["q"] } } }).options.keymap;
 
   expect(resolveNormalCommand("q", undefined, keymap)).toEqual({
     type: "motion",
@@ -188,9 +186,7 @@ test("explicit motion binding wins over default macro record binding", () => {
 });
 
 test("explicit single-key binding wins over default longer prefix bindings", () => {
-  const keymap = resolveVimOptions({
-    piVimMode: { keymap: { motions: { left: ["g"] } } },
-  }).options.keymap;
+  const keymap = resolveVimOptions({ keymap: { motions: { left: ["g"] } } }).options.keymap;
 
   expect(resolveNormalCommand("g", undefined, keymap)).toEqual({
     type: "motion",
@@ -199,9 +195,8 @@ test("explicit single-key binding wins over default longer prefix bindings", () 
 });
 
 test("active digit leader takes precedence over count parsing", () => {
-  const keymap = resolveVimOptions({
-    piVimMode: { leader: "1", keymap: { commands: { undo: ["<leader>u"] } } },
-  }).options.keymap;
+  const keymap = resolveVimOptions({ leader: "1", keymap: { commands: { undo: ["<leader>u"] } } })
+    .options.keymap;
 
   expect(resolveNormalCommand("1", undefined, keymap)).toEqual({ type: "pending", pending: "1" });
   expect(resolveNormalCommand("u", "1", keymap)).toEqual({ type: "command", command: "undo" });
@@ -252,101 +247,9 @@ test("resolves macro prefixes and targets separately from operator state", () =>
   });
 });
 
-test("resolves configured prompt transform action bindings", () => {
-  const keymap = resolveVimOptions({
-    piVimMode: {
-      keymap: {
-        actions: { "prompt.transform.reflow": ["gq", { key: "gQ", args: { width: 72 } }] },
-      },
-    },
-  }).options.keymap;
-  expect(keymap?.actions.accepted).toHaveLength(2);
-
-  const pending = resolveNormalCommand("g", undefined, keymap);
-  expect(pending).toEqual({ type: "pending", pending: "g" });
-  expect(
-    resolveNormalCommand("q", pending.type === "pending" ? pending.pending : "", keymap),
-  ).toEqual({
-    type: "action",
-    actionId: "prompt.transform.reflow",
-    args: { action: "reflow" },
-  });
-
-  const count = resolveNormalCommand("3", undefined, keymap);
-  const countedPrefix = resolveNormalCommand(
-    "g",
-    count.type === "pending" ? count.pending : "",
-    keymap,
-  );
-  expect(
-    resolveNormalCommand(
-      "Q",
-      countedPrefix.type === "pending" ? countedPrefix.pending : "",
-      keymap,
-    ),
-  ).toEqual({
-    type: "action",
-    actionId: "prompt.transform.reflow",
-    args: { action: "reflow", width: 72 },
-    count: 3,
-  });
-});
-
-test("resolves preset-derived prompt transform action bindings", () => {
-  const keymap = resolveVimOptions({
-    piVimMode: { keymap: { actionPresets: ["paragraph-editing"] } },
-  }).options.keymap;
-
-  const pending = resolveNormalCommand("g", undefined, keymap);
-  expect(pending).toEqual({ type: "pending", pending: "g" });
-  expect(
-    resolveNormalCommand("q", pending.type === "pending" ? pending.pending : "", keymap),
-  ).toEqual({
-    type: "action",
-    actionId: "prompt.transform.reflow",
-    args: { action: "reflow" },
-  });
-});
-
-test("action bindings do not resolve as operator targets", () => {
-  const keymap = resolveVimOptions({
-    piVimMode: { keymap: { actions: { "prompt.transform.reflow": ["gq"] } } },
-  }).options.keymap;
-  const operatorPrefix = resolveNormalCommand("g", "d", keymap);
-  expect(operatorPrefix).toEqual({
-    type: "pending",
-    pending: "d\u0000motion\u0000g\u0000motion\u0000",
-  });
-  expect(
-    resolveNormalCommand(
-      "q",
-      operatorPrefix.type === "pending" ? operatorPrefix.pending : "",
-      keymap,
-    ),
-  ).toEqual({
-    type: "invalid",
-  });
-});
-
-test("rejected action conflicts preserve legacy command behavior", () => {
-  const result = resolveVimOptions({
-    piVimMode: { keymap: { actions: { "prompt.transform.quote": ["gg"] } } },
-  });
-  expect(result.options.keymap?.actions.accepted).toEqual([]);
-  expect(resolveNormalCommand("g", undefined, result.options.keymap)).toEqual({
-    type: "pending",
-    pending: "g",
-  });
-  expect(resolveNormalCommand("g", "g", result.options.keymap)).toEqual({
-    type: "motion",
-    motion: "bufferStart",
-  });
-});
-
 test("resolves configured keybindings popup command through semantic parser", () => {
-  const keymap = resolveVimOptions({
-    piVimMode: { keymap: { commands: { showKeybindings: ["gk"] } } },
-  }).options.keymap;
+  const keymap = resolveVimOptions({ keymap: { commands: { showKeybindings: ["gk"] } } }).options
+    .keymap;
 
   const pending = resolveNormalCommand("g", undefined, keymap);
   expect(pending).toEqual({ type: "pending", pending: "g" });
@@ -359,9 +262,8 @@ test("resolves configured keybindings popup command through semantic parser", ()
 });
 
 test("named terminal command mappings stay atomic at runtime", () => {
-  const keymap = resolveVimOptions({
-    piVimMode: { keymap: { commands: { undo: ["<Home>", "<F1>"] } } },
-  }).options.keymap!;
+  const keymap = resolveVimOptions({ keymap: { commands: { undo: ["<Home>", "<F1>"] } } }).options
+    .keymap!;
 
   expect(resolveNormalCommand("h", undefined, keymap)).toEqual({
     type: "motion",
@@ -1005,30 +907,9 @@ test("keeps duplicate sequence resolution first-match deterministic", () => {
   });
 });
 
-test("resolves operator grammar before unrelated top-level prefixes", () => {
-  const keymap = resolveVimOptions({
-    piVimMode: { keymap: { actions: { "prompt.transform.reflow": ["ct"] } } },
-  }).options.keymap;
-
-  const tillPending = resolveNormalCommand("t", "c", keymap);
-  expect(tillPending.type).toBe("pending");
-  expect(
-    resolveNormalCommand(",", tillPending.type === "pending" ? tillPending.pending : "", keymap),
-  ).toEqual({
-    type: "operatorCharSearch",
-    operator: "change",
-    command: "tillCharForward",
-    char: ",",
-  });
-});
-
 test("resolves distinct keymap identities without stale command cache", () => {
-  const leftKeymap = resolveVimOptions({
-    piVimMode: { keymap: { motions: { left: ["q"] } } },
-  }).options.keymap;
-  const undoKeymap = resolveVimOptions({
-    piVimMode: { keymap: { commands: { undo: ["q"] } } },
-  }).options.keymap;
+  const leftKeymap = resolveVimOptions({ keymap: { motions: { left: ["q"] } } }).options.keymap;
+  const undoKeymap = resolveVimOptions({ keymap: { commands: { undo: ["q"] } } }).options.keymap;
 
   expect(resolveNormalCommand("q", undefined, leftKeymap)).toEqual({
     type: "motion",
@@ -1045,9 +926,8 @@ test("resolves distinct keymap identities without stale command cache", () => {
 });
 
 test("interleaves default and custom keymap resolution without contamination", () => {
-  const keymap = resolveVimOptions({
-    piVimMode: { keymap: { motions: { left: ["q"], wordForward: ["z"] } } },
-  }).options.keymap;
+  const keymap = resolveVimOptions({ keymap: { motions: { left: ["q"], wordForward: ["z"] } } })
+    .options.keymap;
 
   expect(resolveNormalCommand("q", undefined, DEFAULT_VIM_KEYMAP)).toEqual({ type: "none" });
   expect(resolveNormalCommand("q", undefined, keymap)).toEqual({
@@ -1072,9 +952,8 @@ test("gv resolves to reselectVisual with default keymap", () => {
 });
 
 test("configured reselectVisual key executes", () => {
-  const keymap = resolveVimOptions({
-    piVimMode: { keymap: { commands: { reselectVisual: ["grv"] } } },
-  }).options.keymap;
+  const keymap = resolveVimOptions({ keymap: { commands: { reselectVisual: ["grv"] } } }).options
+    .keymap;
   const pendingG = resolveNormalCommand("g", undefined, keymap);
   const pendingR = resolveNormalCommand(
     "r",
@@ -1101,4 +980,198 @@ test("reselectVisual default binding does not conflict with existing g-prefix mo
   });
   const pendingGV = resolveNormalCommand("v", pendingG.type === "pending" ? pendingG.pending : "");
   expect(pendingGV).toEqual({ type: "command", command: "reselectVisual" });
+});
+
+function resolveKeys(
+  keys: readonly string[],
+  keymap = DEFAULT_VIM_KEYMAP,
+  mode: "normal" | "visual" = "normal",
+) {
+  let pending: string | undefined;
+  let result = resolveNormalCommand(keys[0]!, pending, keymap, mode);
+  for (const key of keys.slice(1)) {
+    if (result.type !== "pending") return result;
+    pending = result.pending;
+    result = resolveNormalCommand(key, pending, keymap, mode);
+  }
+  return result;
+}
+
+test("surround bindings extend their operators", () => {
+  expect(resolveKeys(["y", "s", "i", "w"])).toEqual({
+    type: "operatorTextObject",
+    operator: "surround",
+    textObject: { kind: "inner", target: "word" },
+    count: undefined,
+  });
+  expect(resolveKeys(["y", "s", "w"])).toEqual({
+    type: "operatorMotion",
+    operator: "surround",
+    motion: "wordForward",
+    count: undefined,
+  });
+  expect(resolveKeys(["d", "s"])).toEqual({ type: "command", command: "deleteSurround" });
+  expect(resolveKeys(["c", "s"])).toEqual({ type: "command", command: "changeSurround" });
+  expect(resolveKeys(["2", "d", "s"])).toEqual({
+    type: "command",
+    command: "deleteSurround",
+    count: 2,
+  });
+});
+
+test("operators keep their meaning next to surround extensions", () => {
+  expect(resolveKeys(["y", "i", "w"])).toMatchObject({
+    type: "operatorTextObject",
+    operator: "yank",
+  });
+  expect(resolveKeys(["y", "y"])).toEqual({
+    type: "lineCommand",
+    operator: "yank",
+    count: undefined,
+  });
+  expect(resolveKeys(["d", "w"])).toMatchObject({ type: "operatorMotion", operator: "delete" });
+  expect(resolveKeys(["d", "d"])).toEqual({
+    type: "lineCommand",
+    operator: "delete",
+    count: undefined,
+  });
+  expect(resolveKeys(["c", "i", "w"])).toMatchObject({
+    type: "operatorTextObject",
+    operator: "change",
+  });
+  expect(resolveKeys(["c", "c"])).toEqual({
+    type: "lineCommand",
+    operator: "change",
+    count: undefined,
+  });
+  expect(resolveKeys(["d", "2", "s"])).toEqual({ type: "invalid" });
+});
+
+test("multi-key operators accept the last-key line form", () => {
+  expect(resolveKeys(["g", "u", "u"])).toEqual({
+    type: "lineCommand",
+    operator: "lowercase",
+    count: undefined,
+  });
+  expect(resolveKeys(["g", "U", "U"])).toEqual({
+    type: "lineCommand",
+    operator: "uppercase",
+    count: undefined,
+  });
+  expect(resolveKeys(["g", "~", "~"])).toEqual({
+    type: "lineCommand",
+    operator: "toggleCase",
+    count: undefined,
+  });
+  expect(resolveKeys(["g", "u", "g", "u"])).toEqual({
+    type: "lineCommand",
+    operator: "lowercase",
+    count: undefined,
+  });
+  expect(resolveKeys(["y", "s", "s"])).toEqual({
+    type: "lineCommand",
+    operator: "surround",
+    count: undefined,
+  });
+  expect(resolveKeys(["3", "y", "s", "s"])).toEqual({
+    type: "lineCommand",
+    operator: "surround",
+    count: 3,
+  });
+
+  const keymap = resolveVimOptions({ keymap: { operators: { surround: ["gs"] } } }).options.keymap!;
+  expect(resolveKeys(["g", "s", "s"], keymap)).toEqual({
+    type: "lineCommand",
+    operator: "surround",
+    count: undefined,
+  });
+  expect(resolveKeys(["g", "s", "i", "w"], keymap)).toMatchObject({
+    type: "operatorTextObject",
+    operator: "surround",
+  });
+});
+
+test("surround accepts character-search targets but not search or repeat", () => {
+  expect(resolveKeys(["y", "s", "f", ","])).toEqual({
+    type: "operatorCharSearch",
+    operator: "surround",
+    command: "findCharForward",
+    char: ",",
+    count: undefined,
+  });
+  expect(resolveKeys(["y", "s", "t", ","])).toMatchObject({ command: "tillCharForward" });
+  expect(resolveKeys(["y", "s", "2", "w"])).toEqual({
+    type: "operatorMotion",
+    operator: "surround",
+    motion: "wordForward",
+    count: 2,
+  });
+  expect(resolveKeys(["y", "s", "/"])).toEqual({ type: "invalid" });
+  expect(resolveKeys(["y", "s", ";"])).toEqual({ type: "invalid" });
+});
+
+test("visual S resolves to surround selection and normal S stays substitute line", () => {
+  expect(resolveKeys(["S"])).toEqual({ type: "command", command: "substituteLine" });
+  expect(resolveKeys(["S"], DEFAULT_VIM_KEYMAP, "visual")).toEqual({
+    type: "command",
+    command: "surroundSelection",
+  });
+});
+
+test("resolves sentence motions and sentence text objects", () => {
+  expect(resolveKeys(["("])).toEqual({ type: "motion", motion: "sentenceBackward" });
+  expect(resolveKeys([")"])).toEqual({ type: "motion", motion: "sentenceForward" });
+  expect(parseNormalCommand(")", "d")).toEqual({
+    type: "operatorMotion",
+    operator: "d",
+    motion: ")",
+  });
+  expect(resolveKeys(["c", "("])).toMatchObject({
+    type: "operatorMotion",
+    operator: "change",
+    motion: "sentenceBackward",
+  });
+  expect(resolveKeys(["d", "i", "s"])).toMatchObject({
+    type: "operatorTextObject",
+    operator: "delete",
+    textObject: { kind: "inner", target: "sentence" },
+  });
+  expect(resolveKeys(["y", "s", "a", "s"])).toMatchObject({
+    type: "operatorTextObject",
+    operator: "surround",
+    textObject: { kind: "around", target: "sentence" },
+  });
+  expect(resolveKeys(["d", "i", ")"])).toMatchObject({
+    textObject: { kind: "inner", target: "paren" },
+  });
+});
+
+test("sentence target leaves surround commands unchanged", () => {
+  expect(resolveKeys(["d", "s"])).toEqual({ type: "command", command: "deleteSurround" });
+  expect(resolveKeys(["c", "s"])).toEqual({ type: "command", command: "changeSurround" });
+});
+
+test("uses configured sentence motion and text object keys", () => {
+  const keymap = {
+    ...DEFAULT_VIM_KEYMAP,
+    motions: { ...DEFAULT_VIM_KEYMAP.motions, sentenceForward: ["S"], sentenceBackward: ["R"] },
+    textObjects: {
+      ...DEFAULT_VIM_KEYMAP.textObjects,
+      targets: { ...DEFAULT_VIM_KEYMAP.textObjects.targets, sentence: ["z"] },
+    },
+  };
+  expect(resolveKeys(["S"], keymap)).toEqual({ type: "motion", motion: "sentenceForward" });
+  expect(resolveKeys(["R"], keymap)).toEqual({ type: "motion", motion: "sentenceBackward" });
+  expect(resolveKeys(["d", "S"], keymap)).toMatchObject({ motion: "sentenceForward" });
+  expect(resolveKeys(["d", "a", "z"], keymap)).toMatchObject({
+    textObject: { kind: "around", target: "sentence" },
+  });
+});
+
+test("omitted sentence operator motion clears pending state", () => {
+  const keymap = {
+    ...DEFAULT_VIM_KEYMAP,
+    operatorMotions: { ...DEFAULT_VIM_KEYMAP.operatorMotions, delete: ["wordForward"] as const },
+  };
+  expect(resolveKeys(["d", ")"], keymap)).toEqual({ type: "invalid" });
 });

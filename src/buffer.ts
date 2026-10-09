@@ -9,7 +9,6 @@ import type {
   LineRange,
   Position,
   PromptStructureTarget,
-  PromptTransform,
   ResolvedVimPromptStructures,
   TextRange,
   VimMotion,
@@ -18,7 +17,25 @@ import type {
   VimTextObjectKind,
 } from "./types.ts";
 
-import { isErrorBlockLine, resolvePromptStructureRange } from "./prompt-structures.ts";
+import {
+  isOffsetTextObjectTarget,
+  offsetTextObjectRange,
+  paragraphBackwardPosition,
+  paragraphForwardPosition,
+  proseMotionTargetOffset,
+  sentenceBackwardPosition,
+  sentenceForwardPosition,
+} from "./prose.ts";
+import {
+  clampPosition,
+  comparePositions,
+  lineStartOffsets,
+  type OffsetRange,
+  offsetToPosition,
+  positionToOffset,
+  splitText,
+} from "./text-position.ts";
+import { resolvePromptStructureRange } from "./prompt-structures.ts";
 import {
   blockSelectionText,
   isVisualCellSelected,
@@ -51,65 +68,22 @@ export {
   visualSelectionText,
 };
 
-export type BufferNavigationTarget = "start" | "end" | "firstNonBlank" | "matchingPair";
+export {
+  paragraphBackwardPosition,
+  paragraphForwardPosition,
+  sentenceBackwardPosition,
+  sentenceForwardPosition,
+};
 
-function splitText(text: string): string[] {
-  const lines = text.split("\n");
-  return lines.length === 0 ? [""] : lines;
-}
+export type BufferNavigationTarget = "start" | "end" | "firstNonBlank" | "matchingPair";
 
 function joinLines(lines: string[]): string {
   return (lines.length === 0 ? [""] : lines).join("\n");
 }
 
-function clampPosition(lines: string[], position: Position): Position {
-  const safeLines = lines.length === 0 ? [""] : lines;
-  const line = Math.max(0, Math.min(position.line, safeLines.length - 1));
-  const length = safeLines[line]?.length ?? 0;
-  const col = Math.max(0, Math.min(position.col, length));
-  return { line, col };
-}
-
-function comparePositions(a: Position, b: Position): number {
-  if (a.line !== b.line) return a.line - b.line;
-  return a.col - b.col;
-}
-
 function firstNonBlankColumn(line: string): number {
   const match = /\S/.exec(line);
   return match?.index ?? 0;
-}
-
-function lineStartOffsets(lines: string[]): number[] {
-  const starts: number[] = [];
-  let offset = 0;
-  for (const line of lines) {
-    starts.push(offset);
-    offset += line.length + 1;
-  }
-  return starts;
-}
-
-function positionToOffset(text: string, position: Position): number {
-  const lines = splitText(text);
-  const pos = clampPosition(lines, position);
-  const starts = lineStartOffsets(lines);
-  return (starts[pos.line] ?? 0) + pos.col;
-}
-
-function offsetToPosition(text: string, offset: number): Position {
-  const safeOffset = Math.max(0, Math.min(offset, text.length));
-  const lines = splitText(text);
-  let consumed = 0;
-
-  for (let line = 0; line < lines.length; line++) {
-    const length = lines[line]?.length ?? 0;
-    if (safeOffset <= consumed + length) return { line, col: safeOffset - consumed };
-    consumed += length + 1;
-  }
-
-  const lastLine = Math.max(0, lines.length - 1);
-  return { line: lastLine, col: lines[lastLine]?.length ?? 0 };
 }
 
 function offsetToPositionFromLineStarts(
@@ -302,25 +276,6 @@ function motionTargetOffset(text: string, offset: number, motion: VimMotion): nu
   return previousWordStartOffset(text, offset);
 }
 
-function paragraphMotionOffsetRange(
-  text: string,
-  cursor: Position,
-  motion: "}" | "{",
-  count: number,
-): { start: number; end: number } | undefined {
-  const current = positionToOffset(text, cursor);
-  const lines = splitText(text);
-  let pos = clampPosition(lines, cursor);
-  const step = motion === "}" ? paragraphForwardStep : paragraphBackwardStep;
-  for (let index = 0; index < Math.max(1, count); index++) {
-    const next = step(lines, pos);
-    if (comparePositions(next, pos) === 0) break;
-    pos = next;
-  }
-  const target = positionToOffset(text, pos);
-  return target === current ? undefined : orderedOffsetRange(current, target);
-}
-
 function standardMotionOffsetRange(
   text: string,
   current: number,
@@ -360,8 +315,8 @@ function motionOffsetRange(
           Math.min(text.length, Math.max(current, targetOffset) + 1),
         );
   }
-  if (motion === "}" || motion === "{")
-    return paragraphMotionOffsetRange(text, cursor, motion, count);
+  if (motion === "}" || motion === "{" || motion === ")" || motion === "(")
+    return orderedOffsetRange(current, proseMotionTargetOffset(text, cursor, motion, count));
   return standardMotionOffsetRange(text, current, motion, count);
 }
 function motionLineRange(
@@ -874,13 +829,6 @@ function replaceLineRange(
   };
 }
 
-function bulletizeLine(line: string): string {
-  if (line.trim().length === 0) return line;
-  const indent = /^\s*/.exec(line)?.[0] ?? "";
-  const content = line.slice(indent.length).replace(/^(?:[-+*]|\d+[.)])\s+(?:\[[ xX]\]\s+)?/, "");
-  return `${indent}- ${content}`;
-}
-
 function dedentLine(line: string): string {
   if (line.startsWith("  ")) return line.slice(2);
   if (line.startsWith("\t")) return line.slice(1);
@@ -888,117 +836,26 @@ function dedentLine(line: string): string {
   return line;
 }
 
-function wrapWords(words: string[], width: number): string[] {
-  const output: string[] = [];
-  let current = "";
-  for (const word of words) {
-    if (current.length === 0) {
-      current = word;
-      continue;
-    }
-    if (current.length + 1 + word.length <= width) current = `${current} ${word}`;
-    else {
-      output.push(current);
-      current = word;
-    }
-  }
-  if (current.length > 0) output.push(current);
-  return output;
-}
+export type LineShiftAction = "indent" | "dedent";
 
-function reflowLines(lines: readonly string[], width: number, initialInFence = false): string[] {
-  const output: string[] = [];
-  let paragraph: string[] = [];
-  let inFence = initialInFence;
-
-  const flush = () => {
-    if (paragraph.length === 0) return;
-    const indent = /^\s*/.exec(paragraph[0] ?? "")?.[0] ?? "";
-    const words = paragraph.flatMap((line) => line.trim().split(/\s+/).filter(Boolean));
-    const wrapped = wrapWords(words, Math.max(10, width - indent.length)).map(
-      (line) => `${indent}${line}`,
-    );
-    output.push(...wrapped);
-    paragraph = [];
-  };
-
-  for (const line of lines) {
-    if (/^\s*(```|~~~)/.test(line)) {
-      flush();
-      inFence = !inFence;
-      output.push(line);
-      continue;
-    }
-    if (
-      inFence ||
-      isErrorBlockLine(line) ||
-      line.trim().length === 0 ||
-      /^\s*[-+*]\s+/.test(line)
-    ) {
-      flush();
-      output.push(line);
-      continue;
-    }
-    paragraph.push(line);
-  }
-  flush();
-  return output;
-}
-
-function startsInsideFence(lines: readonly string[], startLine: number): boolean {
-  let inFence = false;
-  for (let index = 0; index < startLine; index++) {
-    if (/^\s*(```|~~~)/.test(lines[index] ?? "")) inFence = !inFence;
-  }
-  return inFence;
-}
-
-export function applyPromptTransform(
+function shiftLinesOnce(
   text: string,
   range: LineRange,
-  transform: PromptTransform,
+  action: LineShiftAction,
   originalCursor: Position,
 ): ExLineEditResult {
   const lines = splitText(text);
   const safeRange = clampLineRange(lines, range);
   const selected = lines.slice(safeRange.startLine, safeRange.endLine + 1);
-  let replacement: string[];
-
-  switch (transform.action) {
-    case "quote":
-      replacement = selected.map((line) => `> ${line}`);
-      break;
-    case "unquote":
-      replacement = selected.map((line) => line.replace(/^\s*> ?/, ""));
-      break;
-    case "bulletize":
-      replacement = selected.map(bulletizeLine);
-      break;
-    case "fence":
-      replacement = [`${"```"}${transform.language ?? ""}`, ...selected, "```"];
-      break;
-    case "indent":
-      replacement = selected.map((line) => `  ${line}`);
-      break;
-    case "dedent":
-      replacement = selected.map(dedentLine);
-      break;
-    case "reflow":
-      replacement = reflowLines(
-        selected,
-        transform.width ?? 80,
-        startsInsideFence(lines, safeRange.startLine),
-      );
-      break;
-  }
-
+  const replacement =
+    action === "indent" ? selected.map((line) => `  ${line}`) : selected.map(dedentLine);
   return replaceLineRange(text, safeRange, replacement, originalCursor);
 }
 
 export function shiftLineRange(
   text: string,
   range: LineRange,
-  action: Extract<PromptTransform["action"], "indent" | "dedent">,
+  action: LineShiftAction,
   originalCursor: Position,
   depth = 1,
 ): ExLineEditResult {
@@ -1006,13 +863,12 @@ export function shiftLineRange(
   let currentResult: ExLineEditResult | undefined;
   let changed = false;
   for (let i = 0; i < Math.max(1, depth); i += 1) {
-    currentResult = applyPromptTransform(currentText, range, { action }, originalCursor);
+    currentResult = shiftLinesOnce(currentText, range, action, originalCursor);
     if (!currentResult.ok) return currentResult;
     changed ||= currentResult.edit.changed;
     currentText = currentResult.edit.text;
   }
-  if (!currentResult || !currentResult.ok)
-    return applyPromptTransform(text, range, { action }, originalCursor);
+  if (!currentResult?.ok) return shiftLinesOnce(text, range, action, originalCursor);
   return { ...currentResult, edit: { ...currentResult.edit, changed } };
 }
 
@@ -1020,7 +876,7 @@ export function shiftLinesFromCursor(
   text: string,
   cursor: Position,
   count: number,
-  action: Extract<PromptTransform["action"], "indent" | "dedent">,
+  action: LineShiftAction,
 ): ExLineEditResult {
   const lines = splitText(text);
   const pos = clampPosition(lines, cursor);
@@ -1853,17 +1709,16 @@ function charSearchOperatorOffsetRange(
   );
   if (found === undefined) return undefined;
 
-  if (kind === "tillForward" && found === pos.col + 1) return undefined;
-  if (kind === "tillBackward" && found === pos.col - 1) return undefined;
-  const cursorColEnd = Math.min(pos.col + 1, bounds.line.length);
+  // Vim: `f`/`t` are inclusive (`dt,` before an adjacent `,` removes the cursor
+  // character); `F`/`T` are exclusive and keep it.
   const range =
     kind === "findForward"
       ? { start: pos.col, end: found + 1 }
       : kind === "tillForward"
         ? { start: pos.col, end: found }
         : kind === "findBackward"
-          ? { start: found, end: cursorColEnd }
-          : { start: found + 1, end: cursorColEnd };
+          ? { start: found, end: pos.col }
+          : { start: found + 1, end: pos.col };
   if (range.end <= range.start) return undefined;
   return { start: bounds.start + range.start, end: bounds.start + range.end, cursor: pos };
 }
@@ -1954,78 +1809,6 @@ export function wordPreviousEndPosition(text: string, cursor: Position, count = 
 
 export function wordPreviousEndBigPosition(text: string, cursor: Position, count = 1): Position {
   return countedWordPosition(text, cursor, count, previousWordEndWORDOffset);
-}
-
-function isBlankLine(line: string): boolean {
-  return line.trim().length === 0;
-}
-
-function paragraphRunStart(lines: string[], line: number): number {
-  let start = line;
-  while (start > 0 && !isBlankLine(lines[start - 1]!)) start--;
-  return start;
-}
-
-function paragraphRunEnd(lines: string[], line: number): number {
-  let end = line;
-  while (end < lines.length - 1 && !isBlankLine(lines[end + 1]!)) end++;
-  return end;
-}
-
-function promptEndPosition(lines: string[]): Position {
-  const line = Math.max(0, lines.length - 1);
-  return { line, col: lines[line]?.length ?? 0 };
-}
-
-function paragraphForwardStep(lines: string[], pos: Position): Position {
-  const lastLine = lines.length - 1;
-  let index = pos.line;
-  if (!isBlankLine(lines[index]!)) {
-    index = paragraphRunEnd(lines, index) + 1;
-  }
-  while (index <= lastLine && isBlankLine(lines[index]!)) index++;
-  if (index > lastLine) return promptEndPosition(lines);
-  return { line: index, col: 0 };
-}
-
-function paragraphBackwardStep(lines: string[], pos: Position): Position {
-  if (!isBlankLine(lines[pos.line]!)) {
-    const runStart = paragraphRunStart(lines, pos.line);
-    if (pos.line > runStart || pos.col > 0) return { line: runStart, col: 0 };
-    let index = runStart - 1;
-    while (index >= 0 && isBlankLine(lines[index]!)) index--;
-    if (index < 0) return { line: 0, col: 0 };
-    return { line: paragraphRunStart(lines, index), col: 0 };
-  }
-  let index = pos.line - 1;
-  while (index >= 0 && isBlankLine(lines[index]!)) index--;
-  if (index < 0) return { line: 0, col: 0 };
-  return { line: paragraphRunStart(lines, index), col: 0 };
-}
-
-function countedParagraphPosition(
-  text: string,
-  cursor: Position,
-  count: number,
-  step: (lines: string[], pos: Position) => Position,
-): Position {
-  const lines = splitText(text);
-  let pos = clampPosition(lines, cursor);
-  const repetitions = Math.max(1, count);
-  for (let index = 0; index < repetitions; index++) {
-    const next = step(lines, pos);
-    if (comparePositions(next, pos) === 0) break;
-    pos = next;
-  }
-  return pos;
-}
-
-export function paragraphForwardPosition(text: string, cursor: Position, count = 1): Position {
-  return countedParagraphPosition(text, cursor, count, paragraphForwardStep);
-}
-
-export function paragraphBackwardPosition(text: string, cursor: Position, count = 1): Position {
-  return countedParagraphPosition(text, cursor, count, paragraphBackwardStep);
 }
 
 export function deleteByMotion(
@@ -2243,6 +2026,16 @@ export function joinLineWithNext(text: string, cursor: Position): EditResult {
   };
 }
 
+/** `count` copies of `register` for a counted put (`3p`); linewise copies stack as lines. */
+export function repeatRegister(
+  register: VimRegister | undefined,
+  count = 1,
+): VimRegister | undefined {
+  if (!register || count <= 1) return register;
+  const copies = Array.from({ length: count }, () => register.text);
+  return { ...register, text: copies.join(register.type === "line" ? "\n" : "") };
+}
+
 export function pasteRegister(
   text: string,
   cursor: Position,
@@ -2359,39 +2152,6 @@ export function pasteRegisterBefore(
   };
 }
 
-function wordRangeAtOffset(
-  text: string,
-  offset: number,
-): { start: number; end: number } | undefined {
-  const clamped = Math.max(0, Math.min(offset, text.length));
-  let index = clamped;
-  if (index >= text.length) index = text.length - 1;
-  if (index < 0) return undefined;
-  if (isWhitespace(text[index])) {
-    if (index > 0 && !isWhitespace(text[index - 1])) index--;
-    else return undefined;
-  }
-  let start = index;
-  while (start > 0 && !isWhitespace(text[start - 1])) start--;
-  let end = index + 1;
-  while (end < text.length && !isWhitespace(text[end])) end++;
-  return start < end ? { start, end } : undefined;
-}
-
-function quoteRangeAtOffset(
-  text: string,
-  cursor: Position,
-  quote: string,
-): { start: number; end: number } | undefined {
-  const current = positionToOffset(text, cursor);
-  const bounds = lineBoundsForPosition(text, cursor);
-  const before = text.lastIndexOf(quote, Math.max(bounds.start, current - 1));
-  if (before < bounds.start) return undefined;
-  const after = text.indexOf(quote, current);
-  if (after < 0 || after > bounds.end || after <= before) return undefined;
-  return { start: before, end: after + 1 };
-}
-
 function bracketStartOffset(
   text: string,
   current: number,
@@ -2420,18 +2180,21 @@ function bracketEndOffset(
   return undefined;
 }
 
-function bracketRangeAtOffset(
-  text: string,
-  cursor: Position,
-  open: string,
-  close: string,
-): { start: number; end: number } | undefined {
-  const start = bracketStartOffset(text, positionToOffset(text, cursor), open, close);
-  const end = start === undefined ? undefined : bracketEndOffset(text, start, open, close);
-  return start === undefined || end === undefined ? undefined : { start, end };
+/** Character class of a word run; line breaks end every run. */
+function wordRunKind(model: WordBoundaryModel, char: string | undefined) {
+  return char === undefined || char === "\n" ? undefined : boundaryKind(model, char);
 }
-type OffsetRange = { start: number; end: number };
 
+function runRange(text: string, index: number, model: WordBoundaryModel): OffsetRange {
+  const kind = wordRunKind(model, text[index]);
+  let start = index;
+  while (start > 0 && wordRunKind(model, text[start - 1]) === kind) start--;
+  let end = index + 1;
+  while (end < text.length && wordRunKind(model, text[end]) === kind) end++;
+  return { start, end };
+}
+
+/** Add blanks after `range`, or before it when there are none after (Vim `aw`, `a"`). */
 function aroundWordRange(text: string, range: OffsetRange): OffsetRange {
   let end = range.end;
   while (end < text.length && isWhitespace(text[end]) && text[end] !== "\n") end++;
@@ -2441,23 +2204,79 @@ function aroundWordRange(text: string, range: OffsetRange): OffsetRange {
   return { start, end: range.end };
 }
 
+/** Vim `iw`/`aw` (small model) and `iW`/`aW` (big model) at `cursor`. */
+function wordTextObjectOffsets(
+  text: string,
+  cursor: Position,
+  model: WordBoundaryModel,
+  kind: VimTextObjectKind,
+): OffsetRange | undefined {
+  let index = positionToOffset(text, cursor);
+  if (wordRunKind(model, text[index]) === undefined) {
+    if (index > 0 && wordRunKind(model, text[index - 1]) !== undefined) index--;
+    else return undefined;
+  }
+  const run = runRange(text, index, model);
+  if (kind === "inner") return run;
+  if (wordRunKind(model, text[index]) !== "whitespace") return aroundWordRange(text, run);
+  return wordRunKind(model, text[run.end]) === undefined
+    ? run
+    : { start: run.start, end: runRange(text, run.end, model).end };
+}
+
+/**
+ * Quote pair around the cursor, as Vim's quote text objects find it: a cursor
+ * on a quote pairs quotes from the start of the line; otherwise the nearest
+ * quote before the cursor opens the string, or the first string after the
+ * cursor is used when there is none before. Backslash-escaped quotes are
+ * skipped.
+ */
+export function quotePairRange(
+  text: string,
+  cursor: Position,
+  quote: string,
+): DelimitedOffsetRange | undefined {
+  const bounds = lineBoundsForPosition(text, cursor);
+  const col = positionToOffset(text, cursor) - bounds.start;
+  const quotes: number[] = [];
+  for (let index = 0; index < bounds.line.length; index++) {
+    if (bounds.line[index] === "\\" && quote !== "\\") index++;
+    else if (bounds.line[index] === quote) quotes.push(index);
+  }
+  const at = quotes.indexOf(col);
+  let pair: [number | undefined, number | undefined];
+  if (at >= 0) pair = at % 2 === 0 ? [col, quotes[at + 1]] : [quotes[at - 1], col];
+  else {
+    const before = quotes.filter((index) => index < col).at(-1);
+    const after = quotes.filter((index) => index > (before ?? col));
+    pair = before === undefined ? [after[0], after[1]] : [before, after[0]];
+  }
+  const [open, close] = pair;
+  if (open === undefined || close === undefined) return undefined;
+  return { start: bounds.start + open, end: bounds.start + close + 1 };
+}
+
 function delimiterRange(
   text: string,
   cursor: Position,
   target: VimTextObject["target"],
+  kind: VimTextObjectKind,
 ): OffsetRange | undefined {
   const delimiters: Partial<Record<VimTextObject["target"], [string, string]>> = {
     singleQuote: ["'", "'"],
     doubleQuote: ['"', '"'],
+    backtick: ["`", "`"],
     paren: ["(", ")"],
     bracket: ["[", "]"],
     brace: ["{", "}"],
   };
   const pair = delimiters[target];
   if (!pair) return undefined;
-  return pair[0] === pair[1]
-    ? quoteRangeAtOffset(text, cursor, pair[0])
-    : bracketRangeAtOffset(text, cursor, pair[0], pair[1]);
+  if (pair[0] === pair[1]) {
+    const range = quotePairRange(text, cursor, pair[0]);
+    return range && kind === "around" ? aroundWordRange(text, range) : range;
+  }
+  return enclosingBracketRange(text, cursor, pair[0], pair[1]);
 }
 
 function baseTextObjectRange(
@@ -2466,20 +2285,20 @@ function baseTextObjectRange(
   textObject: VimTextObject,
   promptStructures?: ResolvedVimPromptStructures,
 ): OffsetRange | undefined {
-  if (textObject.target === "word") {
-    const range = wordRangeAtOffset(text, positionToOffset(text, cursor));
-    return range && textObject.kind === "around" ? aroundWordRange(text, range) : range;
+  if (textObject.target === "word" || textObject.target === "bigWord") {
+    const model = textObject.target === "word" ? "small" : "big";
+    return wordTextObjectOffsets(text, cursor, model, textObject.kind);
   }
-  const delimiter = delimiterRange(text, cursor, textObject.target);
+  const delimiter = delimiterRange(text, cursor, textObject.target, textObject.kind);
   if (delimiter) return delimiter;
-  if (textObject.target === "paragraph")
-    return paragraphTextObjectOffsets(text, cursor, textObject.kind);
+  if (isOffsetTextObjectTarget(textObject.target))
+    return offsetTextObjectRange(text, cursor, textObject);
   const structure = promptStructureTextObjectRange(text, cursor, textObject, promptStructures);
   return structure && { start: structure.start, end: structure.endExclusive };
 }
 
 function isDelimiterTarget(target: VimTextObject["target"]): boolean {
-  return ["singleQuote", "doubleQuote", "paren", "bracket", "brace"].includes(target);
+  return ["singleQuote", "doubleQuote", "backtick", "paren", "bracket", "brace"].includes(target);
 }
 
 export function textObjectRange(
@@ -2498,46 +2317,18 @@ export function textObjectRange(
 }
 
 function isPromptStructureTarget(target: VimTextObject["target"]): target is PromptStructureTarget {
-  return !["word", "singleQuote", "doubleQuote", "paren", "bracket", "brace", "paragraph"].includes(
-    target,
-  );
-}
-
-function blankRunEnd(lines: string[], start: number): number {
-  let end = start;
-  while (end + 1 < lines.length && isBlankLine(lines[end + 1]!)) end++;
-  return end;
-}
-
-function blankRunStart(lines: string[], start: number): number {
-  let begin = start;
-  while (begin > 0 && isBlankLine(lines[begin - 1]!)) begin--;
-  return begin;
-}
-
-function paragraphTextObjectOffsets(
-  text: string,
-  cursor: Position,
-  kind: VimTextObjectKind,
-): OffsetRange | undefined {
-  const lines = splitText(text);
-  const pos = clampPosition(lines, cursor);
-  if (isBlankLine(lines[pos.line]!)) return undefined;
-  const starts = lineStartOffsets(lines);
-  const runStart = paragraphRunStart(lines, pos.line);
-  const runEnd = paragraphRunEnd(lines, pos.line);
-  const afterBody = runEnd + 1 < lines.length ? starts[runEnd + 1]! : text.length;
-  if (kind === "inner") return { start: starts[runStart]!, end: afterBody };
-  if (runEnd + 1 < lines.length && isBlankLine(lines[runEnd + 1]!)) {
-    const separatorEnd = blankRunEnd(lines, runEnd + 1);
-    return {
-      start: starts[runStart]!,
-      end: separatorEnd + 1 < lines.length ? starts[separatorEnd + 1]! : text.length,
-    };
-  }
-  if (runStart > 0 && isBlankLine(lines[runStart - 1]!))
-    return { start: starts[blankRunStart(lines, runStart - 1)]!, end: afterBody };
-  return { start: starts[runStart]!, end: afterBody };
+  return ![
+    "word",
+    "bigWord",
+    "singleQuote",
+    "doubleQuote",
+    "backtick",
+    "paren",
+    "bracket",
+    "brace",
+    "paragraph",
+    "sentence",
+  ].includes(target);
 }
 
 function promptStructureTextObjectRange(
@@ -2568,8 +2359,8 @@ export function yankTextObject(
   const structureRange = promptStructureTextObjectRange(text, cursor, textObject, promptStructures);
   if (structureRange)
     return { type: "char", text: text.slice(structureRange.start, structureRange.endExclusive) };
-  if (textObject.target === "paragraph") {
-    const offsets = paragraphTextObjectOffsets(text, cursor, textObject.kind);
+  if (isOffsetTextObjectTarget(textObject.target)) {
+    const offsets = offsetTextObjectRange(text, cursor, textObject);
     if (!offsets || offsets.start >= offsets.end) return undefined;
     return { type: "char", text: text.slice(offsets.start, offsets.end) };
   }
@@ -2610,8 +2401,8 @@ export function deleteTextObject(
       changed: nextText !== text,
     };
   }
-  if (textObject.target === "paragraph") {
-    const offsets = paragraphTextObjectOffsets(text, cursor, textObject.kind);
+  if (isOffsetTextObjectTarget(textObject.target)) {
+    const offsets = offsetTextObjectRange(text, cursor, textObject);
     if (!offsets || offsets.start >= offsets.end)
       return { text, cursor: normalizeBufferPosition(text, cursor), changed: false };
     return deleteOffsetRange(text, offsets.start, offsets.end);
@@ -2637,8 +2428,8 @@ export function transformCaseTextObject(
       action,
     );
   }
-  if (textObject.target === "paragraph") {
-    const offsets = paragraphTextObjectOffsets(text, cursor, textObject.kind);
+  if (isOffsetTextObjectTarget(textObject.target)) {
+    const offsets = offsetTextObjectRange(text, cursor, textObject);
     if (!offsets || offsets.start >= offsets.end)
       return { text, cursor: normalizeBufferPosition(text, cursor), changed: false };
     return transformCaseOffsetRange(text, offsets.start, offsets.end, action);
@@ -2646,4 +2437,165 @@ export function transformCaseTextObject(
   const range = textObjectRange(text, cursor, textObject, promptStructures);
   if (!range) return { text, cursor: normalizeBufferPosition(text, cursor), changed: false };
   return transformCaseVisualRange(text, range.start, range.end, "char", action);
+}
+
+/** Offset range `[start, end)` that includes both delimiters of a pair. */
+export type DelimitedOffsetRange = { start: number; end: number };
+
+/**
+ * Nearest pair of `open`/`close` enclosing the cursor, nesting-aware and
+ * across lines. A cursor on either delimiter belongs to that pair. `count`
+ * selects the `count`th enclosing pair, innermost first.
+ */
+export function enclosingBracketRange(
+  text: string,
+  cursor: Position,
+  open: string,
+  close: string,
+  count = 1,
+): DelimitedOffsetRange | undefined {
+  let current = positionToOffset(text, cursor);
+  if (text[current] === close && current > 0) current--;
+  let range: DelimitedOffsetRange | undefined;
+  for (let index = 0; index < Math.max(1, count); index++) {
+    const start = bracketStartOffset(text, current, open, close);
+    const end = start === undefined ? undefined : bracketEndOffset(text, start, open, close);
+    if (start === undefined || end === undefined) return undefined;
+    range = { start, end };
+    current = start - 1;
+  }
+  return range;
+}
+
+export type SurroundTargetSpec =
+  | { type: "motion"; motion: VimMotion; count?: number }
+  | { type: "textObject"; textObject: VimTextObject }
+  | {
+      type: "charSearch";
+      kind: CharSearchKind;
+      char: string;
+      count?: number;
+      searchCursorOffset?: number;
+    }
+  | { type: "line"; count?: number };
+
+/** Text addressed by a surround target; linewise ranges cover whole lines. */
+export type SurroundRange = { start: number; end: number; linewise: boolean };
+
+function trimTrailingWhitespace(text: string, start: number, end: number): number {
+  let trimmed = end;
+  while (trimmed > start && isWhitespace(text[trimmed - 1])) trimmed--;
+  return trimmed;
+}
+
+function linewiseSurroundRange(
+  text: string,
+  startLine: number,
+  endLine: number,
+  trimBlankLines = true,
+): SurroundRange {
+  const lines = splitText(text);
+  const starts = lineStartOffsets(lines);
+  let last = endLine;
+  while (trimBlankLines && last > startLine && (lines[last] ?? "").trim() === "") last--;
+  return {
+    start: starts[startLine] ?? 0,
+    end: (starts[last] ?? 0) + (lines[last]?.length ?? 0),
+    linewise: true,
+  };
+}
+
+function lineFormSurroundRange(
+  text: string,
+  cursor: Position,
+  count: number,
+): SurroundRange | undefined {
+  const lines = splitText(text);
+  const pos = clampPosition(lines, cursor);
+  const starts = lineStartOffsets(lines);
+  const lastLine = Math.min(lines.length - 1, pos.line + Math.max(1, count) - 1);
+  const start = (starts[pos.line] ?? 0) + firstNonBlankColumn(lines[pos.line] ?? "");
+  const end = trimTrailingWhitespace(
+    text,
+    start,
+    (starts[lastLine] ?? 0) + (lines[lastLine]?.length ?? 0),
+  );
+  return end > start ? { start, end, linewise: false } : undefined;
+}
+
+function charwiseSurroundRange(
+  text: string,
+  range: { start: number; end: number } | undefined,
+): SurroundRange | undefined {
+  if (!range) return undefined;
+  const end = trimTrailingWhitespace(text, range.start, range.end);
+  return end > range.start ? { start: range.start, end, linewise: false } : undefined;
+}
+
+function textObjectSurroundRange(
+  text: string,
+  cursor: Position,
+  textObject: VimTextObject,
+  promptStructures?: ResolvedVimPromptStructures,
+): SurroundRange | undefined {
+  const range = textObjectRange(text, cursor, textObject, promptStructures);
+  if (!range) return undefined;
+  if (textObject.target === "paragraph")
+    return linewiseSurroundRange(text, range.start.line, range.end.line);
+  return charwiseSurroundRange(text, {
+    start: positionToOffset(text, range.start),
+    end: positionToOffset(text, range.end) + 1,
+  });
+}
+
+/**
+ * Range a surround target addresses. Charwise ranges exclude trailing
+ * whitespace; `j`, `k`, `gg`, `G`, and the paragraph text object are linewise.
+ */
+export function surroundRangeFor(
+  text: string,
+  cursor: Position,
+  target: SurroundTargetSpec,
+  promptStructures?: ResolvedVimPromptStructures,
+): SurroundRange | undefined {
+  if (target.type === "line") return lineFormSurroundRange(text, cursor, target.count ?? 1);
+  if (target.type === "textObject")
+    return textObjectSurroundRange(text, cursor, target.textObject, promptStructures);
+  if (target.type === "charSearch") {
+    return charwiseSurroundRange(
+      text,
+      charSearchOperatorOffsetRange(
+        text,
+        cursor,
+        target.kind,
+        target.char,
+        target.count ?? 1,
+        target.searchCursorOffset ?? 0,
+      ),
+    );
+  }
+  const lineRange = motionLineRange(text, cursor, target.motion, target.count ?? 1);
+  if (lineRange) return linewiseSurroundRange(text, lineRange.startLine, lineRange.endLine);
+  return charwiseSurroundRange(
+    text,
+    motionOffsetRange(text, cursor, target.motion, target.count ?? 1),
+  );
+}
+
+/** Range of a characterwise or linewise visual selection, for visual surround. */
+export function visualSurroundRange(
+  text: string,
+  anchor: Position,
+  cursor: Position,
+  linewise: boolean,
+): SurroundRange | undefined {
+  if (linewise) {
+    const range = normalizeLineRange(splitText(text), anchor, cursor);
+    return linewiseSurroundRange(text, range.startLine, range.endLine, false);
+  }
+  const range = normalizeRange(splitText(text), anchor, cursor);
+  return charwiseSurroundRange(text, {
+    start: positionToOffset(text, range.start),
+    end: Math.min(text.length, positionToOffset(text, range.end) + 1),
+  });
 }

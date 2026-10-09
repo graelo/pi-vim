@@ -22,20 +22,25 @@ tags:
 
 ## Context
 
-`git stash pop` can leave generated Graphify outputs conflicted while the real source change is already present. In this case, the conflicted files were all under `graphify-out/`:
+`git stash pop` can leave generated Graphify outputs conflicted while the real
+source change is already present. In this case, the conflicted files were all
+under `graphify-out/`:
 
 - `graphify-out/.graphify_labels.json`
 - `graphify-out/GRAPH_REPORT.md`
 - `graphify-out/graph.json`
 - `graphify-out/manifest.json`
 
-The useful work was in source/docs files. The graph files were derived artifacts with conflict markers, so hand-merging them would be slow and easy to corrupt.
+The useful work was in source/docs files. The graph files were derived artifacts
+with conflict markers, so hand-merging them would be slow and easy to corrupt.
 
 Session-history search found no relevant prior sessions for this exact problem.
 
 ## Guidance
 
-Treat generated graph artifacts as rebuildable output. Resolve the Git conflict state, regenerate the graph from the current checkout, then stage the regenerated files.
+Treat generated graph artifacts as rebuildable output. Resolve the Git conflict
+state, regenerate the graph from the current checkout, then stage the
+regenerated files.
 
 ```sh
 git checkout --theirs -- \
@@ -73,9 +78,12 @@ grep -RIn '<<<<<<<\|=======\|>>>>>>>' \
 
 Expected result: both commands produce no conflict output.
 
-If `graphify update .` creates a dated backup directory such as `graphify-out/2026-07-06/`, review whether it should be kept or removed before committing.
+If `graphify update .` creates a dated backup directory such as
+`graphify-out/2026-07-06/`, review whether it should be kept or removed before
+committing.
 
-After a conflicted `stash pop`, the stash entry remains. Drop it only after confirming the recovered checkout contains everything needed:
+After a conflicted `stash pop`, the stash entry remains. Drop it only after
+confirming the recovered checkout contains everything needed:
 
 ```sh
 git stash list
@@ -84,17 +92,25 @@ git stash drop stash@{0}
 
 ## Why This Matters
 
-Generated JSON/report conflicts are high-noise and low-value to merge manually. The stable source of truth is the current codebase plus `graphify update .`. Regenerating produces a consistent graph and avoids leaving partial conflict resolutions inside large generated files.
+Generated JSON/report conflicts are high-noise and low-value to merge manually.
+The stable source of truth is the current codebase plus `graphify update .`.
+Regenerating produces a consistent graph and avoids leaving partial conflict
+resolutions inside large generated files.
 
-The double `git add` is intentional: the first clears the unmerged index state so `graphify update .` can run against normal files; the second stages the regenerated artifacts.
+The double `git add` is intentional: the first clears the unmerged index state
+so `graphify update .` can run against normal files; the second stages the
+regenerated artifacts.
 
 ## When to Apply
 
-- `git status` shows `UU graphify-out/*` after `git stash pop` or `git stash apply`.
+- `git status` shows `UU graphify-out/*` after `git stash pop` or
+    `git stash apply`.
 - Conflict markers appear in generated Graphify files.
-- Source/docs changes are the real work, and graph artifacts only need to match the final checkout.
+- Source/docs changes are the real work, and graph artifacts only need to
+    match the final checkout.
 
-Do not use this blindly for hand-authored files. For source code, specs, docs, or OpenSpec files, inspect and merge the content deliberately.
+Do not use this blindly for hand-authored files. For source code, specs, docs,
+or OpenSpec files, inspect and merge the content deliberately.
 
 ## Examples
 
@@ -116,6 +132,9 @@ git diff --name-only --diff-filter=U
 
 ## Related
 
-- [Pi vimmode read-only popup shared seam](../architecture-patterns/pi-vimmode-read-only-popup-shared-seam-2026-06-12.md) — related only because it uses `graphify update .` as validation.
-- [Pi vimmode UI config single source of truth](../tooling-decisions/pi-vimmode-ui-config-single-source-of-truth-2026-05-27.md) — adjacent generated-artifact hygiene guidance.
-- [Do not touch agent settings JSON](../conventions/do-not-touch-agent-settings-json-2026-05-28.md) — adjacent workflow guardrail for not bulk-editing generated/config state.
+- [Pi vimmode read-only popup shared seam](../architecture-patterns/pi-vimmode-read-only-popup-shared-seam-2026-06-12.md)
+    — related only because it uses `graphify update .` as validation.
+- [Pi vimmode UI config single source of truth](../tooling-decisions/pi-vimmode-ui-config-single-source-of-truth-2026-05-27.md)
+    — adjacent generated-artifact hygiene guidance.
+- [Do not touch agent settings JSON](../conventions/do-not-touch-agent-settings-json-2026-05-28.md)
+    — adjacent workflow guardrail for not bulk-editing generated/config state.

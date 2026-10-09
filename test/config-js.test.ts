@@ -1,17 +1,18 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "vitest";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { resolveNormalCommand } from "../src/commands.ts";
-import { loadVimJsConfig } from "../src/config-js.ts";
+import { defaultJsConfigPath, loadVimJsConfig } from "../src/config-js.ts";
 import { loadVimOptions, resolveVimOptions } from "../src/config.ts";
 import { encodeMappingTokens } from "../src/mapping-scopes.ts";
+import { configDirs } from "./config-files.ts";
 
 function fixture() {
-  const dir = mkdtempSync(join(tmpdir(), "pi-vimmode-js-config-"));
-  const path = join(dir, "pi-vimmode.config.js");
+  const dir = mkdtempSync(join(tmpdir(), "pi-vim-js-config-"));
+  const path = join(dir, "config.js");
   return {
     path,
     write: (content: string) => writeFileSync(path, content),
@@ -27,7 +28,7 @@ function operations(result: Awaited<ReturnType<typeof loadVimJsConfig>>) {
 
 test("loads committed basic typed example without warnings", async () => {
   const result = await loadVimJsConfig(
-    join(dirname(fileURLToPath(import.meta.url)), "../examples/pi-vimmode.config.js"),
+    join(dirname(fileURLToPath(import.meta.url)), "../examples/pi-vim.config.js"),
   );
   expect(result.warnings).toEqual([]);
   expect(operations(result)).toEqual([
@@ -39,8 +40,23 @@ test("loads committed basic typed example without warnings", async () => {
   ]);
 });
 
+test("JS config path lives in the extension directory of the given agent dir", () => {
+  expect(defaultJsConfigPath("/agent")).toBe("/agent/extensions/pi-vim/config.js");
+});
+
+test("JS config path defaults to PI_CODING_AGENT_DIR", () => {
+  const previous = process.env.PI_CODING_AGENT_DIR;
+  process.env.PI_CODING_AGENT_DIR = "/custom-agent";
+  try {
+    expect(defaultJsConfigPath()).toBe("/custom-agent/extensions/pi-vim/config.js");
+  } finally {
+    if (previous === undefined) delete process.env.PI_CODING_AGENT_DIR;
+    else process.env.PI_CODING_AGENT_DIR = previous;
+  }
+});
+
 test("missing JS config is quiet", async () => {
-  const result = await loadVimJsConfig(join(tmpdir(), "missing-pi-vimmode.config.js"));
+  const result = await loadVimJsConfig(join(tmpdir(), "missing-pi-vim.config.js"));
   expect(result).toEqual({ kind: "missing", warnings: [] });
 });
 
@@ -50,33 +66,12 @@ test("loads vim.prompt builtins through string keybindings", async () => {
     f.write(`
 export default (vim) => {
   vim.keymap.set("i", "<A-w>", vim.prompt.deleteWordBackward());
-  vim.keymap.set("n", "zq", vim.prompt.reflow({ width: 88 }));
-  vim.keymap.set("v", "z>", vim.prompt.quote());
 };
 `);
     const result = await loadVimJsConfig(f.path);
     expect(result.warnings).toEqual([]);
     expect(operations(result)).toEqual([
       { kind: "map", mapping: { kind: "insert", action: "deleteWordBackward", key: "alt+w" } },
-      {
-        kind: "map",
-        mapping: {
-          kind: "action",
-          actionId: "prompt.transform.reflow",
-          key: "zq",
-          args: { width: 88 },
-          modes: ["normal"],
-        },
-      },
-      {
-        kind: "map",
-        mapping: {
-          kind: "action",
-          actionId: "prompt.transform.quote",
-          key: "z>",
-          modes: ["visual", "visualLine", "visualBlock"],
-        },
-      },
     ]);
   } finally {
     f.cleanup();
@@ -285,13 +280,11 @@ test("runtime prefixes exclude scoped unmap tombstones and normal-only commands"
 
   const tombstonedOperatorCommands = resolveVimOptions(
     {
-      piVimMode: {
-        keymap: {
-          commands: {
-            startSearch: ["zx"],
-            findChar: ["zy"],
-            repeatCharSearch: ["zz"],
-          },
+      keymap: {
+        commands: {
+          startSearch: ["zx"],
+          findChar: ["zy"],
+          repeatCharSearch: ["zz"],
         },
       },
     },
@@ -443,7 +436,7 @@ export default (vim) => {
     const resolved = resolveVimOptions(undefined, undefined, result);
     expect(resolved.warnings).toContainEqual(
       expect.stringContaining(
-        "global JS config: piVimMode.keymap.insert.deleteWordBackward contains unsupported printable text sequence",
+        "global JS config: keymap.insert.deleteWordBackward contains unsupported printable text sequence",
       ),
     );
     expect(resolved.plan.scopes.insert.exact).not.toHaveProperty("alt+xalt+y");
@@ -495,9 +488,9 @@ test("vim.g.mapleader uses final assignment for leader lhs without expanding rhs
     f.write(`
 export default (vim) => {
   vim.g.mapleader = ",";
-  vim.keymap.set("n", "<Leader>q", vim.prompt.quote());
+  vim.keymap.set("n", "<Leader>q", vim.action.operator.uppercase());
   vim.g.mapleader = " ";
-  vim.keymap.set("n", "<leader>r", vim.prompt.reflow());
+  vim.keymap.set("n", "<leader>r", vim.action.operator.lowercase());
   vim.keymap.set("n", "<leader>x", "<leader>");
 };
 `);
@@ -508,10 +501,9 @@ export default (vim) => {
       {
         kind: "map",
         mapping: {
-          kind: "action",
-          actionId: "prompt.transform.quote",
+          kind: "descriptor",
+          actionId: "operator.uppercase",
           key: encodeMappingTokens(["<leader>", "q"]),
-          args: undefined,
           modes: ["normal"],
         },
       },
@@ -519,10 +511,9 @@ export default (vim) => {
       {
         kind: "map",
         mapping: {
-          kind: "action",
-          actionId: "prompt.transform.reflow",
+          kind: "descriptor",
+          actionId: "operator.lowercase",
           key: encodeMappingTokens(["<leader>", "r"]),
-          args: {},
           modes: ["normal"],
         },
       },
@@ -539,10 +530,7 @@ export default (vim) => {
 
     const resolved = resolveVimOptions(undefined, undefined, loaded);
     expect(resolved.options.leader).toBe(" ");
-    expect(resolved.options.keymap?.actions.accepted.map((binding) => binding.key)).toEqual([
-      " q",
-      " r",
-    ]);
+    expect(resolved.options.keymap?.scoped.map((binding) => binding.key)).toEqual([" q", " r"]);
     expect(resolved.options.keymap?.remaps.accepted).toEqual([
       { key: " x", inputs: ["leader"], modes: ["normal"] },
     ]);
@@ -559,7 +547,7 @@ export default (vim) => {
   vim.g.mapleader = ",";
   vim.g.mapleader = "too-long";
   if (vim.g.mapleader !== ",") throw new Error("invalid write replaced staged leader");
-  vim.keymap.set("n", "<leader>q", vim.prompt.quote());
+  vim.keymap.set("n", "<leader>q", vim.action.operator.uppercase());
   vim.g.mapleader = null;
 };
 `);
@@ -571,82 +559,16 @@ export default (vim) => {
     const resolved = resolveVimOptions(undefined, undefined, loaded);
     expect(resolved.options.leader).toBeUndefined();
     expect(resolved.options.keymap?.leader).toBeUndefined();
-    expect(resolved.options.keymap?.actions.accepted).toEqual([]);
+    expect(resolved.options.keymap?.scoped).toEqual([]);
   } finally {
     f.cleanup();
   }
 });
 
-test("JS leader additions stay raw through project override and clear", () => {
-  const jsConfig = {
-    appendKeymap: true,
-    warnings: [],
-    partial: {
-      leader: ",",
-      keymap: {
-        actions: {
-          "prompt.transform.reflow": [{ key: "<leader>j" }],
-        },
-      },
-    },
-  };
-  const moved = resolveVimOptions(
-    {
-      piVimMode: {
-        leader: ",",
-        keymap: { actions: { "prompt.transform.reflow": ["<leader>g"] } },
-      },
-    },
-    { piVimMode: { leader: " " } },
-    jsConfig,
-  );
-  expect(moved.options.keymap?.actions.accepted.map((binding) => binding.key)).toEqual([
-    " g",
-    " j",
-  ]);
-
-  const cleared = resolveVimOptions(
-    {
-      piVimMode: {
-        leader: ",",
-        keymap: { actions: { "prompt.transform.reflow": ["<leader>g"] } },
-      },
-    },
-    { piVimMode: { leader: null, keymap: { actions: { "prompt.transform.reflow": [] } } } },
-    jsConfig,
-  );
-  expect(cleared.options.keymap?.actions.accepted).toEqual([]);
-  expect(cleared.options.keymap?.leader).toBeUndefined();
-});
-
-test("builder mappings add to existing preset bindings instead of replacing them", () => {
-  const result = resolveVimOptions(
-    { piVimMode: { keymap: { actionPresets: ["paragraph-editing"] } } },
-    undefined,
-    {
-      appendKeymap: true,
-      warnings: [],
-      partial: {
-        keymap: {
-          actions: {
-            "prompt.transform.reflow": [{ key: "zq" }],
-          },
-        },
-      },
-    },
-  );
-
-  const reflowKeys = result.options.keymap?.actions.accepted
-    .filter((binding) => binding.actionId === "prompt.transform.reflow")
-    .map((binding) => binding.key);
-  expect(result.warnings).toEqual([]);
-  expect(reflowKeys).toEqual(["gq", "zq"]);
-});
-
 test("project JSON can override JS string remaps", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVimMode: { keymap: { commands: { insertBefore: ["z"] } } } },
+    { keymap: { commands: { insertBefore: ["z"] } } },
     {
       appendKeymap: true,
       warnings: [],
@@ -665,11 +587,7 @@ test("project JSON can override JS string remaps", () => {
 test("project exact action replaces inherited JS remap", () => {
   const result = resolveVimOptions(
     undefined,
-    {
-      piVimMode: {
-        keymap: { actions: { "prompt.transform.quote": [{ key: "zq", modes: ["normal"] }] } },
-      },
-    },
+    { keymap: { commands: { redo: ["zq"] } } },
     {
       kind: "success",
       warnings: [],
@@ -683,13 +601,13 @@ test("project exact action replaces inherited JS remap", () => {
   );
 
   expect(result.options.keymap?.remaps.accepted).toEqual([]);
-  expect(result.plan.scopes.normal.exact.zq?.id).toBe("prompt.transform.quote");
+  expect(result.plan.scopes.normal.exact.zq?.id).toBe("command.redo");
 });
 
 test("project empty action removes JS descriptor across canonical scopes", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVimMode: { keymap: { motions: { wordForward: [] } } } },
+    { keymap: { motions: { wordForward: [] } } },
     {
       kind: "success",
       warnings: [],
@@ -709,6 +627,34 @@ test("project empty action removes JS descriptor across canonical scopes", () =>
 
   expect(result.plan.scopes.normal.exact.H).toBeUndefined();
   expect(result.plan.scopes.operatorPending.exact.H).toBeUndefined();
+});
+
+test("project empty insert action removes JS insert binding", () => {
+  const result = resolveVimOptions(
+    undefined,
+    { keymap: { insert: { deleteWordBackward: [] } } },
+    {
+      kind: "success",
+      warnings: [],
+      operations: [
+        { kind: "map", mapping: { kind: "insert", action: "deleteWordBackward", key: "alt+w" } },
+      ],
+    },
+  );
+
+  expect(result.warnings).toEqual([]);
+  expect(result.options.keymap!.insert.deleteWordBackward).toEqual([]);
+  expect(result.plan.scopes.insert.exact["alt+w"]).toBeUndefined();
+});
+
+test("insert action with only rejected keys keeps inherited bindings", () => {
+  const result = resolveVimOptions(
+    { keymap: { insert: { deleteWordBackward: ["ctrl+w"] } } },
+    { keymap: { insert: { deleteWordBackward: ["enter"] } } },
+  );
+
+  expect(result.warnings.some((warning) => warning.includes("protected key enter"))).toBe(true);
+  expect(result.options.keymap!.insert.deleteWordBackward).toEqual(["ctrl+w"]);
 });
 
 test("operator-pending unmaps suppress inherited motions and text objects", () => {
@@ -733,7 +679,7 @@ test("operator-pending unmaps suppress inherited motions and text objects", () =
 test("project exact mappings restore lower JS unmaps", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVimMode: { keymap: { motions: { wordForward: ["w"] } } } },
+    { keymap: { motions: { wordForward: ["w"] } } },
     {
       kind: "success",
       warnings: [],
@@ -747,7 +693,7 @@ test("project exact mappings restore lower JS unmaps", () => {
 test("project action replaces JS descriptor across canonical scopes", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVimMode: { keymap: { motions: { wordForward: ["L"] } } } },
+    { keymap: { motions: { wordForward: ["L"] } } },
     {
       kind: "success",
       warnings: [],
@@ -772,34 +718,19 @@ test("project action replaces JS descriptor across canonical scopes", () => {
 });
 
 test("later JS remap replaces lower action in only claimed scopes", () => {
-  const result = resolveVimOptions(
-    {
-      piVimMode: {
-        keymap: {
-          actions: {
-            "prompt.transform.quote": [{ key: "zq", modes: ["normal", "visual"] }],
-          },
-        },
+  const result = resolveVimOptions({ keymap: { operators: { uppercase: ["zq"] } } }, undefined, {
+    kind: "success",
+    warnings: [],
+    operations: [
+      {
+        kind: "map",
+        mapping: { kind: "remap", key: "zq", inputs: ["l"], modes: ["normal"] },
       },
-    },
-    undefined,
-    {
-      kind: "success",
-      warnings: [],
-      operations: [
-        {
-          kind: "map",
-          mapping: { kind: "remap", key: "zq", inputs: ["l"], modes: ["normal"] },
-        },
-      ],
-    },
-  );
+    ],
+  });
 
   expect(result.plan.scopes.normal.exact.zq?.kind).toBe("remap");
-  expect(result.plan.scopes.visual.exact.zq?.kind).toBe("action");
-  expect(result.options.keymap?.actions.accepted).toEqual([
-    expect.objectContaining({ actionId: "prompt.transform.quote", modes: ["visual"] }),
-  ]);
+  expect(result.plan.scopes.visual.exact.zq?.id).toBe("operator.uppercase");
   expect(result.options.keymap?.remaps.accepted).toEqual([
     { key: "zq", inputs: ["l"], modes: ["normal"] },
   ]);
@@ -807,55 +738,53 @@ test("later JS remap replaces lower action in only claimed scopes", () => {
 
 test("action bindings on same key survive in disjoint modes", () => {
   const result = resolveVimOptions(undefined, undefined, {
-    appendKeymap: true,
+    kind: "success",
     warnings: [],
-    partial: {
-      keymap: {
-        actions: {
-          "prompt.transform.quote": [{ key: "zq", modes: ["normal"] }],
-          "prompt.transform.unquote": [{ key: "zq", modes: ["visual"] }],
+    operations: [
+      {
+        kind: "map",
+        mapping: {
+          kind: "descriptor",
+          actionId: "operator.uppercase",
+          key: "zq",
+          modes: ["normal"],
         },
       },
-    },
+      {
+        kind: "map",
+        mapping: {
+          kind: "descriptor",
+          actionId: "operator.lowercase",
+          key: "zq",
+          modes: ["visual"],
+        },
+      },
+    ],
   });
 
   expect(result.warnings).toEqual([]);
-  expect(result.options.keymap?.actions.accepted).toEqual([
-    {
-      actionId: "prompt.transform.quote",
-      key: "zq",
-      args: { action: "quote" },
-      modes: ["normal"],
-    },
-    {
-      actionId: "prompt.transform.unquote",
-      key: "zq",
-      args: { action: "unquote" },
-      modes: ["visual"],
-    },
+  expect(result.options.keymap?.scoped).toEqual([
+    { actionId: "operator.uppercase", key: "zq", modes: ["normal"] },
+    { actionId: "operator.lowercase", key: "zq", modes: ["visual"] },
   ]);
 });
 
 test("plan preflights remap strict-prefix conflicts in concrete scope", () => {
-  const result = resolveVimOptions(
-    { piVimMode: { keymap: { commands: { undo: ["za"] } } } },
-    undefined,
-    {
-      kind: "success",
-      warnings: [],
-      operations: [
-        {
-          kind: "map",
-          mapping: {
-            kind: "remap",
-            key: "zab",
-            inputs: ["l"],
-            modes: ["normal", "visual"],
-          },
+  const result = resolveVimOptions({ keymap: { commands: { undo: ["za"] } } }, undefined, {
+    kind: "success",
+    warnings: [],
+    operations: [
+      {
+        kind: "map",
+        mapping: {
+          kind: "remap",
+          key: "zab",
+          inputs: ["l"],
+          modes: ["normal", "visual"],
         },
-      ],
-    },
-  );
+      },
+    ],
+  });
 
   expect(result.plan.scopes.normal.exact.za?.id).toBe("command.undo");
   expect(result.plan.scopes.normal.exact.zab).toBeUndefined();
@@ -869,20 +798,16 @@ test("plan preflights remap strict-prefix conflicts in concrete scope", () => {
 });
 
 test("printable plus sequences participate in strict-prefix preflight", () => {
-  const result = resolveVimOptions(
-    { piVimMode: { keymap: { commands: { undo: ["g+"] } } } },
-    undefined,
-    {
-      kind: "success",
-      warnings: [],
-      operations: [
-        {
-          kind: "map",
-          mapping: { kind: "remap", key: "g+x", inputs: ["l"], modes: ["normal"] },
-        },
-      ],
-    },
-  );
+  const result = resolveVimOptions({ keymap: { commands: { undo: ["g+"] } } }, undefined, {
+    kind: "success",
+    warnings: [],
+    operations: [
+      {
+        kind: "map",
+        mapping: { kind: "remap", key: "g+x", inputs: ["l"], modes: ["normal"] },
+      },
+    ],
+  });
 
   expect(result.plan.scopes.normal.exact["g+"]?.id).toBe("command.undo");
   expect(result.plan.scopes.normal.exact["g+x"]).toBeUndefined();
@@ -1089,8 +1014,8 @@ test("latest same-scope JS exact mapping wins", () => {
       {
         kind: "map",
         mapping: {
-          kind: "action",
-          actionId: "prompt.transform.quote",
+          kind: "descriptor",
+          actionId: "operator.uppercase",
           key: "zq",
           modes: ["normal"],
         },
@@ -1098,10 +1023,9 @@ test("latest same-scope JS exact mapping wins", () => {
       {
         kind: "map",
         mapping: {
-          kind: "action",
-          actionId: "prompt.transform.reflow",
+          kind: "descriptor",
+          actionId: "operator.lowercase",
           key: "zq",
-          args: {},
           modes: ["normal"],
         },
       },
@@ -1109,27 +1033,18 @@ test("latest same-scope JS exact mapping wins", () => {
   });
 
   expect(result.warnings).toEqual([]);
-  expect(result.options.keymap?.actions.accepted).toEqual([
-    {
-      actionId: "prompt.transform.reflow",
-      key: "zq",
-      args: { action: "reflow" },
-      modes: ["normal"],
-    },
+  expect(result.options.keymap?.scoped).toEqual([
+    { actionId: "operator.lowercase", key: "zq", modes: ["normal"] },
   ]);
-  expect(result.plan.scopes.normal.exact.zq?.id).toBe("prompt.transform.reflow");
+  expect(result.plan.scopes.normal.exact.zq?.id).toBe("operator.lowercase");
 });
 
 test("project leader actions override lower JS remaps after final expansion", () => {
   const result = resolveVimOptions(
     undefined,
     {
-      piVimMode: {
-        leader: ",",
-        keymap: {
-          actions: { "prompt.transform.quote": [{ key: "<leader>u", modes: ["normal"] }] },
-        },
-      },
+      leader: ",",
+      keymap: { commands: { redo: ["<leader>u"] } },
     },
     {
       kind: "success",
@@ -1144,9 +1059,7 @@ test("project leader actions override lower JS remaps after final expansion", ()
   );
 
   expect(result.options.keymap?.remaps.accepted).toEqual([]);
-  expect(result.plan.scopes.normal.exact[encodeMappingTokens([",", "u"])]?.id).toBe(
-    "prompt.transform.quote",
-  );
+  expect(result.plan.scopes.normal.exact[encodeMappingTokens([",", "u"])]?.id).toBe("command.redo");
 });
 
 test("JS escape descriptors stay in selected scopes", () => {
@@ -1175,7 +1088,7 @@ test("JS escape descriptors stay in selected scopes", () => {
 test("project command mappings replace JS descriptors in visual scopes", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVimMode: { keymap: { commands: { toggleCase: ["Q"] } } } },
+    { keymap: { commands: { toggleCase: ["Q"] } } },
     {
       kind: "success",
       warnings: [],
@@ -1200,7 +1113,7 @@ test("project command mappings replace JS descriptors in visual scopes", () => {
 test("project escape mappings override lower JS mappings in escape scopes", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVimMode: { keymap: { escape: ["<D-j>"] } } },
+    { keymap: { escape: ["<D-j>"] } },
     {
       kind: "success",
       warnings: [],
@@ -1232,7 +1145,7 @@ test("project escape mappings override lower JS mappings in escape scopes", () =
 test("project escape array replaces lower JS escape descriptors", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVimMode: { keymap: { escape: ["<C-[>"] } } },
+    { keymap: { escape: ["<C-[>"] } },
     {
       kind: "success",
       warnings: [],
@@ -1299,26 +1212,6 @@ test("invalid remap modes are dropped", () => {
   expect(result.options.keymap?.remaps.accepted).toEqual([]);
 });
 
-test("project JSON can still clear JS-added bindings", () => {
-  const result = resolveVimOptions(
-    undefined,
-    { piVimMode: { keymap: { actions: { "prompt.transform.reflow": [] } } } },
-    {
-      appendKeymap: true,
-      warnings: [],
-      partial: {
-        keymap: {
-          actions: {
-            "prompt.transform.reflow": [{ key: "zq" }],
-          },
-        },
-      },
-    },
-  );
-
-  expect(result.options.keymap?.actions.accepted).toEqual([]);
-});
-
 test("string rhs maps to replayed key inputs", async () => {
   const f = fixture();
   try {
@@ -1378,23 +1271,20 @@ test("per-binding options survive descriptor and replay compilation", async () =
   try {
     f.write(`
 export default (vim) => {
-  vim.keymap.set("n", "<C-p>", vim.prompt.quote(), { allowProtected: true, desc: "Quote" });
+  vim.keymap.set("n", "<C-p>", vim.action.operator.uppercase(), { allowProtected: true, desc: "Upper" });
   vim.keymap.set("i", "<C-v>", vim.prompt.deleteWordBackward(), { allowProtected: true });
   vim.keymap.set("n", "<C-t>", "j", { allowProtected: true, desc: "Replay down" });
-  vim.keymap.set("n", "<C-g>", vim.prompt.reflow());
+  vim.keymap.set("n", "<C-g>", vim.action.operator.lowercase());
 };`);
     const loaded = await loadVimJsConfig(f.path);
     const resolved = resolveVimOptions(undefined, undefined, loaded);
-    expect(resolved.options.keymap?.actions.accepted).toEqual([
-      {
-        actionId: "prompt.transform.quote",
-        key: "ctrl+p",
-        args: { action: "quote" },
-        modes: ["normal"],
-        allowProtected: true,
-        desc: "Quote",
-      },
-    ]);
+    expect(resolved.options.keymap?.scoped).toContainEqual({
+      actionId: "operator.uppercase",
+      key: "ctrl+p",
+      modes: ["normal"],
+      allowProtected: true,
+      desc: "Upper",
+    });
     expect(resolved.options.keymap?.insert.deleteWordBackward).toContain("ctrl+v");
     expect(resolved.options.keymap?.remaps.accepted).toContainEqual({
       key: "ctrl+t",
@@ -1407,7 +1297,7 @@ export default (vim) => {
     expect(resolved.warnings).toEqual(
       expect.arrayContaining([expect.stringContaining("protected key ctrl+g")]),
     );
-    expect(resolved.options.keymap?.actions.accepted).not.toEqual(
+    expect(resolved.options.keymap?.scoped).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ key: "ctrl+g" })]),
     );
   } finally {
@@ -1422,7 +1312,7 @@ test("protected lhs warns without registering", async () => {
 export default (vim) => {
   vim.g.mapleader = ",";
   vim.keymap.set("n", "<C-p>", "j");
-  vim.keymap.set("n", "<leader><C-p>", vim.prompt.quote());
+  vim.keymap.set("n", "<leader><C-p>", vim.action.operator.uppercase());
 };
 `);
     const result = await loadVimJsConfig(f.path);
@@ -1457,7 +1347,7 @@ test("unknown leaf writes warn without discarding valid staged siblings", async 
 export default (vim) => {
   vim.g.mapleader = ",";
   vim.g.unknown = true;
-  vim.keymap.set("n", "zq", vim.prompt.quote());
+  vim.keymap.set("n", "zq", vim.action.operator.uppercase());
 };
 `);
     const loaded = await loadVimJsConfig(f.path);
@@ -1467,10 +1357,9 @@ export default (vim) => {
       {
         kind: "map",
         mapping: {
-          kind: "action",
-          actionId: "prompt.transform.quote",
+          kind: "descriptor",
+          actionId: "operator.uppercase",
           key: "zq",
-          args: undefined,
           modes: ["normal"],
         },
       },
@@ -1487,8 +1376,8 @@ test("stages preset and scoped unmap operations in source order", async () => {
 export default (vim) => {
   vim.preset = "minimal";
   vim.g.mapleader = ",";
-  vim.keymap.set("n", "zq", vim.prompt.quote());
-  vim.keymap.set("v", "zq", vim.prompt.reflow());
+  vim.keymap.set("n", "zq", vim.action.operator.uppercase());
+  vim.keymap.set("v", "zq", vim.action.operator.lowercase());
   vim.keymap.set("n", "zq", null);
 };
 `);
@@ -1499,20 +1388,18 @@ export default (vim) => {
       {
         kind: "map",
         mapping: {
-          kind: "action",
-          actionId: "prompt.transform.quote",
+          kind: "descriptor",
+          actionId: "operator.uppercase",
           key: "zq",
-          args: undefined,
           modes: ["normal"],
         },
       },
       {
         kind: "map",
         mapping: {
-          kind: "action",
-          actionId: "prompt.transform.reflow",
+          kind: "descriptor",
+          actionId: "operator.lowercase",
           key: "zq",
-          args: {},
           modes: ["visual", "visualLine", "visualBlock"],
         },
       },
@@ -1522,11 +1409,10 @@ export default (vim) => {
     const resolved = resolveVimOptions(undefined, undefined, loaded);
     expect(resolved.options.macros?.enabled).toBe(false);
     expect(resolved.options.marks?.enabled).toBe(false);
-    expect(resolved.options.keymap?.actions.accepted).toEqual([
+    expect(resolved.options.keymap?.scoped).toEqual([
       {
-        actionId: "prompt.transform.reflow",
+        actionId: "operator.lowercase",
         key: "zq",
-        args: { action: "reflow" },
         modes: ["visual", "visualLine", "visualBlock"],
       },
     ]);
@@ -1545,10 +1431,8 @@ test("leader-form unmaps suppress inherited bindings after expansion", async () 
     const loaded = await loadVimJsConfig(f.path);
     const resolved = resolveVimOptions(
       {
-        piVimMode: {
-          leader: ",",
-          keymap: { commands: { undo: ["<leader>x"] } },
-        },
+        leader: ",",
+        keymap: { commands: { undo: ["<leader>x"] } },
       },
       undefined,
       loaded,
@@ -1587,9 +1471,7 @@ test("project text-object bindings replace matching JS descriptors", () => {
   const resolved = resolveVimOptions(
     undefined,
     {
-      piVimMode: {
-        keymap: { textObjects: { kinds: { inner: ["z"] } } },
-      },
+      keymap: { textObjects: { kinds: { inner: ["z"] } } },
     },
     {
       kind: "success",
@@ -1610,33 +1492,6 @@ test("project text-object bindings replace matching JS descriptors", () => {
   expect(resolved.options.keymap?.scoped).not.toEqual(
     expect.arrayContaining([expect.objectContaining({ actionId: "textObject.kind.inner" })]),
   );
-});
-
-test("unmaps inherited mappings in only selected scopes", async () => {
-  const f = fixture();
-  try {
-    f.write(`export default (vim) => vim.keymap.set("n", "zq", null);`);
-    const loaded = await loadVimJsConfig(f.path);
-    const resolved = resolveVimOptions(
-      {
-        piVimMode: {
-          keymap: { actions: { "prompt.transform.quote": [{ key: "zq" }] } },
-        },
-      },
-      undefined,
-      loaded,
-    );
-    expect(resolved.options.keymap?.actions.accepted).toEqual([
-      {
-        actionId: "prompt.transform.quote",
-        key: "zq",
-        args: { action: "quote" },
-        modes: ["visual", "visualLine", "visualBlock"],
-      },
-    ]);
-  } finally {
-    f.cleanup();
-  }
 });
 
 test("unmaps inherited grammar in only selected scopes", async () => {
@@ -1662,16 +1517,11 @@ test("keeps mappings declared after an unmap", async () => {
   try {
     f.write(`export default (vim) => {
   vim.keymap.set("n", "zq", null);
-  vim.keymap.set("n", "zq", vim.prompt.quote());
+  vim.keymap.set("n", "zq", vim.action.operator.uppercase());
 };`);
     const resolved = resolveVimOptions(undefined, undefined, await loadVimJsConfig(f.path));
-    expect(resolved.options.keymap?.actions.accepted).toEqual([
-      {
-        actionId: "prompt.transform.quote",
-        key: "zq",
-        args: { action: "quote" },
-        modes: ["normal"],
-      },
+    expect(resolved.options.keymap?.scoped).toEqual([
+      { actionId: "operator.uppercase", key: "zq", modes: ["normal"] },
     ]);
   } finally {
     f.cleanup();
@@ -1680,7 +1530,7 @@ test("keeps mappings declared after an unmap", async () => {
 
 test("re-evaluates root config on every load", async () => {
   const f = fixture();
-  const loadKey = "__piVimModeRootLoadCount";
+  const loadKey = "__piVimRootLoadCount";
   try {
     f.write(`
 export default (vim) => {
@@ -1726,14 +1576,10 @@ export default async (vim) => {
       warnings: ["global JS config: failed to load (export failure)"],
     });
 
-    const resolved = resolveVimOptions(
-      { piVimMode: { startMode: "normal" } },
-      { piVimMode: { leader: " " } },
-      failedExport,
-    );
+    const resolved = resolveVimOptions({ startMode: "normal" }, { leader: " " }, failedExport);
     expect(resolved.options.startMode).toBe("normal");
     expect(resolved.options.leader).toBe(" ");
-    expect(resolved.options.keymap?.actions.accepted).toEqual([]);
+    expect(resolved.options.keymap?.scoped).toEqual([]);
   } finally {
     importFailure.cleanup();
     syntaxFailure.cleanup();
@@ -1744,7 +1590,7 @@ export default async (vim) => {
 test("closes retained APIs after synchronous and asynchronous exports", async () => {
   for (const asyncExport of [false, true]) {
     const f = fixture();
-    const retainedKey = `__piVimModeRetained${asyncExport}`;
+    const retainedKey = `__piVimRetained${asyncExport}`;
     try {
       f.write(`
 export default ${asyncExport ? "async " : ""}(vim) => {
@@ -1775,7 +1621,7 @@ export default ${asyncExport ? "async " : ""}(vim) => {
 
 test("closes synchronous exports before queued writes run", async () => {
   const f = fixture();
-  const errorKey = "__piVimModeQueuedWriteError";
+  const errorKey = "__piVimQueuedWriteError";
   try {
     f.write(`
 export default (vim) => {
@@ -1804,7 +1650,7 @@ test("uses global JSON leader as staged read seed and freezes operation snapshot
     f.write(`
 export default (vim) => {
   if (vim.g.mapleader !== ",") throw new Error("missing global seed");
-  vim.keymap.set("n", "zq", vim.prompt.quote());
+  vim.keymap.set("n", "zq", vim.action.operator.uppercase());
 };
 `);
     const loaded = await loadVimJsConfig(f.path, { leader: "," });
@@ -1820,19 +1666,17 @@ export default (vim) => {
 });
 
 test("applies presets to staged reads and replaces UI mode label records", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "pi-vimmode-js-ui-labels-"));
+  const dirs = configDirs("pi-vim-js-ui-labels-");
   try {
-    const globalPath = join(dir, "settings.json");
-    const jsConfigPath = join(dir, "pi-vimmode.config.js");
+    const globalPath = dirs.globalPath;
+    const jsConfigPath = dirs.jsConfigPath;
     writeFileSync(
       globalPath,
       JSON.stringify({
-        piVimMode: {
-          ui: {
-            mode: {
-              labels: { insert: "GLOBAL-INSERT" },
-              narrowLabels: { insert: "GI" },
-            },
+        ui: {
+          mode: {
+            labels: { insert: "GLOBAL-INSERT" },
+            narrowLabels: { insert: "GI" },
           },
         },
       }),
@@ -1848,8 +1692,9 @@ test("applies presets to staged reads and replaces UI mode label records", async
     );
 
     const result = await loadVimOptions({
-      globalSettingsPath: globalPath,
-      projectSettingsPath: join(dir, "missing-project-settings.json"),
+      agentDir: dirs.agentDir,
+      cwd: dirs.cwd,
+      isProjectTrusted: true,
       jsConfigPath,
     });
     expect(result.options.ui?.mode.labels).toMatchObject({ normal: "JS-NORMAL" });
@@ -1858,7 +1703,7 @@ test("applies presets to staged reads and replaces UI mode label records", async
     expect(Object.keys(result.options.ui?.mode.narrowLabels ?? {})).toEqual(["normal"]);
     expect(result.warnings).toEqual([]);
   } finally {
-    rmSync(dir, { recursive: true, force: true });
+    dirs.cleanup();
   }
 });
 
@@ -1884,63 +1729,14 @@ test("replays preset and leaf operations in source order", () => {
   expect(afterPreset.options.startMode).toBe("insert");
 });
 
-test("replaces action presets on each assignment", async () => {
-  const f = fixture();
-  try {
-    f.write(`export default (vim) => {
-  vim.keymap.set("n", "za", vim.prompt.quote());
-  vim.keymap.actionPresets = ["paragraph-editing"];
-  vim.keymap.set("n", "zq", vim.prompt.reflow());
-  vim.keymap.actionPresets = [];
-};`);
-    const result = await loadVimOptions({
-      globalSettingsPath: join(tmpdir(), "missing-settings.json"),
-      projectSettingsPath: join(tmpdir(), "missing-project-settings.json"),
-      jsConfigPath: f.path,
-    });
-
-    expect(result.options.keymap?.actions.accepted).toEqual([
-      {
-        key: "za",
-        actionId: "prompt.transform.quote",
-        args: { action: "quote" },
-        modes: ["normal"],
-      },
-      {
-        key: "zq",
-        actionId: "prompt.transform.reflow",
-        args: { action: "reflow" },
-        modes: ["normal"],
-      },
-    ]);
-    expect(result.warnings).toEqual([]);
-  } finally {
-    f.cleanup();
-  }
-});
-
-test("JS action preset assignment replaces global JSON preset bindings", () => {
-  const result = resolveVimOptions(
-    { piVimMode: { keymap: { actionPresets: ["paragraph-editing"] } } },
-    undefined,
-    {
-      kind: "success",
-      warnings: [],
-      operations: [{ kind: "leaf", path: "keymap.actionPresets", value: [] }],
-    },
-  );
-
-  expect(result.options.keymap?.actions.accepted).toEqual([]);
-});
-
 test("exposes validated domain options from global JSON without project settings", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "pi-vimmode-js-options-"));
+  const dirs = configDirs("pi-vim-js-options-");
   try {
-    const globalPath = join(dir, "settings.json");
-    const projectPath = join(dir, "project-settings.json");
-    const jsConfigPath = join(dir, "pi-vimmode.config.js");
-    writeFileSync(globalPath, JSON.stringify({ piVimMode: { startMode: "normal" } }));
-    writeFileSync(projectPath, JSON.stringify({ piVimMode: { startMode: "insert" } }));
+    const globalPath = dirs.globalPath;
+    const projectPath = dirs.projectPath;
+    const jsConfigPath = dirs.jsConfigPath;
+    writeFileSync(globalPath, JSON.stringify({ startMode: "normal" }));
+    writeFileSync(projectPath, JSON.stringify({ startMode: "insert" }));
     writeFileSync(
       jsConfigPath,
       `export default (vim) => {
@@ -1953,15 +1749,14 @@ test("exposes validated domain options from global JSON without project settings
   vim.exCommand.autocomplete = false;
   vim.feedback.noop = "status";
   vim.promptStructures.targets = { codeFence: false };
-  vim.promptTransforms.commands = { quote: ["quoteit"] };
-  vim.keymap.actionPresets = ["paragraph-editing"];
   vim.keymap.operatorMotions = { delete: ["wordForward"] };
 };`,
     );
 
     const result = await loadVimOptions({
-      globalSettingsPath: globalPath,
-      projectSettingsPath: projectPath,
+      agentDir: dirs.agentDir,
+      cwd: dirs.cwd,
+      isProjectTrusted: true,
       jsConfigPath,
     });
     expect(result.options.startMode).toBe("insert");
@@ -1974,13 +1769,11 @@ test("exposes validated domain options from global JSON without project settings
     expect(result.options.feedback?.noop).toBe("status");
     expect(result.options.promptStructures?.targets).toMatchObject({ codeFence: false });
     expect(Object.keys(result.options.promptStructures?.targets ?? [])).toEqual(["codeFence"]);
-    expect(result.options.promptTransforms?.commands).toMatchObject({ quote: ["quoteit"] });
-    expect(Object.keys(result.options.promptTransforms?.commands ?? [])).toEqual(["quote"]);
     expect(result.options.keymap?.operatorMotions).toMatchObject({ delete: ["wordForward"] });
     expect(Object.keys(result.options.keymap?.operatorMotions ?? [])).toEqual(["delete"]);
     expect(result.warnings).toEqual([]);
   } finally {
-    rmSync(dir, { recursive: true, force: true });
+    dirs.cleanup();
   }
 });
 
@@ -1995,7 +1788,6 @@ test("exposes every finite option path through trusted JavaScript", async () => 
   vim.cursor.visual = "block";
   vim.cursor.visualLine = "underline";
   vim.cursor.visualBlock = "bar";
-  vim.keymap.actionPresets = [];
   vim.keymap.operatorMotions = { delete: ["wordForward"] };
   vim.ui.status.enabled = false;
   vim.ui.status.position = "right";
@@ -2023,13 +1815,10 @@ test("exposes every finite option path through trusted JavaScript", async () => 
   vim.feedback.noop = "status";
   vim.promptStructures.enabled = false;
   vim.promptStructures.targets = { codeFence: false };
-  vim.promptTransforms.enabled = false;
-  vim.promptTransforms.actions = { quote: false };
-  vim.promptTransforms.commands = { quote: ["quoteit"] };
 };`);
     const result = await loadVimOptions({
-      globalSettingsPath: join(tmpdir(), "missing-settings.json"),
-      projectSettingsPath: join(tmpdir(), "missing-project-settings.json"),
+      agentDir: dirname(f.path),
+      cwd: dirname(f.path),
       jsConfigPath: f.path,
     });
 
@@ -2063,11 +1852,6 @@ test("exposes every finite option path through trusted JavaScript", async () => 
       exCommand: { autocomplete: false },
       feedback: { noop: "status" },
       promptStructures: { enabled: false, targets: { codeFence: false } },
-      promptTransforms: {
-        enabled: false,
-        actions: { quote: false },
-        commands: { quote: ["quoteit"] },
-      },
     });
     expect(result.warnings).toEqual([]);
   } finally {
@@ -2087,13 +1871,13 @@ test("rejects invalid composite writes without changing frozen staged reads", as
   vim.search.unknown = true;
 };`);
     const result = await loadVimOptions({
-      globalSettingsPath: join(tmpdir(), "missing-settings.json"),
-      projectSettingsPath: join(tmpdir(), "missing-project-settings.json"),
+      agentDir: dirname(f.path),
+      cwd: dirname(f.path),
       jsConfigPath: f.path,
     });
     expect(result.options.macros?.enabled).toBe(false);
     expect(result.warnings).toEqual([
-      "global JS config: piVimMode.macros.slots only supports lowercase a-z slots",
+      "global JS config: macros.slots only supports lowercase a-z slots",
       "global JS config: unknown vim.search property unknown",
     ]);
   } finally {
@@ -2106,36 +1890,26 @@ test("rejects invalid prompt records and accepts empty replacements", async () =
   try {
     f.write(`export default (vim) => {
   vim.promptStructures.targets = { codeFence: false };
-  vim.promptTransforms.actions = { quote: false };
-  vim.promptTransforms.commands = { quote: ["quoteit"] };
   vim.promptStructures.targets = { codeFence: true, unknown: true };
-  vim.promptTransforms.actions = { quote: true, unknown: true };
-  vim.promptTransforms.commands = { quote: ["valid", "not-valid!"] };
 };`);
     const rejected = await loadVimOptions({
-      globalSettingsPath: join(tmpdir(), "missing-settings.json"),
-      projectSettingsPath: join(tmpdir(), "missing-project-settings.json"),
+      agentDir: dirname(f.path),
+      cwd: dirname(f.path),
       jsConfigPath: f.path,
     });
     expect(rejected.options.promptStructures?.targets).toMatchObject({ codeFence: false });
-    expect(rejected.options.promptTransforms?.actions).toMatchObject({ quote: false });
-    expect(rejected.options.promptTransforms?.commands).toMatchObject({ quote: ["quoteit"] });
 
     const empty = fixture();
     try {
       empty.write(`export default (vim) => {
   vim.promptStructures.targets = {};
-  vim.promptTransforms.actions = {};
-  vim.promptTransforms.commands = {};
 };`);
       const cleared = await loadVimOptions({
-        globalSettingsPath: join(tmpdir(), "missing-settings.json"),
-        projectSettingsPath: join(tmpdir(), "missing-project-settings.json"),
+        agentDir: dirname(empty.path),
+        cwd: dirname(empty.path),
         jsConfigPath: empty.path,
       });
       expect(Object.keys(cleared.options.promptStructures?.targets ?? {})).toEqual([]);
-      expect(Object.keys(cleared.options.promptTransforms?.actions ?? {})).toEqual([]);
-      expect(Object.keys(cleared.options.promptTransforms?.commands ?? {})).toEqual([]);
     } finally {
       empty.cleanup();
     }
@@ -2146,24 +1920,21 @@ test("rejects invalid prompt records and accepts empty replacements", async () =
 
 test("keeps valid prompt records from JSON when siblings are invalid", () => {
   const result = resolveVimOptions({
-    piVimMode: {
-      promptStructures: { targets: { codeFence: false, unknown: true } },
-      promptTransforms: { commands: { quote: ["quoteit", "not-valid!"], unknown: ["ignored"] } },
-    },
+    promptStructures: { targets: { codeFence: false, unknown: true } },
   });
 
   expect(result.options.promptStructures?.targets).toMatchObject({ codeFence: false });
-  expect(result.options.promptTransforms?.commands).toMatchObject({ quote: ["quoteit"] });
 });
 
 test("loadVimOptions includes JS string remaps", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "pi-vimmode-js-remap-load-"));
+  const dirs = configDirs("pi-vim-js-remap-load-");
   try {
-    const jsConfigPath = join(dir, "pi-vimmode.config.js");
+    const jsConfigPath = dirs.jsConfigPath;
     writeFileSync(jsConfigPath, `export default (vim) => vim.keymap.set("n", "zz", "llll");`);
     const result = await loadVimOptions({
-      globalSettingsPath: join(dir, "missing-settings.json"),
-      projectSettingsPath: join(dir, "project-settings.json"),
+      agentDir: dirs.agentDir,
+      cwd: dirs.cwd,
+      isProjectTrusted: true,
       jsConfigPath,
     });
     expect(result.options.keymap?.remaps.accepted).toEqual([
@@ -2171,29 +1942,72 @@ test("loadVimOptions includes JS string remaps", async () => {
     ]);
     expect(result.warnings).toEqual([]);
   } finally {
-    rmSync(dir, { recursive: true, force: true });
+    dirs.cleanup();
   }
 });
 
 test("loadVimOptions includes the trusted global JS config layer", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "pi-vimmode-js-config-load-"));
+  const dirs = configDirs("pi-vim-js-config-load-");
   try {
-    const globalPath = join(dir, "settings.json");
-    const jsConfigPath = join(dir, "pi-vimmode.config.js");
-    writeFileSync(globalPath, JSON.stringify({ piVimMode: { startMode: "normal" } }));
+    const globalPath = dirs.globalPath;
+    const jsConfigPath = dirs.jsConfigPath;
+    writeFileSync(globalPath, JSON.stringify({ startMode: "normal" }));
     writeFileSync(
       jsConfigPath,
-      `export default (vim) => vim.keymap.set("n", "zq", vim.prompt.reflow());`,
+      `export default (vim) => vim.keymap.set("n", "zq", vim.action.operator.uppercase());`,
     );
     const result = await loadVimOptions({
-      globalSettingsPath: globalPath,
-      projectSettingsPath: join(dir, "project-settings.json"),
+      agentDir: dirs.agentDir,
+      cwd: dirs.cwd,
+      isProjectTrusted: true,
       jsConfigPath,
     });
     expect(result.options.startMode).toBe("normal");
-    expect(result.options.keymap?.actions.accepted.map((binding) => binding.key)).toEqual(["zq"]);
+    expect(result.options.keymap?.scoped.map((binding) => binding.key)).toEqual(["zq"]);
     expect(result.warnings).toEqual([]);
   } finally {
-    rmSync(dir, { recursive: true, force: true });
+    dirs.cleanup();
+  }
+});
+
+test("trusted JS replaces the whole mode colors record", async () => {
+  const dirs = configDirs("pi-vim-js-mode-colors-");
+  try {
+    writeFileSync(
+      dirs.globalPath,
+      JSON.stringify({ ui: { mode: { colors: { insert: { bg: 4 } } } } }),
+    );
+    writeFileSync(
+      dirs.jsConfigPath,
+      `export default (vim) => {
+  if (vim.ui.mode.colors.insert?.bg !== 4) throw new Error("missing global seed");
+  vim.ui.mode.colors = { normal: { bg: 2, fg: 15 } };
+};`,
+    );
+    const result = await loadVimOptions({ agentDir: dirs.agentDir, cwd: dirs.cwd });
+    expect(result.options.ui?.mode.colors).toEqual({ normal: { bg: 2, fg: 15 } });
+    expect(result.warnings).toEqual([]);
+  } finally {
+    dirs.cleanup();
+  }
+});
+
+test("trusted JS rejects invalid mode colors without changing the record", async () => {
+  const f = fixture();
+  try {
+    f.write(`export default (vim) => {
+  vim.ui.mode.colors = { normal: { bg: 300 } };
+};`);
+    const result = await loadVimOptions({
+      agentDir: dirname(f.path),
+      cwd: dirname(f.path),
+      jsConfigPath: f.path,
+    });
+    expect(result.options.ui?.mode.colors).toEqual({});
+    expect(result.warnings.some((warning) => warning.includes("ui.mode.colors.normal.bg"))).toBe(
+      true,
+    );
+  } finally {
+    f.cleanup();
   }
 });

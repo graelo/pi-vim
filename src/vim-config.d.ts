@@ -15,15 +15,6 @@ export type VimPromptStructureTarget =
   | "listItem"
   | "tag"
   | "errorBlock";
-export type VimPromptTransformAction =
-  | "quote"
-  | "unquote"
-  | "bulletize"
-  | "fence"
-  | "indent"
-  | "dedent"
-  | "reflow";
-export type VimPromptTransformActionId = `prompt.transform.${VimPromptTransformAction}`;
 
 export type VimOperatorAction =
   | "delete"
@@ -32,6 +23,7 @@ export type VimOperatorAction =
   | "lowercase"
   | "uppercase"
   | "toggleCase"
+  | "surround"
   | "indent"
   | "dedent";
 export type VimMotionOperatorAction =
@@ -40,7 +32,8 @@ export type VimMotionOperatorAction =
   | "yank"
   | "lowercase"
   | "uppercase"
-  | "toggleCase";
+  | "toggleCase"
+  | "surround";
 export type VimMotionAction =
   | "left"
   | "down"
@@ -63,7 +56,9 @@ export type VimMotionAction =
   | "halfPageDown"
   | "halfPageUp"
   | "paragraphBackward"
-  | "paragraphForward";
+  | "paragraphForward"
+  | "sentenceBackward"
+  | "sentenceForward";
 export type VimCommandAction =
   | "insertBefore"
   | "insertAfter"
@@ -106,7 +101,10 @@ export type VimCommandAction =
   | "redo"
   | "showKeybindings"
   | "reselectVisual"
-  | "easymotion";
+  | "easymotion"
+  | "deleteSurround"
+  | "changeSurround"
+  | "surroundSelection";
 export type VimMacroAction = "record" | "play";
 export type VimMarkAction = "set" | "jumpExact" | "jumpLine";
 export type VimInsertAction =
@@ -123,12 +121,15 @@ export type VimInsertAction =
 export type VimTextObjectKind = "inner" | "around";
 export type VimTextObjectTarget =
   | "word"
+  | "bigWord"
   | "singleQuote"
   | "doubleQuote"
+  | "backtick"
   | "paren"
   | "bracket"
   | "brace"
   | "paragraph"
+  | "sentence"
   | VimPromptStructureTarget;
 
 export type VimFiniteActionId =
@@ -140,8 +141,7 @@ export type VimFiniteActionId =
   | `mark.${VimMarkAction}`
   | `insert.${VimInsertAction}`
   | `textObject.kind.${VimTextObjectKind}`
-  | `textObject.target.${VimTextObjectTarget}`
-  | VimPromptTransformActionId;
+  | `textObject.target.${VimTextObjectTarget}`;
 
 export type VimActionDescriptor = {
   readonly [vimActionDescriptor]: true;
@@ -172,9 +172,6 @@ export type VimKeymapOptions = VimKeymapMappingOptions;
 export type VimKeymapRightHandSide = VimActionDescriptor | string | null;
 
 export type VimActionFactory = () => VimActionDescriptor;
-export type VimOptionalArgsActionFactory<Args extends object> = (
-  args?: Args,
-) => VimActionDescriptor;
 
 export type VimOperatorActionApi = Record<VimOperatorAction, VimActionFactory>;
 export type VimMotionActionApi = Record<VimMotionAction, VimActionFactory>;
@@ -189,13 +186,6 @@ export type VimEasyMotionActionFactory = VimActionFactory & {
 export type VimCommandActionApi = {
   [K in VimCommandAction]: K extends "easymotion" ? VimEasyMotionActionFactory : VimActionFactory;
 };
-export type VimPromptTransformActionApi = {
-  [K in VimPromptTransformAction]: K extends "fence"
-    ? VimOptionalArgsActionFactory<{ language?: string }>
-    : K extends "reflow"
-      ? VimOptionalArgsActionFactory<{ width?: number }>
-      : VimActionFactory;
-};
 
 export type VimActionApi = {
   escape: VimActionFactory;
@@ -209,19 +199,9 @@ export type VimActionApi = {
     kind: VimTextObjectKindActionApi;
     target: VimTextObjectTargetActionApi;
   };
-  prompt: {
-    transform: VimPromptTransformActionApi;
-  };
 };
 
 export type VimPromptApi = {
-  quote: VimActionFactory;
-  unquote: VimActionFactory;
-  bulletize: VimActionFactory;
-  fence: VimOptionalArgsActionFactory<{ language?: string }>;
-  indent: VimActionFactory;
-  dedent: VimActionFactory;
-  reflow: VimOptionalArgsActionFactory<{ width?: number }>;
   openLineBelow: VimActionFactory;
   openLineAbove: VimActionFactory;
   deleteWordBackward: VimActionFactory;
@@ -235,7 +215,6 @@ export type VimPromptApi = {
 };
 
 export type VimKeymapApi = {
-  actionPresets: readonly ("paragraph-editing" | "markdown-wrapping")[];
   operatorMotions: Partial<Record<VimMotionOperatorAction, readonly VimMotionAction[]>>;
   set(
     mode: VimModeInput,
@@ -263,6 +242,8 @@ export type VimConfigApi = {
       enabled: boolean;
       labels: Partial<Record<VimMode, string>>;
       narrowLabels: Partial<Record<VimMode, string>>;
+      /** Palette index `0`-`255` or `#rrggbb` per mode; `visualLine`/`visualBlock` fall back to `visual`. */
+      colors: Partial<Record<VimMode, { bg?: number | `#${string}`; fg?: number | `#${string}` }>>;
     };
     selection: {
       enabled: boolean;
@@ -302,11 +283,6 @@ export type VimConfigApi = {
   promptStructures: {
     enabled: boolean;
     targets: Partial<Record<VimPromptStructureTarget, boolean>>;
-  };
-  promptTransforms: {
-    enabled: boolean;
-    actions: Partial<Record<VimPromptTransformAction, boolean>>;
-    commands: Partial<Record<VimPromptTransformAction, readonly string[]>>;
   };
   action: VimActionApi;
   prompt: VimPromptApi;

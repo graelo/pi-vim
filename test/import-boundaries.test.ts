@@ -1,7 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { readFile } from "node:fs/promises";
+
+import { describe, expect, test } from "vitest";
 
 async function source(path: string): Promise<string> {
-  return await Bun.file(path).text();
+  return await readFile(path, "utf8");
 }
 
 describe("import boundaries", () => {

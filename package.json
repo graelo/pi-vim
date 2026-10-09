@@ -1,74 +1,82 @@
 {
-  "name": "pi-vimmode",
-  "version": "0.9.0",
-  "private": false,
-  "description": "Vim mode for Pi coding agent",
-  "keywords": [
-    "pi",
-    "pi-extension",
-    "pi-package"
-  ],
-  "homepage": "https://github.com/pekochan069/pi-vimmode#readme",
-  "bugs": {
-    "url": "https://github.com/pekochan069/pi-vimmode/issues"
-  },
-  "license": "MIT",
-  "author": "pekochan069",
-  "contributors": [],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/pekochan069/pi-vimmode.git"
+  "name": "@graelo/pi-vim",
+  "version": "1.0.0",
+  "description": "Vim mode for the pi coding agent prompt editor",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./config": {
+      "types": "./src/vim-config.d.ts"
+    }
   },
   "files": [
-    "index.ts",
     "src",
-    "dist",
-    "README.md",
-    "LICENSE",
-    "RELEASE.md",
-    "release-notes.json",
     "docs/config.md",
     "docs/features.md",
-    "docs/settings.md"
+    "docs/settings.md",
+    "examples",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
   ],
-  "type": "module",
-  "module": "index.ts",
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
-    "build": "rolldown -c",
-    "verify-package": "bun scripts/verify-package.ts",
-    "generate:config-reference": "bun scripts/generate-config-reference.ts",
-    "check:config-reference": "bun scripts/generate-config-reference.ts --check",
-    "prepublish": "bun run build && bun run verify-package",
-    "format": "oxfmt",
-    "format:check": "oxfmt --check",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
-    "test": "bun test",
-    "check-types": "tsc --noEmit",
-    "verify": "bun run check-types && bun run lint && bun run test",
-    "prepare": "lefthook install"
-  },
-  "devDependencies": {
-    "@earendil-works/pi-coding-agent": "^0.77.0",
-    "@earendil-works/pi-tui": "^0.77.0",
-    "bun-types": "^1.3.14",
-    "lefthook": "^2.1.10",
-    "oxfmt": "^0.60.0",
-    "oxlint": "^1.75.0",
-    "oxlint-plugin-complexity": "^2.1.6",
-    "rolldown": "^1.2.0",
-    "typescript": "^7.0.2"
+    "check": "tsc --noEmit",
+    "lint": "biome check . && npm run lint:md",
+    "lint:md": "rumdl check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "bench": "tsx benchmark/run.ts",
+    "generate:config-reference": "tsx scripts/generate-config-reference.ts",
+    "check:config-reference": "tsx scripts/generate-config-reference.ts --check"
   },
   "peerDependencies": {
-    "@earendil-works/pi-coding-agent": "^0.77.0",
-    "@earendil-works/pi-tui": "^0.77.0"
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "@types/node": "^24",
+    "rumdl": "^0.2.10",
+    "tsx": "^4.23.11",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
   },
   "pi": {
     "extensions": [
-      "./index.ts"
+      "./src/index.ts"
     ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/graelo/pi-vim.git"
+  },
+  "homepage": "https://github.com/graelo/pi-vim#readme",
+  "bugs": {
+    "url": "https://github.com/graelo/pi-vim/issues"
+  },
+  "keywords": [
+    "pi-package",
+    "pi",
+    "pi-extension",
+    "pi-coding-agent",
+    "vim",
+    "modal-editing"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "license": "MIT",
+  "contributors": [
+    "pekochan069",
+    "graelo <graelo@graelo.cc>"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@graelo/pi-ext-config": "^0.2.0"
   }
 }

@@ -1,9 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { join } from "node:path";
 
 import { loadVimJsConfig } from "../src/config-js.ts";
 
-const examples = join(import.meta.dir, "../examples");
+const examples = join(import.meta.dirname, "../examples");
 
 async function load(name: string) {
   const result = await loadVimJsConfig(join(examples, name));
@@ -15,7 +15,7 @@ async function load(name: string) {
 
 describe("trusted config examples", () => {
   test("basic workflow", async () => {
-    expect(await load("pi-vimmode.config.js")).toContainEqual({
+    expect(await load("pi-vim.config.js")).toContainEqual({
       kind: "leaf",
       path: "startMode",
       value: "normal",
@@ -33,15 +33,11 @@ describe("trusted config examples", () => {
   });
 
   test("async workflow", async () => {
-    expect(await load("async.config.js")).toContainEqual({
+    const operations = await load("async.config.js");
+    expect(operations).toContainEqual({ kind: "leaf", path: "search.maxHighlights", value: 50 });
+    expect(operations).toContainEqual({
       kind: "map",
-      mapping: {
-        kind: "action",
-        actionId: "prompt.transform.reflow",
-        key: "gq",
-        args: { width: 88 },
-        modes: ["normal"],
-      },
+      mapping: { kind: "descriptor", actionId: "motion.lineEnd", key: "gl", modes: ["normal"] },
     });
   });
 
@@ -49,8 +45,8 @@ describe("trusted config examples", () => {
     const operations = await load("imported-preset.config.js");
     expect(operations).toContainEqual({
       kind: "leaf",
-      path: "keymap.actionPresets",
-      value: ["markdown-wrapping"],
+      path: "promptStructures.targets",
+      value: { codeFence: true, headingSection: true, listItem: true },
     });
     expect(operations).toContainEqual({ kind: "leaf", path: "startMode", value: "normal" });
   });

@@ -1,8 +1,8 @@
 /**
- * @param {import("pi-vimmode/config").VimConfigApi} vim
+ * @param {import("@graelo/pi-vim/config").VimConfigApi} vim
  */
 export default function applyMarkdownPreset(vim) {
   vim.g.mapleader = " ";
-  vim.keymap.actionPresets = ["markdown-wrapping"];
-  vim.keymap.set("v", "<leader>>", vim.prompt.quote());
+  vim.promptStructures.targets = { codeFence: true, headingSection: true, listItem: true };
+  vim.keymap.set("o", "<leader>c", vim.action.textObject.target.codeFence());
 }

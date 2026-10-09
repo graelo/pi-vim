@@ -25,15 +25,29 @@ tags:
 
 ## Context
 
-`pi-vimmode` needs to replace Pi's default editor with `VimEditor` automatically. A manual `/vimmode` command proved the extension could load and install the editor, but it was not acceptable product behavior: Vim mode should activate automatically once the extension and UI context are ready.
+`pi-vimmode` needs to replace Pi's default editor with `VimEditor`
+automatically. A manual `/vimmode` command proved the extension could load and
+install the editor, but it was not acceptable product behavior: Vim mode should
+activate automatically once the extension and UI context are ready.
 
-A single `session_start` handler was not reliable enough. In current Pi startup/reload timing, the custom editor install can race with UI context setup or be lost when session/UI resources are refreshed.
+A single `session_start` handler was not reliable enough. In current Pi
+startup/reload timing, the custom editor install can race with UI context setup
+or be lost when session/UI resources are refreshed.
 
-The first reliable version kept this logic inline in `src/index.ts`. As settings support and cursor cleanup grew, that small entrypoint started owning too many concrete responsibilities: stable editor factory identity, settings refresh, delayed reinstall, multi-hook install, stale-context tolerance, and terminal cursor reset. Those responsibilities now live in `src/lifecycle.ts`; `src/index.ts` only delegates to it.
+The first reliable version kept this logic inline in `src/index.ts`. As settings
+support and cursor cleanup grew, that small entrypoint started owning too many
+concrete responsibilities: stable editor factory identity, settings refresh,
+delayed reinstall, multi-hook install, stale-context tolerance, and terminal
+cursor reset. Those responsibilities now live in `src/lifecycle.ts`;
+`src/index.ts` only delegates to it.
 
 ## Guidance
 
-Use a stable editor factory, install through more than one lifecycle event, and keep the extension command-free. When install behavior grows beyond one trivial hook, move editor install state, hook registration, delayed reinstall, settings refresh, and cleanup into `src/lifecycle.ts` instead of letting the entrypoint accumulate runtime state.
+Use a stable editor factory, install through more than one lifecycle event, and
+keep the extension command-free. When install behavior grows beyond one trivial
+hook, move editor install state, hook registration, delayed reinstall, settings
+refresh, and cleanup into `src/lifecycle.ts` instead of letting the entrypoint
+accumulate runtime state.
 
 ### Keep the entrypoint thin
 
@@ -81,7 +95,8 @@ const installEditor = (ctx: ExtensionContext) => {
 
 ### Preserve reload timing explicitly
 
-Install immediately and again on the next tick for hooks whose context can race with UI/resource setup:
+Install immediately and again on the next tick for hooks whose context can race
+with UI/resource setup:
 
 ```ts
 const installEditorSoon = (ctx: ExtensionContext) => {
@@ -106,11 +121,15 @@ pi.on("agent_end", (_event, ctx) => installEditor(ctx));
 pi.on("session_shutdown", () => resetKnownEditors());
 ```
 
-The current implementation swallows delayed reinstall failures after the immediate install succeeds because reload/session switches can stale the context. Immediate install failures should still surface so real startup/config errors are visible.
+The current implementation swallows delayed reinstall failures after the
+immediate install succeeds because reload/session switches can stale the
+context. Immediate install failures should still surface so real startup/config
+errors are visible.
 
 ### Use narrow dependency injection for deterministic tests
 
-Avoid monkeypatching globals or constructing real TUI/editor internals in lifecycle tests. Inject only the seams needed to observe behavior:
+Avoid monkeypatching globals or constructing real TUI/editor internals in
+lifecycle tests. Inject only the seams needed to observe behavior:
 
 ```ts
 registerVimLifecycle(fakePi, {
@@ -129,25 +148,36 @@ Test the lifecycle contract directly:
 - settings/status refresh and latest options for new editors,
 - delayed stale-context handling and shutdown cleanup.
 
-Keep `src/config.ts` pure. It should resolve/load settings and return warnings, not register hooks, install editor components, schedule reload work, or track editor instances.
+Keep `src/config.ts` pure. It should resolve/load settings and return warnings,
+not register hooks, install editor components, schedule reload work, or track
+editor instances.
 
 ## Why This Matters
 
-Manual activation commands test extension loading, not automatic UX. If the real extension behavior depends on a slash command, users can install the extension and still see no Vim mode.
+Manual activation commands test extension loading, not automatic UX. If the real
+extension behavior depends on a slash command, users can install the extension
+and still see no Vim mode.
 
-Stable factory identity allows idempotent installs; anonymous factories make every event look different and cause unnecessary editor re-registration.
+Stable factory identity allows idempotent installs; anonymous factories make
+every event look different and cause unnecessary editor re-registration.
 
-Multiple hooks cover observed startup, resource discovery, and post-agent refresh gaps.
+Multiple hooks cover observed startup, resource discovery, and post-agent
+refresh gaps.
 
-The extraction matters because reload bugs hide in timing and identity. Inline lifecycle code can look simple while encoding fragile behavior. A dedicated module makes install behavior reviewable and testable without a real Pi runtime.
+The extraction matters because reload bugs hide in timing and identity. Inline
+lifecycle code can look simple while encoding fragile behavior. A dedicated
+module makes install behavior reviewable and testable without a real Pi runtime.
 
 ## When to Apply
 
-- Pi extension provides a custom editor or UI component that should be active by default.
-- Extension discovery works, but the visible UI customization is missing after startup.
+- Pi extension provides a custom editor or UI component that should be active
+    by default.
+- Extension discovery works, but the visible UI customization is missing after
+    startup.
 - A manual diagnostic command works, but automatic activation remains flaky.
 - Reload/session switches can make captured UI context stale.
-- Entrypoint coordinates hooks, settings refresh, delayed reinstall, factory identity, or cleanup.
+- Entrypoint coordinates hooks, settings refresh, delayed reinstall, factory
+    identity, or cleanup.
 - Function identity or delayed reinstall behavior is part of correctness.
 
 ## Examples
@@ -158,23 +188,28 @@ Avoid these activation shortcuts:
 - Single `session_start` hook: misses Pi UI reload/resource timing.
 - Anonymous editor factory: prevents reliable identity checks.
 - Global monkeypatching in tests: makes scheduler/settings behavior brittle.
-- Moving lifecycle side effects into config parsing: mixes pure settings resolution with runtime install behavior.
+- Moving lifecycle side effects into config parsing: mixes pure settings
+    resolution with runtime install behavior.
 
 Useful validation after changing the lifecycle seam:
 
 ```bash
-bun run format
-bun run lint
-bun test
-bun run check-types
+npx biome format --write .
+npm run lint
+npm test
+npm run check
 ```
 
-The lifecycle extraction added `test/lifecycle.test.ts` to cover reload/install behavior directly, while existing config/editor tests continue to cover parsing and editor behavior.
+The lifecycle extraction added `test/lifecycle.test.ts` to cover reload/install
+behavior directly, while existing config/editor tests continue to cover parsing
+and editor behavior.
 
 ## Related
 
 - `src/index.ts` — thin Pi extension entrypoint.
-- `src/lifecycle.ts` — lifecycle hook registration, settings refresh, editor install, delayed reinstall, and shutdown cleanup.
+- `src/lifecycle.ts` — lifecycle hook registration, settings refresh, editor
+    install, delayed reinstall, and shutdown cleanup.
 - `src/config.ts` — pure settings load/resolve module.
 - `test/lifecycle.test.ts` — lifecycle contract tests.
-- `docs/solutions/tooling-decisions/pi-vimmode-ui-config-single-source-of-truth-2026-05-27.md` — related settings/config contract.
+- `docs/solutions/tooling-decisions/pi-vimmode-ui-config-single-source-of-truth-2026-05-27.md`
+    — related settings/config contract.

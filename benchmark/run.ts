@@ -1,6 +1,7 @@
 import { CURSOR_MARKER, visibleWidth } from "@earendil-works/pi-tui";
 import { mkdir, writeFile } from "node:fs/promises";
 import { cpus, arch, platform, release } from "node:os";
+import { spawnSync } from "node:child_process";
 import { dirname } from "node:path";
 
 import { createVimConfigPlan, DEFAULT_VIM_OPTIONS } from "../src/config.ts";
@@ -166,11 +167,8 @@ function leftCase(corpus: Corpus): BenchmarkCase {
 }
 
 function stripRenderFormatting(text: string): string {
-  const escape = String.fromCharCode(27);
-  return text
-    .replaceAll(CURSOR_MARKER, "")
-    .replaceAll(`${escape}[7m`, "")
-    .replaceAll(`${escape}[0m`, "");
+  const esc = String.fromCharCode(27);
+  return text.replaceAll(CURSOR_MARKER, "").replaceAll(`${esc}[7m`, "").replaceAll(`${esc}[0m`, "");
 }
 
 function promptSearchRepeatCase(): BenchmarkCase {
@@ -293,9 +291,9 @@ export function measureCase(item: BenchmarkCase, runs: number, warmup: number): 
   for (let index = 0; index < runs; index++) {
     const editor = createEditor();
     item.setup(editor);
-    const start = Bun.nanoseconds();
+    const start = process.hrtime.bigint();
     const result = item.measure(editor);
-    const elapsed = Number(Bun.nanoseconds() - start) / 1_000_000;
+    const elapsed = Number(process.hrtime.bigint() - start) / 1_000_000;
     item.assert(editor, result);
     samples.push(elapsed);
   }
@@ -311,9 +309,9 @@ export function measureCase(item: BenchmarkCase, runs: number, warmup: number): 
 }
 
 function commandOutput(command: string[]): string {
-  const result = Bun.spawnSync(command);
-  if (result.exitCode !== 0) throw new Error(`Command failed: ${command.join(" ")}`);
-  return new TextDecoder().decode(result.stdout).trim();
+  const result = spawnSync(command[0] ?? "", command.slice(1));
+  if (result.status !== 0) throw new Error(`Command failed: ${command.join(" ")}`);
+  return result.stdout.toString().trim();
 }
 
 const ARGUMENT_SETTERS: Readonly<Record<string, (args: Arguments, value: string) => void>> = {
@@ -347,7 +345,7 @@ function parseArguments(argv: string[]): Arguments {
     const argument = argv[index];
     if (argument === "--help") {
       console.log(
-        "bun benchmark/run.ts [--case name] [--output path] [--runs n] [--warmup n] [--profile cursor-restoration|long-line-render]",
+        "npm run bench -- [--case name] [--output path] [--runs n] [--warmup n] [--profile cursor-restoration|long-line-render]",
       );
       process.exit(0);
     }
@@ -384,13 +382,13 @@ export function createOutput(
   results: BenchmarkResult[],
   environment: {
     revision: string;
-    runtime: { bun: string; os: string; cpu: string };
+    runtime: { node: string; os: string; cpu: string };
     viewport: { columns: number; rows: number };
   },
 ) {
   return {
-    schemaVersion: 2,
-    baseline: "pi-vimmode-0.10.0-release-gate",
+    schemaVersion: 3,
+    baseline: "pi-vim-1.0.0-release-gate",
     revision: environment.revision,
     environment: { runtime: environment.runtime, viewport: environment.viewport },
     samples: args.runs,
@@ -411,7 +409,7 @@ async function run(): Promise<void> {
   const output = createOutput(args, corpora, results, {
     revision: commandOutput(["git", "rev-parse", "HEAD"]),
     runtime: {
-      bun: Bun.version,
+      node: process.versions.node,
       os: `${platform()} ${release()} ${arch()}`,
       cpu: cpus()[0]?.model ?? "unknown",
     },

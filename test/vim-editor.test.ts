@@ -1,5 +1,5 @@
-import { visibleWidth } from "@earendil-works/pi-tui";
-import { afterEach, expect, test } from "bun:test";
+import { type Component, type OverlayOptions, visibleWidth } from "@earendil-works/pi-tui";
+import { afterEach, expect, test } from "vitest";
 
 import type { ModalState } from "../src/modal/types.ts";
 import type { ResolvedVimEditorOptions, VimDiagnostics, VimMode } from "../src/types.ts";
@@ -15,22 +15,21 @@ import {
 import { SEARCH_CURRENT_START, SEARCH_START } from "../src/render.ts";
 import { fitStatusBorder, VimEditor } from "../src/vim-editor.ts";
 
+type EditorArgs = ConstructorParameters<typeof VimEditor>;
+
 function ctrlVVisualBlockOptions(startMode: "insert" | "normal" = "insert") {
   return resolveVimOptions({
-    piVimMode: {
-      startMode,
-      keymap: {
-        commands: { visualBlock: ["ctrl+v"] },
-        allowProtectedOverrides: ["ctrl+v"],
-      },
+    startMode,
+    keymap: {
+      commands: { visualBlock: ["ctrl+v"] },
+      allowProtectedOverrides: ["ctrl+v"],
     },
   }).options;
 }
 
 function easyMotionOptions() {
-  return resolveVimOptions({
-    piVimMode: { startMode: "normal", keymap: { commands: { easymotion: ["e"] } } },
-  }).options;
+  return resolveVimOptions({ startMode: "normal", keymap: { commands: { easymotion: ["e"] } } })
+    .options;
 }
 
 function runtimeConfiguration(
@@ -54,7 +53,7 @@ function createEditorTui(
 ) {
   const writes: string[] = [];
   const hardwareCursorChanges: boolean[] = [];
-  const overlays: Array<{ component: any; options: any; hidden: boolean }> = [];
+  const overlays: Array<{ component: Component; options?: OverlayOptions; hidden: boolean }> = [];
   let hardwareCursorVisible = initialHardwareCursorVisible;
   let renderRequests = 0;
   return {
@@ -67,7 +66,7 @@ function createEditorTui(
       requestRender() {
         renderRequests += 1;
       },
-      showOverlay(component: any, options: any) {
+      showOverlay(component: Component, options?: OverlayOptions) {
         const entry = { component, options, hidden: false };
         overlays.push(entry);
         return {
@@ -94,7 +93,7 @@ function createEditorTui(
         hardwareCursorVisible = visible;
         hardwareCursorChanges.push(visible);
       },
-    } as any,
+    } as unknown as EditorArgs[0],
     writes,
     hardwareCursorChanges,
     overlays,
@@ -111,7 +110,7 @@ const editorTheme = {
     noMatch: (text: string) => text,
     scrollInfo: (text: string) => text,
   },
-} as any;
+} as unknown as EditorArgs[1];
 
 const editorKeybindings = {
   matches() {
@@ -126,7 +125,7 @@ const editorKeybindings = {
   getConflicts() {
     return [];
   },
-} as any;
+} as unknown as EditorArgs[2];
 
 function createEditor(
   options: ResolvedVimEditorOptions = DEFAULT_VIM_OPTIONS,
@@ -173,7 +172,7 @@ function installAutocomplete(editor: VimEditor, values: readonly string[], maxVi
     applyCompletion(
       lines: string[],
       cursorLine: number,
-      cursorCol: number,
+      _cursorCol: number,
       item: { value: string },
     ) {
       const next = [...lines];
@@ -195,7 +194,6 @@ function runEx(editor: VimEditor, command: string) {
   editor.handleInput(":");
   for (const char of command) editor.handleInput(char);
   editor.handleInput("\r");
-  if (/^\s*(?:%|\d|\.|\$|'|<|>|,)*s(?:ubstitute)?\b/.test(command)) editor.handleInput("\r");
 }
 
 function expectEditorState(
@@ -308,11 +306,9 @@ test("insert mode edits keep long-prompt viewport stable", () => {
 test("constructor clones caller-owned nested keymap options", () => {
   const options = structuredClone(
     resolveVimOptions({
-      piVimMode: {
-        startMode: "normal",
-        leader: ",",
-        keymap: { escape: ["<D-j>"], commands: { openLineBelow: ["<leader>k"] } },
-      },
+      startMode: "normal",
+      leader: ",",
+      keymap: { escape: ["<D-j>"], commands: { openLineBelow: ["<leader>k"] } },
     }).options,
   );
   const { editor } = createEditor(options);
@@ -332,7 +328,8 @@ test("constructor clones caller-owned nested keymap options", () => {
 
 test("live editor honors configured case operator keymap", () => {
   const options = resolveVimOptions({
-    piVimMode: { startMode: "normal", keymap: { operators: { lowercase: ["zu"] } } },
+    startMode: "normal",
+    keymap: { operators: { lowercase: ["zu"] } },
   }).options;
   const { editor } = createEditor(options);
 
@@ -347,7 +344,8 @@ test("live editor honors configured case operator keymap", () => {
 test("reconfigure applies new keymaps immediately while clearing pending grammar", () => {
   const { editor } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
   const options = resolveVimOptions({
-    piVimMode: { startMode: "insert", keymap: { commands: { openLineBelow: [",k"] } } },
+    startMode: "insert",
+    keymap: { commands: { openLineBelow: [",k"] } },
   }).options;
 
   editor.setText("one\ntwo");
@@ -398,7 +396,6 @@ test("reconfigure preserves durable state and clears transient grammar", () => {
     pendingEx: { command: "stale", sourceMode: "visual" },
     pendingInsertEscape: "j",
     pendingInsertEscapeInputs: ["j"],
-    pendingWorkbench: { kind: "ex", prefix: ":", text: "stale", sourceMode: "visual" },
     pendingEasymotion: {
       kind: "highlight",
       targets: [{ label: "a", line: 0, character: 0 }],
@@ -410,10 +407,8 @@ test("reconfigure preserves durable state and clears transient grammar", () => {
   const renderRequests = getRenderRequests();
   const plan = createVimConfigPlan(
     resolveVimOptions({
-      piVimMode: {
-        cursor: { visual: "underline" },
-        keymap: { commands: { openLineBelow: [",k"] } },
-      },
+      cursor: { visual: "underline" },
+      keymap: { commands: { openLineBelow: [",k"] } },
     }).options,
     [],
   );
@@ -446,7 +441,6 @@ test("reconfigure preserves durable state and clears transient grammar", () => {
     "pendingEx",
     "pendingInsertEscape",
     "pendingInsertEscapeInputs",
-    "pendingWorkbench",
     "pendingEasymotion",
   ] as const) {
     expect(internal.modalState[field]).toBeUndefined();
@@ -591,10 +585,35 @@ test("insert escape stays on modal path and exits insert mode", () => {
   expectEditorState(editor, { text: "a", mode: "normal" });
 });
 
+test("leaving insert mode steps the cursor back like Vim", () => {
+  const { editor } = createEditor();
+  editor.setText("hello");
+  editor.handleInput("\x1b");
+  typeKeys(editor, ["A", "!", "\x1b"]);
+  expectEditorState(editor, { text: "hello!", cursor: { line: 0, col: 5 }, mode: "normal" });
+
+  typeKeys(editor, ["0", "i", "\x1b"]);
+  expectEditorState(editor, { text: "hello!", cursor: { line: 0, col: 0 }, mode: "normal" });
+
+  editor.setText("a😀");
+  typeKeys(editor, ["A", "\x1b"]);
+  expectEditorState(editor, { text: "a😀", cursor: { line: 0, col: 1 }, mode: "normal" });
+
+  typeKeys(editor, ["d", "d", "i"]);
+  for (const char of "word") editor.handleInput(char);
+  typeKeys(editor, ["\x1b", "x"]);
+  expectEditorState(editor, { text: "wor", mode: "normal" });
+});
+
+test("insert escape alias steps the cursor back", () => {
+  const options = resolveVimOptions({ keymap: { escape: ["<D-j>"] } }).options;
+  const { editor } = createEditor(options);
+  typeKeys(editor, ["a", "b", "c", superJ]);
+  expectEditorState(editor, { text: "abc", cursor: { line: 0, col: 2 }, mode: "normal" });
+});
+
 test("configured super+j insert escape exits insert without inserting alias", () => {
-  const options = resolveVimOptions({
-    piVimMode: { keymap: { escape: ["<D-j>"] } },
-  }).options;
+  const options = resolveVimOptions({ keymap: { escape: ["<D-j>"] } }).options;
   const { editor } = createEditor(options);
 
   editor.handleInput("a");
@@ -604,9 +623,7 @@ test("configured super+j insert escape exits insert without inserting alias", ()
 });
 
 test("configured super+j insert escape exits visual mode", () => {
-  const options = resolveVimOptions({
-    piVimMode: { startMode: "normal", keymap: { escape: ["<D-j>"] } },
-  }).options;
+  const options = resolveVimOptions({ startMode: "normal", keymap: { escape: ["<D-j>"] } }).options;
   const { editor } = createEditor(options);
 
   editor.setText("abc");
@@ -619,9 +636,7 @@ test("configured super+j insert escape exits visual mode", () => {
 });
 
 test("configured ctrl+j insert escape exits insert when sent as enhanced keyboard input", () => {
-  const options = resolveVimOptions({
-    piVimMode: { keymap: { escape: ["<C-j>"] } },
-  }).options;
+  const options = resolveVimOptions({ keymap: { escape: ["<C-j>"] } }).options;
   const { editor } = createEditor(options);
 
   editor.handleInput("x");
@@ -631,7 +646,7 @@ test("configured ctrl+j insert escape exits insert when sent as enhanced keyboar
 });
 
 test("raw text insert escape config is ignored by live editor", () => {
-  const options = resolveVimOptions({ piVimMode: { keymap: { escape: ["jk"] } } }).options;
+  const options = resolveVimOptions({ keymap: { escape: ["jk"] } }).options;
   const { editor } = createEditor(options);
 
   typeKeys(editor, ["j", "k"]);
@@ -640,9 +655,7 @@ test("raw text insert escape config is ignored by live editor", () => {
 });
 
 test("configured insert escape delegates while autocomplete is open", async () => {
-  const options = resolveVimOptions({
-    piVimMode: { keymap: { escape: ["<D-j>"] } },
-  }).options;
+  const options = resolveVimOptions({ keymap: { escape: ["<D-j>"] } }).options;
   const { editor } = createEditor(options);
   installAutocomplete(editor, ["/super-j-suggestion"], 1);
 
@@ -658,9 +671,7 @@ test("configured insert escape delegates while autocomplete is open", async () =
 });
 
 test("macro replay preserves configured insert escape behavior", () => {
-  const options = resolveVimOptions({
-    piVimMode: { startMode: "normal", keymap: { escape: ["<D-j>"] } },
-  }).options;
+  const options = resolveVimOptions({ startMode: "normal", keymap: { escape: ["<D-j>"] } }).options;
   const { editor } = createEditor(options);
 
   typeKeys(editor, ["q", "a", "i", "X", superJ, "q"]);
@@ -847,9 +858,7 @@ test("diagnostic popups and feedback info rows render width-safely", () => {
   const { editor, overlays } = createEditor(
     { ...DEFAULT_VIM_OPTIONS, startMode: "normal", feedback: { noop: "status" } },
     {
-      warnings: [
-        "project settings: piVimMode.keymap.commands.openLineBelow contains protected key ctrl+p",
-      ],
+      warnings: ["project config: keymap.commands.openLineBelow contains protected key ctrl+p"],
     },
   );
   const baseline = editor.render(24);
@@ -913,7 +922,7 @@ test("renders Ex command suggestions width-safely and reserves viewport rows", (
   editor.handleInput("");
 });
 
-test("search and substitution preview rows render width-safely below prompt", () => {
+test("search rows and substitution results render width-safely below prompt", () => {
   const { editor } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
   const baseline = editor.render(20);
 
@@ -928,11 +937,10 @@ test("search and substitution preview rows render width-safely below prompt", ()
   editor.setText("old old");
   editor.handleInput(":");
   typeKeys(editor, ["%", "s", "/", "o", "l", "d", "/", "n", "e", "w", "/", "g", "\r"]);
-  const preview = editor.render(80);
-  expect(preview.at(-1)).toContain("2 matches found");
-  expect(preview.at(-1)).toContain("Enter applies");
-  expect(preview.join("\n")).toContain(SEARCH_START);
-  expectRenderedWidth(preview, 80);
+  expect(editor.getText()).toBe("new new");
+  const applied = editor.render(80);
+  expect(applied.at(-1)).toContain("2 substitutions");
+  expectRenderedWidth(applied, 80);
 });
 
 test("Ex row composes with visual selection and search highlights", () => {
@@ -952,33 +960,6 @@ test("Ex row composes with visual selection and search highlights", () => {
   expect(visualEx).toContain(":'<,'>");
 });
 
-test("keybinding discovery popup renders as real overlay panel", () => {
-  const { editor, overlays } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
-  const baseline = editor.render(32);
-
-  runEx(editor, "features keybindings");
-  const editorLines = editor.render(32);
-  const editorText = editorLines.join("\n");
-  const overlay = overlays.at(-1);
-  const overlayLines = overlay?.component.render(64) ?? [];
-  const overlayText = overlayLines.join("\n");
-
-  expect(overlay).toBeDefined();
-  expect(overlay?.hidden).toBe(false);
-  expect(overlay?.options).toMatchObject({ anchor: "center", width: "90%", maxHeight: "90%" });
-  expect(editorLines.length).toBe(baseline.length);
-  expect(editorText).not.toContain("Keybinding discovery");
-  expect(overlayText).toContain("╭");
-  expect(overlayText).toContain("Keybinding discovery");
-  expect(overlayText).toContain("1-9/9");
-  expect(overlayText).toContain("│ Source-backed");
-  expect(overlayText).toContain("j/k ↑/↓ scroll");
-  expect(overlayText).toContain("Esc close");
-  expect(overlayText).not.toContain("↓1");
-  expect(overlayText).not.toContain("…");
-  expectRenderedWidth(overlayLines, 64);
-});
-
 test("dedicated keybindings command renders as real overlay panel", () => {
   const { editor, overlays } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
   const baseline = editor.render(32);
@@ -994,9 +975,9 @@ test("dedicated keybindings command renders as real overlay panel", () => {
   expect(overlay?.hidden).toBe(false);
   expect(overlay?.options).toMatchObject({ anchor: "center", width: "90%", maxHeight: "90%" });
   expect(editorLines.length).toBe(baseline.length);
-  expect(editorText).not.toContain("Effective pi-vimmode keybindings");
+  expect(editorText).not.toContain("Effective pi-vim keybindings");
   expect(overlayText).toContain(":keybindings");
-  expect(overlayText).not.toContain("Effective pi-vimmode keybindings");
+  expect(overlayText).not.toContain("Effective pi-vim keybindings");
   expect(overlayText).toContain("Key            Mode        Action");
   expect(overlayText).toContain("j/k ↑/↓ scroll");
   expectRenderedWidth(overlayLines, 72);
@@ -1019,41 +1000,25 @@ test("configured showKeybindings key renders same overlay shell", () => {
   expect(overlay).toBeDefined();
   expect(overlay?.options).toMatchObject({ anchor: "center", width: "90%", maxHeight: "90%" });
   expect(overlayText).toContain(":keybindings");
-  expect(overlayText).not.toContain("Effective pi-vimmode keybindings");
+  expect(overlayText).not.toContain("Effective pi-vim keybindings");
   expect(overlayText).toContain("Key            Mode        Action");
 });
 
 test("keybinding discovery overlay scroll reveals hidden bounded rows", () => {
-  const options: ResolvedVimEditorOptions = {
-    ...DEFAULT_VIM_OPTIONS,
-    startMode: "normal",
-    keymap: {
-      ...DEFAULT_VIM_OPTIONS.keymap!,
-      actions: {
-        accepted: Array.from({ length: 8 }, (_, index) => ({
-          key: `g${index}`,
-          actionId: "prompt.transform.quote",
-          args: { action: "quote" },
-        })),
-      },
-    },
-  };
-  const { editor, overlays } = createEditor(options);
+  const { editor, overlays } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
 
-  runEx(editor, "features keybindings");
-  const overlay = overlays.at(-1)?.component;
+  runEx(editor, "keybindings");
+  const overlay = overlays.at(-1)?.component as Required<Component>;
   expect(overlay).toBeDefined();
   const initial = overlay.render(80).join("\n");
   expect(initial).toContain("1-10/");
-  expect(initial).toContain("Source-backed");
-  expect(initial).not.toContain("prompt.transform.quote -> g7");
+  expect(initial).toContain("Type :keybindings");
 
   typeKeys(overlay, ["j", "j", "j", "j", "j", "j"]);
   const scrolled = overlay.render(80).join("\n");
   expect(scrolled).toContain("7-16/");
-  expect(scrolled).toContain("prompt.transform.quote -> g7");
   expect(scrolled).toContain("↑");
-  expect(scrolled).not.toContain("Source-backed");
+  expect(scrolled).not.toContain("Type :keybindings");
   expectRenderedWidth(overlay.render(80), 80);
 
   overlay.handleInput("k");
@@ -1065,33 +1030,23 @@ test("runtime help uses generic read-only popup", () => {
   const baseline = editor.render(48);
 
   runEx(editor, "help search");
-  let lines = editor.render(48);
-  let overlayText = overlays.at(-1)?.component.render(64).join("\n") ?? "";
+  const lines = editor.render(48);
+  const overlayText = overlays.at(-1)?.component.render(64).join("\n") ?? "";
   expect(lines.length).toBe(baseline.length);
   expect(lines.join("\n")).not.toContain("prompt search");
   expect(overlayText).toContain(":help search");
   expect(overlayText).toContain("prompt search");
-
-  runEx(editor, "features redo");
-  lines = editor.render(48);
-  overlayText = overlays.at(-1)?.component.render(64).join("\n") ?? "";
-  expect(lines.length).toBe(baseline.length);
-  expect(lines.join("\n")).not.toContain("command.redo");
-  expect(overlayText).toContain(":features redo");
-  expect(overlayText).toContain("command.redo");
 });
 
 test("representative read-only Ex commands open live popups", () => {
   const { editor, overlays } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
   const cases = [
     ["help search", ":help search", "prompt search"],
-    ["features redo", ":features redo", "command.redo"],
-    ["actions redo", ":actions redo", "command.redo"],
     ["keymap redo", ":keymap redo", "command.redo"],
     ["mapcheck ctrl+p", ":mapcheck ctrl+p", "protected"],
     ["vimdoctor", ":vimdoctor", "vimdoctor: ok"],
     ["messages", ":messages", "messages:"],
-    ["vimmode inspect", ":vimmode inspect", "inspect:"],
+    ["vim inspect", ":vim inspect", "inspect:"],
   ] as const;
 
   for (const [command, title, body] of cases) {
@@ -1107,7 +1062,7 @@ test("runtime help, inspect, and messages popups render width-safely", () => {
   editor.setText("abc");
   editor.handleInput(":");
   typeKeys(editor, ["s", "/", "m", "i", "s", "s", "i", "n", "g", "/", "x", "/", "\r"]);
-  runEx(editor, "vimmode inspect");
+  runEx(editor, "vim inspect");
   let lines = editor.render(48);
   let overlayLines = overlays.at(-1)?.component.render(48) ?? [];
   expect(lines.join("\n")).not.toContain("inspect: mode=normal");
@@ -1155,7 +1110,7 @@ test("read-only popup local controls and too-small fallback stay prompt-safe", (
   runEx(editor, "help search");
   const overlay = overlays.at(-1);
   expect(overlay?.hidden).toBe(false);
-  overlay?.component.handleInput("\x03");
+  overlay?.component.handleInput?.("\x03");
   expect(overlay?.hidden).toBe(true);
   expect(editor.getText()).toBe("abc");
   expect(editor.getCursor()).toEqual({ line: 0, col: 3 });
@@ -1197,12 +1152,10 @@ test("renders configured mode labels", () => {
 test("renders and clones a right-positioned status group", () => {
   const options = structuredClone(
     resolveVimOptions({
-      piVimMode: {
-        startMode: "normal",
-        ui: {
-          status: { position: "right" },
-          mode: { labels: { normal: "COMMAND" } },
-        },
+      startMode: "normal",
+      ui: {
+        status: { position: "right" },
+        mode: { labels: { normal: "COMMAND" } },
       },
     }).options,
   );
@@ -1429,7 +1382,7 @@ test("normal search can cancel and insert slash remains delegated", () => {
   editor.handleInput("/");
   editor.handleInput("z");
   editor.handleInput("\x1b");
-  expectEditorState(editor, { text: "/", cursor: { line: 0, col: 1 }, mode: "normal" });
+  expectEditorState(editor, { text: "/", cursor: { line: 0, col: 0 }, mode: "normal" });
 });
 
 test("normal x deletes character under cursor into register", () => {
@@ -1437,7 +1390,6 @@ test("normal x deletes character under cursor into register", () => {
   editor.handleInput("a");
   editor.handleInput("b");
   editor.handleInput("\x1b");
-  editor.handleInput("h");
   editor.handleInput("x");
   expect(editor.getText()).toBe("a");
   expect(editor.getRegister()).toEqual({ type: "char", text: "b" });
@@ -1450,9 +1402,9 @@ test("normal X deletes character before cursor into register", () => {
   editor.handleInput("c");
   editor.handleInput("\x1b");
   editor.handleInput("X");
-  expect(editor.getText()).toBe("ab");
-  expect(editor.getCursor()).toEqual({ line: 0, col: 2 });
-  expect(editor.getRegister()).toEqual({ type: "char", text: "c" });
+  expect(editor.getText()).toBe("ac");
+  expect(editor.getCursor()).toEqual({ line: 0, col: 1 });
+  expect(editor.getRegister()).toEqual({ type: "char", text: "b" });
 });
 
 test("mark keys and behavior are configurable", () => {
@@ -1598,7 +1550,7 @@ test("configured Ex keymap enters Ex from normal and delegates in insert", () =>
   expect(editor.getText()).toBe(":");
 });
 
-test("honors prompt-native structure and transform config through live editor", () => {
+test("honors prompt-native structure config through live editor", () => {
   const { editor } = createEditor({
     ...DEFAULT_VIM_OPTIONS,
     startMode: "normal",
@@ -1606,26 +1558,11 @@ test("honors prompt-native structure and transform config through live editor", 
       ...DEFAULT_VIM_OPTIONS.promptStructures!,
       targets: { ...DEFAULT_VIM_OPTIONS.promptStructures!.targets, codeFence: false },
     },
-    promptTransforms: {
-      ...DEFAULT_VIM_OPTIONS.promptTransforms!,
-      actions: { ...DEFAULT_VIM_OPTIONS.promptTransforms!.actions, reflow: false },
-      commands: { ...DEFAULT_VIM_OPTIONS.promptTransforms!.commands, quote: ["qte"] },
-    },
   });
 
   editor.setText("```ts\nconst x = 1;\n```\nplain words here");
   typeKeys(editor, ["g", "g", "j", "d", "i", "f"]);
   expect(editor.getText()).toBe("```ts\nconst x = 1;\n```\nplain words here");
-
-  runEx(editor, "quote");
-  expect(editor.getText()).toBe("```ts\nconst x = 1;\n```\nplain words here");
-
-  typeKeys(editor, ["g", "g"]);
-  runEx(editor, "qte");
-  expect(editor.getText()).toBe("> ```ts\nconst x = 1;\n```\nplain words here");
-
-  runEx(editor, "4reflow 10");
-  expect(editor.getText()).toBe("> ```ts\nconst x = 1;\n```\nplain words here");
 });
 
 test("executes finite Ex line commands and aliases from normal mode", () => {
@@ -1710,15 +1647,13 @@ test("Ex visual delete and nohlsearch interact with selection and search highlig
 
 test("VimEditor honors configured WORD and previous-end motion keymap", () => {
   const options = resolveVimOptions({
-    piVimMode: {
-      startMode: "normal",
-      keymap: {
-        motions: { wordForwardBig: ["gw"], wordPreviousEnd: ["g-"] },
-        operatorMotions: { delete: ["wordForwardBig", "wordPreviousEnd"] },
-        commands: { redo: ["U"], showKeybindings: ["gk"] },
-        macros: { record: ["q"], play: ["@"] },
-        marks: { set: ["m"], jumpExact: ["`"], jumpLine: ["'"] },
-      },
+    startMode: "normal",
+    keymap: {
+      motions: { wordForwardBig: ["gw"], wordPreviousEnd: ["g-"] },
+      operatorMotions: { delete: ["wordForwardBig", "wordPreviousEnd"] },
+      commands: { redo: ["U"], showKeybindings: ["gk"] },
+      macros: { record: ["q"], play: ["@"] },
+      marks: { set: ["m"], jumpExact: ["`"], jumpLine: ["'"] },
     },
   }).options;
   const { editor } = createEditor(options);
@@ -1751,13 +1686,11 @@ test("VimEditor honors default paragraph motions and text objects", () => {
 
 test("VimEditor honors configured paragraph motion and text object keys", () => {
   const options = resolveVimOptions({
-    piVimMode: {
-      startMode: "normal",
-      keymap: {
-        motions: { paragraphForward: ["P"], paragraphBackward: ["N"] },
-        textObjects: { targets: { paragraph: ["g"] } },
-        operatorMotions: { delete: ["paragraphForward"] },
-      },
+    startMode: "normal",
+    keymap: {
+      motions: { paragraphForward: ["P"], paragraphBackward: ["N"] },
+      textObjects: { targets: { paragraph: ["g"] } },
+      operatorMotions: { delete: ["paragraphForward"] },
     },
   }).options;
   const { editor } = createEditor(options);
@@ -1768,16 +1701,40 @@ test("VimEditor honors configured paragraph motion and text object keys", () => 
   expect(editor.getText()).toBe("alpha\n\n");
 });
 
+test("VimEditor honors default and configured sentence keys", () => {
+  const { editor } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
+  editor.setText("Foo bar. Baz qux. End.");
+  typeKeys(editor, ["0", ")"]);
+  expect(editor.getCursor()).toEqual({ line: 0, col: 9 });
+  typeKeys(editor, ["d", "a", "s"]);
+  expect(editor.getText()).toBe("Foo bar. End.");
+
+  const options = resolveVimOptions({
+    startMode: "normal",
+    keymap: {
+      motions: { sentenceForward: ["S"] },
+      textObjects: { targets: { sentence: ["z"] } },
+      operatorMotions: { delete: ["sentenceForward"] },
+    },
+  }).options;
+  const configured = createEditor(options).editor;
+  configured.setText("Foo bar. Baz qux. End.");
+  typeKeys(configured, ["0", "S"]);
+  expect(configured.getCursor()).toEqual({ line: 0, col: 9 });
+  typeKeys(configured, ["d", "S"]);
+  expect(configured.getText()).toBe("Foo bar. End.");
+  typeKeys(configured, ["0", "d", "i", "z"]);
+  expect(configured.getText()).toBe(" End.");
+});
+
 test("VimEditor propagates configured paragraph options without dropping siblings", () => {
   const options = resolveVimOptions({
-    piVimMode: {
-      startMode: "normal",
-      keymap: {
-        motions: { paragraphForward: ["]"] },
-        commands: { redo: ["U"] },
-        macros: { record: ["q"], play: ["@"] },
-        marks: { set: ["m"], jumpExact: ["`"], jumpLine: ["'"] },
-      },
+    startMode: "normal",
+    keymap: {
+      motions: { paragraphForward: ["]"] },
+      commands: { redo: ["U"] },
+      macros: { record: ["q"], play: ["@"] },
+      marks: { set: ["m"], jumpExact: ["`"], jumpLine: ["'"] },
     },
   }).options;
   const { editor } = createEditor(options);
@@ -1807,7 +1764,6 @@ test("macro records and replays Ex substitutions and cancellation", () => {
     "e",
     "w",
     "/",
-    "\r",
     "\r",
     "q",
   ]);
@@ -1910,7 +1866,6 @@ test("configured showKeybindings key survives live editor option cloning", () =>
       },
       macros: { ...DEFAULT_VIM_OPTIONS.keymap!.macros, record: ["Q"] },
       marks: { ...DEFAULT_VIM_OPTIONS.keymap!.marks, set: ["M"] },
-      actions: { accepted: [] },
     },
   });
 
@@ -2031,7 +1986,7 @@ test("default shift operators and existing editor behavior remain compatible", (
   typeKeys(editor, ["g", "g", ">", ">", "j", "."]);
   expect(editor.getText()).toBe("  one\n  two");
 
-  runEx(editor, "%dedent");
+  typeKeys(editor, ["g", "g", "<", "<", "j", "."]);
   expect(editor.getText()).toBe("one\ntwo");
 
   typeKeys(editor, ["g", "g", "d", "w"]);
@@ -2186,7 +2141,6 @@ test("visual delete removes selected text and returns normal", () => {
   const { editor } = createEditor();
   for (const char of "abcd") editor.handleInput(char);
   editor.handleInput("\x1b");
-  editor.handleInput("h");
   editor.handleInput("h");
   editor.handleInput("v");
   editor.handleInput("l");
@@ -2595,4 +2549,89 @@ test("missing shutdown callback does not throw", () => {
   editor.setText("hello");
   runEx(editor, "q");
   expect(editor.getText()).toBe("hello");
+});
+
+test("live editor surrounds, deletes, and changes pairs", () => {
+  const { editor } = createEditor(normalOpts);
+  editor.setText("say hello world");
+  typeKeys(editor, ["0", "w", ..."ysiw)"]);
+  expectEditorState(editor, { text: "say (hello) world", cursor: { line: 0, col: 4 } });
+
+  editor.handleInput("u");
+  expectEditorState(editor, { text: "say hello world", mode: "normal" });
+
+  editor.setText("  fix it");
+  typeKeys(editor, ["0", ...'yss"']);
+  expectEditorState(editor, { text: '  "fix it"' });
+
+  editor.setText("f( a )");
+  typeKeys(editor, ["0", "f", "a", ..."ds("]);
+  expectEditorState(editor, { text: "fa" });
+
+  editor.setText("[x]");
+  typeKeys(editor, ["0", "l", ..."cs])"]);
+  expectEditorState(editor, { text: "(x)", mode: "normal" });
+});
+
+test("live editor shows pending surround keys and repeats with dot", () => {
+  const { editor } = createEditor(normalOpts);
+  editor.setText("one two");
+  typeKeys(editor, ["0", ..."ysiw"]);
+  expectEditorState(editor, { pending: "ysiw", text: "one two" });
+  editor.handleInput("'");
+  expectEditorState(editor, { text: "'one' two" });
+  typeKeys(editor, ["W", "."]);
+  expectEditorState(editor, { text: "'one' 'two'" });
+});
+
+test("live editor visual S surrounds the selection", () => {
+  const { editor } = createEditor(normalOpts);
+  editor.setText("say hello");
+  typeKeys(editor, ["0", "w", "v", "e", "S", "'"]);
+  expectEditorState(editor, { text: "say 'hello'", mode: "normal" });
+});
+
+test("live editor keeps a configured surround operator", () => {
+  const options = resolveVimOptions({ keymap: { operators: { surround: ["gs"] } } }).options;
+  const { editor } = createEditor({ ...options, startMode: "normal" });
+  editor.setText("word");
+  typeKeys(editor, ["0", ..."gsiw]"]);
+  expectEditorState(editor, { text: "[word]" });
+  typeKeys(editor, ["0", ..."gss)"]);
+  expectEditorState(editor, { text: "([word])" });
+});
+
+test("colored mode label stays width-safe and ends its color before the border", () => {
+  const options = resolveVimOptions({
+    startMode: "normal",
+    ui: { mode: { colors: { normal: { bg: 2, fg: 15 } } } },
+  }).options;
+  const { editor } = createEditor(options);
+  const start = "\x1b[48;5;2;38;5;15m";
+
+  for (const width of [40, 12, 8, 5, 3]) {
+    const lines = editor.render(width);
+    expectRenderedWidth(lines, width);
+    const statusLine = lines.at(-1) ?? "";
+    const colored = statusLine.slice(Math.max(0, statusLine.indexOf(start)));
+    if (!statusLine.includes(start)) continue;
+    const reset = colored.indexOf("\x1b[0m");
+    const dash = colored.indexOf("─");
+    expect(reset).toBeGreaterThan(0);
+    if (dash >= 0) expect(reset).toBeLessThan(dash);
+  }
+  expect(editor.render(40).at(-1)).toContain(`${start} NORMAL \x1b[0m`);
+});
+
+test("reconfigure applies new mode colors to the live editor", () => {
+  const { editor } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
+  expect(editor.render(40).at(-1)).not.toContain("\x1b[48;5;");
+
+  const options = resolveVimOptions({
+    startMode: "normal",
+    ui: { mode: { colors: { normal: { bg: 2 } } } },
+  }).options;
+  editor.reconfigure(createVimConfigPlan(options, []), { warnings: [] });
+
+  expect(editor.render(40).at(-1)).toContain("\x1b[48;5;2m NORMAL \x1b[0m");
 });

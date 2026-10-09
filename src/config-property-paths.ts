@@ -7,7 +7,6 @@ export const TRUSTED_JS_OPTION_PATHS = [
   "cursor.visual",
   "cursor.visualLine",
   "cursor.visualBlock",
-  "keymap.actionPresets",
   "keymap.operatorMotions",
   "ui.status.enabled",
   "ui.status.position",
@@ -15,6 +14,7 @@ export const TRUSTED_JS_OPTION_PATHS = [
   "ui.mode.enabled",
   "ui.mode.labels",
   "ui.mode.narrowLabels",
+  "ui.mode.colors",
   "ui.selection.enabled",
   "ui.selection.previewMaxChars",
   "ui.cursorPosition.enabled",
@@ -35,9 +35,6 @@ export const TRUSTED_JS_OPTION_PATHS = [
   "feedback.noop",
   "promptStructures.enabled",
   "promptStructures.targets",
-  "promptTransforms.enabled",
-  "promptTransforms.actions",
-  "promptTransforms.commands",
 ] as const;
 
 export type TrustedJsOptionPath = (typeof TRUSTED_JS_OPTION_PATHS)[number];
