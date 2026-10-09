@@ -494,47 +494,27 @@ const searchWordCommand =
   ({ nextState, snapshot, options }) =>
     searchWordUnderCursor(nextState, snapshot, options, direction);
 
-const pasteAfterCommand: NormalCommandHandler = ({ state, nextState, snapshot, count }) => {
-  const clipboardTarget = clipboardTargetToRead(state);
-  if (clipboardTarget) {
-    return withEffects(clearRegisterTarget(nextState), [
-      {
-        type: "readClipboard",
-        register: clipboardTarget.slot,
-        placement: "after",
-        fallback: state.clipboardRegisters?.[clipboardTarget.slot],
-        ...(count > 1 ? { count } : {}),
-      },
-    ]);
-  }
-  return editUpdate(
-    clearRegisterTarget(nextState),
-    pasteRegister(snapshot.text, snapshot.cursor, repeatRegister(registerToRead(state), count)),
-  );
-};
-
-const pasteBeforeCommand: NormalCommandHandler = ({ state, nextState, snapshot, count }) => {
-  const clipboardTarget = clipboardTargetToRead(state);
-  if (clipboardTarget) {
-    return withEffects(clearRegisterTarget(nextState), [
-      {
-        type: "readClipboard",
-        register: clipboardTarget.slot,
-        placement: "before",
-        fallback: state.clipboardRegisters?.[clipboardTarget.slot],
-        ...(count > 1 ? { count } : {}),
-      },
-    ]);
-  }
-  return editUpdate(
-    clearRegisterTarget(nextState),
-    pasteRegisterBefore(
-      snapshot.text,
-      snapshot.cursor,
-      repeatRegister(registerToRead(state), count),
-    ),
-  );
-};
+const pasteCommand =
+  (placement: "after" | "before"): NormalCommandHandler =>
+  ({ state, nextState, snapshot, count }) => {
+    const clipboardTarget = clipboardTargetToRead(state);
+    if (clipboardTarget) {
+      return withEffects(clearRegisterTarget(nextState), [
+        {
+          type: "readClipboard",
+          register: clipboardTarget.slot,
+          placement,
+          fallback: state.clipboardRegisters?.[clipboardTarget.slot],
+          ...(count > 1 ? { count } : {}),
+        },
+      ]);
+    }
+    const paste = placement === "after" ? pasteRegister : pasteRegisterBefore;
+    return editUpdate(
+      clearRegisterTarget(nextState),
+      paste(snapshot.text, snapshot.cursor, repeatRegister(registerToRead(state), count)),
+    );
+  };
 
 const NORMAL_COMMAND_HANDLERS: Record<VimCommandAction, NormalCommandHandler> = {
   // Engine-intercepted commands.
@@ -594,8 +574,8 @@ const NORMAL_COMMAND_HANDLERS: Record<VimCommandAction, NormalCommandHandler> = 
     ),
   joinLine: ({ nextState, snapshot }) =>
     editUpdate(nextState, joinLineWithNext(snapshot.text, snapshot.cursor)),
-  pasteAfter: pasteAfterCommand,
-  pasteBefore: pasteBeforeCommand,
+  pasteAfter: pasteCommand("after"),
+  pasteBefore: pasteCommand("before"),
   // Pure text edits.
   incrementNumber: numberAdjustCommand(1),
   decrementNumber: numberAdjustCommand(-1),
