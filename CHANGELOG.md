@@ -6,8 +6,26 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-09
+
+Hard fork of [pekochan069/pi-vimmode](https://github.com/pekochan069/pi-vimmode)
+at v0.9.0, published as `@graelo/pi-vim`. Apart from the changes below,
+editor behavior is unchanged from 0.9.0.
+
 ### Added
 
+- Surround, following vim-surround: `ys{motion}{char}`, `yss{char}`,
+  `ds{char}`, `cs{old}{new}`, and visual `S{char}`. Supports counts, `.`
+  repeat, and the vim-surround pair rules (`(` adds spaces, `)` and `b` do
+  not). Keys are configurable under `keymap.operators.surround` and
+  `keymap.commands`. See the Surround section of `docs/features.md`.
+- `guu`, `gUU`, and `g~~` line forms, next to `gugu`, `gUgU`, and `g~g~`.
+- `iW` and `aW` text objects for whitespace-delimited WORDs (target
+  `bigWord`, default `W`).
+- `` i` `` and `` a` `` text objects for backtick-quoted strings (target
+  `backtick`).
+- Counted paste: `3p` and `3P` paste three copies, including from named and
+  clipboard registers.
 - Sentence motions `(` and `)`, with counts, in normal and visual modes and
   after operators (`d)`, `c(`, `y)`), and `is`/`as` sentence text objects.
   Sentences follow `:help sentence`. Keys are configurable under
@@ -22,46 +40,16 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- **Breaking:** configuration moved out of Pi's `settings.json` into
-  pi-vim's own files, located the same way as other `@graelo` pi extensions
-  (via `@graelo/pi-ext-config`):
-  1. Move the global `piVim` object, without the `piVim` wrapper, to
-     `<agent-dir>/extensions/pi-vim/config.json`. `<agent-dir>` is
-     `~/.pi/agent`, or `PI_CODING_AGENT_DIR` when set.
-  2. Move a project's `piVim` object, unwrapped, to
-     `<repo-root>/.pi/extensions/pi-vim/config.json`. It is read only when Pi
-     trusts the project, and only inside a git repository.
-  3. Move `~/.pi/agent/pi-vim.config.js` to
-     `<agent-dir>/extensions/pi-vim/config.js`. In that file, change the
-     JSDoc type import to `../../npm/node_modules/@graelo/pi-vim/config`.
-
-     The old locations are ignored without a warning. Warning texts now name
-     option paths without the `piVim.` prefix and use the source labels
-     `global config`, `global JS config`, and `project config`.
-
-## [1.0.0] - 2026-10-08
-
-Hard fork of [pekochan069/pi-vimmode](https://github.com/pekochan069/pi-vimmode)
-at v0.9.0, published as `@graelo/pi-vim`. Apart from the changes below,
-editor behavior is unchanged from 0.9.0.
-
-### Added
-
-- Surround, following vim-surround: `ys{motion}{char}`, `yss{char}`,
-  `ds{char}`, `cs{old}{new}`, and visual `S{char}`. Supports counts, `.`
-  repeat, and the vim-surround pair rules (`(` adds spaces, `)` and `b` do
-  not). Keys are configurable under `piVim.keymap.operators.surround` and
-  `piVim.keymap.commands`. See the Surround section of `docs/features.md`.
-- `guu`, `gUU`, and `g~~` line forms, next to `gugu`, `gUgU`, and `g~g~`.
-- `iW` and `aW` text objects for whitespace-delimited WORDs (target
-  `bigWord`, default `W`).
-- `` i` `` and `` a` `` text objects for backtick-quoted strings (target
-  `backtick`).
-- Counted paste: `3p` and `3P` paste three copies, including from named and
-  clipboard registers.
-
-### Changed
-
+- **Breaking:** options moved out of Pi's `settings.json` into pi-vim's own
+  files (via `@graelo/pi-ext-config`); the old locations are ignored. Move,
+  without the `piVimMode` wrapper:
+  - global options to `<agent-dir>/extensions/pi-vim/config.json`
+    (`<agent-dir>` is `~/.pi/agent`, or `PI_CODING_AGENT_DIR`);
+  - project options to `<repo-root>/.pi/extensions/pi-vim/config.json`, read
+    only in a trusted git repository;
+  - `~/.pi/agent/pi-vimmode.config.js` to
+    `<agent-dir>/extensions/pi-vim/config.js`, with its JSDoc type import set
+    to `../../npm/node_modules/@graelo/pi-vim/config`.
 - Editing now follows Vim in these cases:
   - leaving insert mode moves the cursor one character left, unless it is at
     the start of the line;
@@ -77,14 +65,9 @@ editor behavior is unchanged from 0.9.0.
     searches (`"adiw`, `"a2yy`, `"adt,`), and commands that do not use
     registers run and consume it (`"aj` moves down) instead of being
     cancelled.
-- Published as `@graelo/pi-vim`. Install with
-  `pi install npm:@graelo/pi-vim`, and update the JSDoc import of trusted
-  JavaScript config to `./npm/node_modules/@graelo/pi-vim/config`.
-- Renamed from pi-vimmode to pi-vim throughout:
-  - the settings key `piVimMode` is now `piVim`;
-  - `~/.pi/agent/pi-vimmode.config.js` is now `~/.pi/agent/pi-vim.config.js`;
-  - `/vimmode` is now `/vim`, and `:vimmode inspect` is now `:vim inspect`;
-  - diagnostic metadata IDs moved from `vimmode.*` to `pi-vim.*`.
+- Published as `@graelo/pi-vim`; install with `pi install npm:@graelo/pi-vim`.
+  `/vimmode` is now `/vim`, `:vimmode inspect` is now `:vim inspect`, and
+  diagnostic metadata IDs moved from `vimmode.*` to `pi-vim.*`.
 - The package now ships TypeScript sources directly; there is no bundled
   `dist/` build anymore.
 - `RELEASE.md` is replaced by this `CHANGELOG.md`.
@@ -104,8 +87,8 @@ editor behavior is unchanged from 0.9.0.
   actions, and their `vim.prompt.*` and `vim.action.prompt.transform.*`
   factories in trusted JavaScript config. Use Vim line shifts (`>>`, `<<`,
   visual `>`/`<`) for indentation.
-- The action keymap layer and its presets: `piVim.keymap.actions`,
-  `piVim.keymap.actionPresets`, and `piVim.promptTransforms`. These
+- The action keymap layer and its presets: `keymap.actions`,
+  `keymap.actionPresets`, and `promptTransforms`. These
   settings now produce a "removed in 1.0.0" warning (see `:vimdoctor`) and are
   ignored.
 - `:features`; use `:help`, `:keybindings`, and `:mapcheck`.
@@ -119,7 +102,7 @@ editor behavior is unchanged from 0.9.0.
 
 - Configured `easymotion` options (such as `labelColor`) are no longer dropped
   when resolved editor options are cloned.
-- An empty array under `piVim.keymap.insert.<action>` now clears that
+- An empty array under `keymap.insert.<action>` now clears that
   action's inherited bindings, including ones added by global JS config, as it
   already did for other keymap groups.
 
