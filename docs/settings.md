@@ -6,7 +6,7 @@ every supported setting, default, accepted value, and effect.
 
 Source of truth:
 
-- Defaults and validation: `src/config.ts`
+- Defaults and validation: `src/config/` (re-exported by `src/config.ts`)
 - Types: `src/types.ts`
 - Runtime use: `src/lifecycle.ts`, `src/vim-editor.ts`, `src/modal/*`,
     `src/render.ts`

@@ -1235,8 +1235,10 @@ Useful files when verifying feature behavior:
 
 - `src/lifecycle.ts`: extension activation, settings refresh, status, shutdown
     cursor reset.
-- `src/config.ts`: settings defaults, parser, validation, merge precedence,
-    warnings.
+- `src/config.ts`: public config facade re-exporting `src/config/`, where
+    `defaults.ts`, the `*-parsers.ts` modules, `merge.ts`, `keymap-layers.ts`,
+    `leader.ts`, `conflicts.ts`, `js-layer.ts`, `plan.ts` and `resolve.ts` hold
+    settings defaults, validation, merge precedence, warnings, and loading.
 - `src/config-js.ts`: trusted global JS config loader and `vim.prompt.*`
     keymap builder.
 - `src/types.ts`: public option and behavior types.

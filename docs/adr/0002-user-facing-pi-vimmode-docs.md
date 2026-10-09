@@ -5,6 +5,9 @@ date: 2026-05-29
 status: accepted
 tags:
 - docs
+links:
+- target: 10
+  kind: amendedby
 ---
 
 # 2. User-facing pi-vimmode documentation
