@@ -1,8 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { readFileSync } from "node:fs";
 
-import type { VimConfigPropertyMetadata } from "../src/config-metadata.ts";
-
 import {
   ACTION_MARKERS,
   PROPERTY_MARKERS,
@@ -65,14 +63,6 @@ describe("generated config reference", () => {
         VIM_ACTION_METADATA.filter(({ id }) => id !== "escape"),
       ),
     ).toThrow(/missing public action metadata: escape/);
-    expect(() =>
-      validateMetadata(
-        VIM_CONFIG_PROPERTY_METADATA.map((property) =>
-          property.configPath === "leader" ? { ...property, jsonPaths: ["notReal"] } : property,
-        ) as VimConfigPropertyMetadata[],
-        VIM_ACTION_METADATA,
-      ),
-    ).toThrow(/unsupported JSON crosswalk: notReal/);
   });
 
   test("rejects missing or duplicate marker pairs and unresolved links", () => {

@@ -176,7 +176,6 @@ export const VIM_ACTION_METADATA: readonly VimPublicActionMetadata[] = [
 type PropertyFacts = {
   acceptedShape: string;
   assignment: string;
-  jsonPaths: readonly string[];
   aliases: readonly string[];
 };
 
@@ -184,211 +183,176 @@ const PROPERTY_FACTS = {
   preset: {
     acceptedShape: '"minimal" | "prompt-safe" | "vim-heavy"',
     assignment: "applies selected preset baseline, then replaces preset value",
-    jsonPaths: ["preset"],
     aliases: [],
   },
   leader: {
     acceptedShape: "one printable character or null",
     assignment: "replaces leader; null clears it",
-    jsonPaths: ["leader"],
     aliases: ["vim.g.mapleader"],
   },
   startMode: {
     acceptedShape: '"insert" | "normal"',
     assignment: "replaces startup mode",
-    jsonPaths: ["startMode"],
     aliases: [],
   },
   "cursor.insert": {
     acceptedShape: '"block" | "bar" | "underline"',
     assignment: "replaces cursor style",
-    jsonPaths: ["cursor.insert"],
     aliases: [],
   },
   "cursor.normal": {
     acceptedShape: '"block" | "bar" | "underline"',
     assignment: "replaces cursor style",
-    jsonPaths: ["cursor.normal"],
     aliases: [],
   },
   "cursor.visual": {
     acceptedShape: '"block" | "bar" | "underline"',
     assignment: "replaces cursor style",
-    jsonPaths: ["cursor.visual"],
     aliases: [],
   },
   "cursor.visualLine": {
     acceptedShape: '"block" | "bar" | "underline"',
     assignment: "replaces cursor style",
-    jsonPaths: ["cursor.visualLine"],
     aliases: [],
   },
   "cursor.visualBlock": {
     acceptedShape: '"block" | "bar" | "underline"',
     assignment: "replaces cursor style",
-    jsonPaths: ["cursor.visualBlock"],
     aliases: [],
   },
   "keymap.operatorMotions": {
     acceptedShape: "partial record of operator names to motion-name arrays",
     assignment: "replaces operator-motion allow-list",
-    jsonPaths: ["keymap.operatorMotions"],
     aliases: [],
   },
   "ui.status.enabled": {
     acceptedShape: "boolean",
     assignment: "replaces value",
-    jsonPaths: ["ui.status.enabled"],
     aliases: [],
   },
   "ui.status.position": {
     acceptedShape: '"left" | "right"',
     assignment: "replaces value",
-    jsonPaths: ["ui.status.position"],
     aliases: [],
   },
   "ui.status.items": {
     acceptedShape: 'readonly ("mode" | "pendingOperator" | "selection" | "cursorPosition")[]',
     assignment: "replaces item list",
-    jsonPaths: ["ui.status.items"],
     aliases: [],
   },
   "ui.mode.enabled": {
     acceptedShape: "boolean",
     assignment: "replaces value",
-    jsonPaths: ["ui.mode.enabled"],
     aliases: [],
   },
   "ui.mode.labels": {
     acceptedShape: "partial record of Vim modes to strings",
     assignment: "replaces whole record; does not merge keys",
-    jsonPaths: ["ui.mode.labels"],
     aliases: [],
   },
   "ui.mode.narrowLabels": {
     acceptedShape: "partial record of Vim modes to strings",
     assignment: "replaces whole record; does not merge keys",
-    jsonPaths: ["ui.mode.narrowLabels"],
     aliases: [],
   },
   "ui.selection.enabled": {
     acceptedShape: "boolean",
     assignment: "replaces value",
-    jsonPaths: ["ui.selection.enabled"],
     aliases: [],
   },
   "ui.selection.previewMaxChars": {
     acceptedShape: "non-negative integer",
     assignment: "replaces value",
-    jsonPaths: ["ui.selection.previewMaxChars"],
     aliases: [],
   },
   "ui.cursorPosition.enabled": {
     acceptedShape: "boolean",
     assignment: "replaces value",
-    jsonPaths: ["ui.cursorPosition.enabled"],
     aliases: [],
   },
   "ui.cursorPosition.base": {
     acceptedShape: "0 | 1",
     assignment: "replaces value",
-    jsonPaths: ["ui.cursorPosition.base"],
     aliases: [],
   },
   "ui.cursorPosition.format": {
     acceptedShape: "string",
     assignment: "replaces value",
-    jsonPaths: ["ui.cursorPosition.format"],
     aliases: [],
   },
   "ui.workbench.reservedRows": {
     acceptedShape: "integer from 0 through 5",
     assignment: "replaces value",
-    jsonPaths: ["ui.workbench.reservedRows"],
     aliases: [],
   },
   "macros.enabled": {
     acceptedShape: "boolean",
     assignment: "replaces value",
-    jsonPaths: ["macros.enabled"],
     aliases: [],
   },
   "macros.slots": {
     acceptedShape: "readonly lowercase register-name[]",
     assignment: "replaces slot list",
-    jsonPaths: ["macros.slots"],
     aliases: [],
   },
   "macros.maxReplaySteps": {
     acceptedShape: "positive integer",
     assignment: "replaces value",
-    jsonPaths: ["macros.maxReplaySteps"],
     aliases: [],
   },
   "marks.enabled": {
     acceptedShape: "boolean",
     assignment: "replaces value",
-    jsonPaths: ["marks.enabled"],
     aliases: [],
   },
   "marks.slots": {
     acceptedShape: "readonly lowercase register-name[]",
     assignment: "replaces slot list",
-    jsonPaths: ["marks.slots"],
     aliases: [],
   },
   "search.highlight": {
     acceptedShape: "boolean",
     assignment: "replaces value",
-    jsonPaths: ["search.highlight"],
     aliases: [],
   },
   "search.highlightCurrent": {
     acceptedShape: "boolean",
     assignment: "replaces value",
-    jsonPaths: ["search.highlightCurrent"],
     aliases: [],
   },
   "search.clearOnCancel": {
     acceptedShape: "boolean",
     assignment: "replaces value",
-    jsonPaths: ["search.clearOnCancel"],
     aliases: [],
   },
   "search.clearOnInsert": {
     acceptedShape: "boolean",
     assignment: "replaces value",
-    jsonPaths: ["search.clearOnInsert"],
     aliases: [],
   },
   "search.maxHighlights": {
     acceptedShape: "non-negative integer",
     assignment: "replaces value",
-    jsonPaths: ["search.maxHighlights"],
     aliases: [],
   },
   "exCommand.autocomplete": {
     acceptedShape: "boolean",
     assignment: "replaces value",
-    jsonPaths: ["exCommand.autocomplete"],
     aliases: [],
   },
   "feedback.noop": {
     acceptedShape: '"off" | "status"',
     assignment: "replaces value",
-    jsonPaths: ["feedback.noop"],
     aliases: [],
   },
   "promptStructures.enabled": {
     acceptedShape: "boolean",
     assignment: "replaces value",
-    jsonPaths: ["promptStructures.enabled"],
     aliases: [],
   },
   "promptStructures.targets": {
     acceptedShape: "partial record of prompt-structure targets to booleans",
     assignment: "replaces whole record; does not merge keys",
-    jsonPaths: ["promptStructures.targets"],
     aliases: [],
   },
 } as const satisfies Record<TrustedJsOptionPath, PropertyFacts>;

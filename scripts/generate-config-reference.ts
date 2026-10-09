@@ -68,10 +68,6 @@ function expectedActionIds(): string[] {
   return VIM_ACTION_METADATA.map(({ id }) => id);
 }
 
-function expectedJsonPaths(): Set<string> {
-  return new Set(VIM_CONFIG_PROPERTY_METADATA.map(({ configPath }) => configPath));
-}
-
 function addDuplicateErrors(errors: string[], label: string, values: readonly string[]): void {
   for (const value of duplicates(values)) errors.push(`duplicate ${label}: ${value}`);
 }
@@ -92,15 +88,12 @@ function addSetDifferenceErrors(
 function addPropertyErrors(
   errors: string[],
   properties: readonly VimConfigPropertyMetadata[],
-  jsonPaths: ReadonlySet<string>,
 ): void {
   for (const property of properties) {
     const path = property.path;
     if (!property.acceptedShape) errors.push(`missing accepted shape: ${path}`);
     if (!property.assignment) errors.push(`missing assignment semantics: ${path}`);
     if (!property.anchor) errors.push(`missing property anchor: ${path}`);
-    for (const jsonPath of property.jsonPaths)
-      if (!jsonPaths.has(jsonPath)) errors.push(`unsupported JSON crosswalk: ${jsonPath}`);
   }
 }
 
@@ -146,7 +139,7 @@ export function validateMetadata(
     "missing public action metadata",
     "unknown public action metadata",
   );
-  addPropertyErrors(errors, properties, expectedJsonPaths());
+  addPropertyErrors(errors, properties);
   addActionErrors(errors, publicActions);
   if (errors.length > 0)
     throw new Error(`Config reference metadata invalid:\n- ${errors.join("\n- ")}`);
@@ -191,7 +184,7 @@ ${entries
 - Accepted shape: \`${property.acceptedShape}\`
 - Built-in default: \`${stableValue(property.defaultValue)}\`
 - Assignment semantics: ${property.assignment}
-- JSON crosswalk: ${property.jsonPaths.length ? property.jsonPaths.map((path) => `\`${path}\``).join(", ") : "none"}
+- JSON crosswalk: \`${property.configPath}\`
 - Compatibility aliases: ${renderAliases(property.aliases, property.anchor)}
 `,
   )
