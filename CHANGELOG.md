@@ -6,6 +6,13 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Uppercase normal-mode keys such as `X`, `A`, `O`, `G` and `P` now work in
+  terminals that send Shift+letter as a Kitty event without the shifted key
+  or as an xterm modifyOtherKeys event (pi's fallback under tmux). Before,
+  `X` acted like `x` or did nothing.
+
 ## [1.0.0] - 2026-10-09
 
 Hard fork of [pekochan069/pi-vimmode](https://github.com/pekochan069/pi-vimmode)

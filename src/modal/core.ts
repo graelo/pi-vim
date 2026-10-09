@@ -28,8 +28,16 @@ function legacyAltPrintable(data: string): string | undefined {
   return char && char.charCodeAt(0) >= 32 ? `alt+${char}` : undefined;
 }
 
+// Kitty events without the shifted key (`CSI 120;2u`) and xterm modifyOtherKeys
+// events (`CSI 27;2;88~`) lose the uppercase letter; Vim treats Shift+x as `X`.
+function shiftedLetter(data: string): string | undefined {
+  if (data.length <= 2 || data.charCodeAt(0) !== 0x1b) return undefined;
+  return /^shift\+([a-z])$/.exec(parseKey(data) ?? "")?.[1]?.toUpperCase();
+}
+
 export function keySequence(data: string): string | undefined {
   return (
+    shiftedLetter(data) ??
     decodeKittyPrintable(data) ??
     (data.length === 1 && data.charCodeAt(0) >= 32 ? data : undefined) ??
     parseKey(data)
@@ -38,6 +46,7 @@ export function keySequence(data: string): string | undefined {
 
 export function insertKeySequence(data: string): string | undefined {
   return (
+    shiftedLetter(data) ??
     decodeKittyPrintable(data) ??
     (data.length === 1 && data.charCodeAt(0) >= 32 ? data : undefined) ??
     legacyAltPrintable(data) ??
