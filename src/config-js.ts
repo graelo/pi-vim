@@ -338,7 +338,10 @@ function tokenizeMappingKeys(value: string): string[] | undefined {
 function tokenizeReplayInputs(value: string): string[] | undefined {
   const keys = tokenizeKeys(value);
   if (!keys) return undefined;
-  return keys.map((key) => RHS_INPUT_ALIASES[key] ?? key);
+  // Shift+letter input resolves to the uppercase letter, so replay `<S-x>` as `X`.
+  return keys.map(
+    (key) => /^shift\+([a-z])$/.exec(key)?.[1]?.toUpperCase() ?? RHS_INPUT_ALIASES[key] ?? key,
+  );
 }
 
 type MappingOptions = { allowProtected?: boolean; desc?: string };

@@ -15,6 +15,8 @@ project uses [Semantic Versioning](https://semver.org/).
 - A keymap binding written as `<S-x>` or `shift+x` now warns and is ignored,
   in JSON and trusted JS config, because Shift+letter input resolves to the
   uppercase letter. Bind `X` instead.
+- A trusted JS string remap such as `vim.keymap.set("n", "zq", "<S-x>")` now
+  replays `X`; before, it did nothing.
 
 ## [1.0.0] - 2026-10-09
 

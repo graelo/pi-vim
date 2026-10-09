@@ -1346,6 +1346,26 @@ export default (vim) => {
   }
 });
 
+test("shift+letter rhs replays the uppercase letter", async () => {
+  const f = fixture();
+  try {
+    f.write(`
+export default (vim) => {
+  vim.keymap.set("n", "zq", "<S-x><S-tab>x");
+};
+`);
+    const result = await loadVimJsConfig(f.path);
+    expect(operations(result)).toEqual([
+      {
+        kind: "map",
+        mapping: { kind: "remap", key: "zq", inputs: ["X", "shift+tab", "x"], modes: ["normal"] },
+      },
+    ]);
+  } finally {
+    f.cleanup();
+  }
+});
+
 test("invalid default export and rhs warn without throwing", async () => {
   const f = fixture();
   try {
