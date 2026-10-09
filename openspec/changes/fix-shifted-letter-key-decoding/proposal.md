@@ -25,6 +25,8 @@ The modal engine already implements `X` correctly; only key decoding is wrong.
 - A keymap binding containing a `shift+<letter>` key (`<S-x>` or `shift+x`),
   in JSON or trusted JS config, warns with the uppercase letter to use and is
   ignored; valid siblings still apply.
+- A trusted JS string-remap target containing `<S-x>` replays `X`; before, it
+  replayed the literal text `shift+x` and did nothing.
 
 ## Non-goals
 

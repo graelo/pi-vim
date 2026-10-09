@@ -36,6 +36,12 @@ field, or an xterm modifyOtherKeys event.
     ignores that binding, keeps valid sibling bindings, and does not fail
     session startup
 
+#### Scenario: Shift+letter remap target replays the uppercase letter
+
+- **WHEN** a trusted JS string remap such as
+    `vim.keymap.set("n", "zq", "<S-x>")` is configured
+- **THEN** the remap replays `X`
+
 #### Scenario: Unshifted input is unchanged
 
 - **WHEN** the editor receives a plain lowercase letter or a Kitty event

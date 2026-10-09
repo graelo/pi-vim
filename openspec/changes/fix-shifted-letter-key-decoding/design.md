@@ -52,12 +52,19 @@ checks in `compileMapping`, next to the protected-key check.
 Rewriting to the uppercase letter silently was rejected: it would hide a
 config that changed meaning, and the project prefers explicit warnings.
 
+### D4. Replay `<S-x>` on a string-remap right-hand side as `X`
+
+A trusted JS string target such as `"<S-x>"` tokenized to the literal text
+`shift+x`, which no decoder recognizes, so the replay did nothing.
+`tokenizeReplayInputs` in `src/config-js.ts` now maps a `shift+<letter>`
+token to the uppercase letter; other tokens keep their current replay.
+
 ## Risks / Trade-offs
 
 - A configured `shift+<letter>` binding stops firing. Such bindings only
   worked in Kitty or modifyOtherKeys terminals before; the D3 warning tells
   the user to bind the uppercase letter.
-- A string-remap right-hand side such as `"<S-x>"` is not covered: it already
-  replayed the literal text `shift+x` before this change.
+- Shifted non-letters on a string-remap right-hand side (for example
+  `<C-a>`) still replay as literal text; that is a separate, pre-existing gap.
 - Shift with Caps Lock on resolves to the uppercase letter, unlike typed text.
   Normal-mode commands do not depend on Caps Lock.

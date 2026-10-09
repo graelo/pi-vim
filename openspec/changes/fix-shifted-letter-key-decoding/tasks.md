@@ -19,6 +19,10 @@
   `test/config.test.ts` (`<S-x>`, raw `shift+X`, a multi-key sequence, an
   insert binding, a surviving sibling) and `test/config-js.test.ts`.
 
+- [x] 3.2 Replay a `shift+<letter>` string-remap token as the uppercase
+  letter (D4). Verify with a `test/config-js.test.ts` case for
+  `"<S-x><S-tab>x"`.
+
 ## 4. Docs
 
 - [x] 4.1 Add a CHANGELOG `[Unreleased]` entry under Fixed, and a `docs/solutions`
