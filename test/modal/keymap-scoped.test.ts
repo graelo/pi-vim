@@ -6,9 +6,7 @@ import { handleModalInputWithOptions as handleModalInput } from "../modal-test-h
 import { p, cursor, snapshot, superJ, ctrlP, applyModalKeys } from "./shared.ts";
 
 test("project semantic action exact keys override built-in grammar", () => {
-  const options = resolveVimOptions(undefined, {
-    piVim: { keymap: { motions: { lineEnd: ["u"] } } },
-  }).options;
+  const options = resolveVimOptions(undefined, { keymap: { motions: { lineEnd: ["u"] } } }).options;
 
   const result = applyModalKeys({ mode: "normal" }, "hello", p(0, 0), ["u"], options);
   const lineEnd = applyModalKeys({ mode: "normal" }, "hello", p(0, 0), ["$"]);
@@ -351,11 +349,9 @@ test("scoped prefixes own visual grammar, macros, marks, and easymotion", () => 
 test("scoped unmaps return protected inherited keys to Pi", () => {
   const unmappedOptions = resolveVimOptions(
     {
-      piVim: {
-        keymap: {
-          allowProtectedOverrides: ["<C-p>"],
-          commands: { undo: ["<C-p>"] },
-        },
+      keymap: {
+        allowProtectedOverrides: ["<C-p>"],
+        commands: { undo: ["<C-p>"] },
       },
     },
     undefined,
@@ -401,7 +397,7 @@ test("operator-pending protected descriptors keep modal ownership", () => {
 });
 
 test("scoped unmaps remove inherited escape aliases by scope", () => {
-  const options = resolveVimOptions({ piVim: { keymap: { escape: ["<D-j>"] } } }, undefined, {
+  const options = resolveVimOptions({ keymap: { escape: ["<D-j>"] } }, undefined, {
     kind: "success",
     warnings: [],
     operations: [{ kind: "unmap", key: "super+j", modes: ["insert"] }],
@@ -450,10 +446,8 @@ test("scoped unmap disables inherited visual command", () => {
 test("active leader overrides normal structural prefixes", () => {
   for (const leader of ['"', "q", "m"]) {
     const configured = resolveVimOptions({
-      piVim: {
-        leader,
-        keymap: { commands: { redo: ["<leader>x"] } },
-      },
+      leader,
+      keymap: { commands: { redo: ["<leader>x"] } },
     }).options;
     const result = handleModalInput({ mode: "normal" }, snapshot, configured, leader);
     expect(result.state.pending).toBe(leader);
@@ -465,10 +459,8 @@ test("active leader overrides normal structural prefixes", () => {
 
 test("visual leader overrides direct case transform across visual modes", () => {
   const configured = resolveVimOptions({
-    piVim: {
-      leader: "u",
-      keymap: { operators: { uppercase: ["<leader>x"] } },
-    },
+    leader: "u",
+    keymap: { operators: { uppercase: ["<leader>x"] } },
   }).options;
 
   for (const mode of ["visual", "visualLine", "visualBlock"] as const) {
@@ -482,11 +474,9 @@ test("visual leader overrides direct case transform across visual modes", () => 
 
 test("invalid leader continuation preserves durable modal state", () => {
   const configured = resolveVimOptions({
-    piVim: {
-      leader: '"',
-      feedback: { noop: "status" },
-      keymap: { commands: { redo: ["<leader>q"] } },
-    },
+    leader: '"',
+    feedback: { noop: "status" },
+    keymap: { commands: { redo: ["<leader>q"] } },
   }).options;
   const initial: ModalState = {
     mode: "normal",
@@ -515,10 +505,8 @@ test("invalid leader continuation preserves durable modal state", () => {
 
 test("pending register keeps ownership of leader character", () => {
   const configured = resolveVimOptions({
-    piVim: {
-      leader: "w",
-      keymap: { commands: { redo: ["<leader>x"] } },
-    },
+    leader: "w",
+    keymap: { commands: { redo: ["<leader>x"] } },
   }).options;
   const result = handleModalInput(
     { mode: "normal", pendingRegister: "awaitingSlot" },

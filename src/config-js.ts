@@ -1,7 +1,8 @@
 import { existsSync, statSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+
+import { getAgentDir } from "@earendil-works/pi-coding-agent";
 
 import type {
   VimActionBindingMode,
@@ -31,8 +32,14 @@ import {
 } from "./mapping-scopes.ts";
 import { VIM_PRESETS } from "./types.ts";
 
-export const JS_CONFIG_FILE_NAME = "pi-vim.config.js";
-export const DEFAULT_JS_CONFIG_PATH = join(homedir(), ".pi", "agent", JS_CONFIG_FILE_NAME);
+/** Directory name under `<agent-dir>/extensions/` and `<repo>/.pi/extensions/`. */
+export const VIM_EXTENSION_ID = "pi-vim";
+export const JS_CONFIG_FILE_NAME = "config.js";
+
+/** Trusted JS config path; `agentDir` defaults to Pi's agent directory. */
+export function defaultJsConfigPath(agentDir = getAgentDir()): string {
+  return join(agentDir, "extensions", VIM_EXTENSION_ID, JS_CONFIG_FILE_NAME);
+}
 
 type ActionDescriptor = {
   actionId: VimFiniteActionId;
@@ -669,7 +676,7 @@ function isThenable(value: unknown): value is PromiseLike<unknown> {
 }
 
 export async function loadVimJsConfig(
-  configPath = DEFAULT_JS_CONFIG_PATH,
+  configPath = defaultJsConfigPath(),
   seed: Record<string, unknown> = {},
   rules?: VimJsConfigRules,
 ): Promise<VimJsConfigLoadResult> {

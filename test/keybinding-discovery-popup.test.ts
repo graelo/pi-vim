@@ -6,10 +6,8 @@ import { keybindingsPopup } from "../src/keybinding-discovery-popup.ts";
 describe("keybinding discovery popups", () => {
   test("builds dedicated keybindings catalog popup", () => {
     const { options } = resolveVimOptions({
-      piVim: {
-        keymap: {
-          commands: { redo: ["U"] },
-        },
+      keymap: {
+        commands: { redo: ["U"] },
       },
     });
     const popup = keybindingsPopup(options);

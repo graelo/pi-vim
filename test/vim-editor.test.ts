@@ -19,20 +19,17 @@ type EditorArgs = ConstructorParameters<typeof VimEditor>;
 
 function ctrlVVisualBlockOptions(startMode: "insert" | "normal" = "insert") {
   return resolveVimOptions({
-    piVim: {
-      startMode,
-      keymap: {
-        commands: { visualBlock: ["ctrl+v"] },
-        allowProtectedOverrides: ["ctrl+v"],
-      },
+    startMode,
+    keymap: {
+      commands: { visualBlock: ["ctrl+v"] },
+      allowProtectedOverrides: ["ctrl+v"],
     },
   }).options;
 }
 
 function easyMotionOptions() {
-  return resolveVimOptions({
-    piVim: { startMode: "normal", keymap: { commands: { easymotion: ["e"] } } },
-  }).options;
+  return resolveVimOptions({ startMode: "normal", keymap: { commands: { easymotion: ["e"] } } })
+    .options;
 }
 
 function runtimeConfiguration(
@@ -309,11 +306,9 @@ test("insert mode edits keep long-prompt viewport stable", () => {
 test("constructor clones caller-owned nested keymap options", () => {
   const options = structuredClone(
     resolveVimOptions({
-      piVim: {
-        startMode: "normal",
-        leader: ",",
-        keymap: { escape: ["<D-j>"], commands: { openLineBelow: ["<leader>k"] } },
-      },
+      startMode: "normal",
+      leader: ",",
+      keymap: { escape: ["<D-j>"], commands: { openLineBelow: ["<leader>k"] } },
     }).options,
   );
   const { editor } = createEditor(options);
@@ -333,7 +328,8 @@ test("constructor clones caller-owned nested keymap options", () => {
 
 test("live editor honors configured case operator keymap", () => {
   const options = resolveVimOptions({
-    piVim: { startMode: "normal", keymap: { operators: { lowercase: ["zu"] } } },
+    startMode: "normal",
+    keymap: { operators: { lowercase: ["zu"] } },
   }).options;
   const { editor } = createEditor(options);
 
@@ -348,7 +344,8 @@ test("live editor honors configured case operator keymap", () => {
 test("reconfigure applies new keymaps immediately while clearing pending grammar", () => {
   const { editor } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
   const options = resolveVimOptions({
-    piVim: { startMode: "insert", keymap: { commands: { openLineBelow: [",k"] } } },
+    startMode: "insert",
+    keymap: { commands: { openLineBelow: [",k"] } },
   }).options;
 
   editor.setText("one\ntwo");
@@ -410,10 +407,8 @@ test("reconfigure preserves durable state and clears transient grammar", () => {
   const renderRequests = getRenderRequests();
   const plan = createVimConfigPlan(
     resolveVimOptions({
-      piVim: {
-        cursor: { visual: "underline" },
-        keymap: { commands: { openLineBelow: [",k"] } },
-      },
+      cursor: { visual: "underline" },
+      keymap: { commands: { openLineBelow: [",k"] } },
     }).options,
     [],
   );
@@ -611,16 +606,14 @@ test("leaving insert mode steps the cursor back like Vim", () => {
 });
 
 test("insert escape alias steps the cursor back", () => {
-  const options = resolveVimOptions({ piVim: { keymap: { escape: ["<D-j>"] } } }).options;
+  const options = resolveVimOptions({ keymap: { escape: ["<D-j>"] } }).options;
   const { editor } = createEditor(options);
   typeKeys(editor, ["a", "b", "c", superJ]);
   expectEditorState(editor, { text: "abc", cursor: { line: 0, col: 2 }, mode: "normal" });
 });
 
 test("configured super+j insert escape exits insert without inserting alias", () => {
-  const options = resolveVimOptions({
-    piVim: { keymap: { escape: ["<D-j>"] } },
-  }).options;
+  const options = resolveVimOptions({ keymap: { escape: ["<D-j>"] } }).options;
   const { editor } = createEditor(options);
 
   editor.handleInput("a");
@@ -630,9 +623,7 @@ test("configured super+j insert escape exits insert without inserting alias", ()
 });
 
 test("configured super+j insert escape exits visual mode", () => {
-  const options = resolveVimOptions({
-    piVim: { startMode: "normal", keymap: { escape: ["<D-j>"] } },
-  }).options;
+  const options = resolveVimOptions({ startMode: "normal", keymap: { escape: ["<D-j>"] } }).options;
   const { editor } = createEditor(options);
 
   editor.setText("abc");
@@ -645,9 +636,7 @@ test("configured super+j insert escape exits visual mode", () => {
 });
 
 test("configured ctrl+j insert escape exits insert when sent as enhanced keyboard input", () => {
-  const options = resolveVimOptions({
-    piVim: { keymap: { escape: ["<C-j>"] } },
-  }).options;
+  const options = resolveVimOptions({ keymap: { escape: ["<C-j>"] } }).options;
   const { editor } = createEditor(options);
 
   editor.handleInput("x");
@@ -657,7 +646,7 @@ test("configured ctrl+j insert escape exits insert when sent as enhanced keyboar
 });
 
 test("raw text insert escape config is ignored by live editor", () => {
-  const options = resolveVimOptions({ piVim: { keymap: { escape: ["jk"] } } }).options;
+  const options = resolveVimOptions({ keymap: { escape: ["jk"] } }).options;
   const { editor } = createEditor(options);
 
   typeKeys(editor, ["j", "k"]);
@@ -666,9 +655,7 @@ test("raw text insert escape config is ignored by live editor", () => {
 });
 
 test("configured insert escape delegates while autocomplete is open", async () => {
-  const options = resolveVimOptions({
-    piVim: { keymap: { escape: ["<D-j>"] } },
-  }).options;
+  const options = resolveVimOptions({ keymap: { escape: ["<D-j>"] } }).options;
   const { editor } = createEditor(options);
   installAutocomplete(editor, ["/super-j-suggestion"], 1);
 
@@ -684,9 +671,7 @@ test("configured insert escape delegates while autocomplete is open", async () =
 });
 
 test("macro replay preserves configured insert escape behavior", () => {
-  const options = resolveVimOptions({
-    piVim: { startMode: "normal", keymap: { escape: ["<D-j>"] } },
-  }).options;
+  const options = resolveVimOptions({ startMode: "normal", keymap: { escape: ["<D-j>"] } }).options;
   const { editor } = createEditor(options);
 
   typeKeys(editor, ["q", "a", "i", "X", superJ, "q"]);
@@ -873,9 +858,7 @@ test("diagnostic popups and feedback info rows render width-safely", () => {
   const { editor, overlays } = createEditor(
     { ...DEFAULT_VIM_OPTIONS, startMode: "normal", feedback: { noop: "status" } },
     {
-      warnings: [
-        "project settings: piVim.keymap.commands.openLineBelow contains protected key ctrl+p",
-      ],
+      warnings: ["project config: keymap.commands.openLineBelow contains protected key ctrl+p"],
     },
   );
   const baseline = editor.render(24);
@@ -1169,12 +1152,10 @@ test("renders configured mode labels", () => {
 test("renders and clones a right-positioned status group", () => {
   const options = structuredClone(
     resolveVimOptions({
-      piVim: {
-        startMode: "normal",
-        ui: {
-          status: { position: "right" },
-          mode: { labels: { normal: "COMMAND" } },
-        },
+      startMode: "normal",
+      ui: {
+        status: { position: "right" },
+        mode: { labels: { normal: "COMMAND" } },
       },
     }).options,
   );
@@ -1666,15 +1647,13 @@ test("Ex visual delete and nohlsearch interact with selection and search highlig
 
 test("VimEditor honors configured WORD and previous-end motion keymap", () => {
   const options = resolveVimOptions({
-    piVim: {
-      startMode: "normal",
-      keymap: {
-        motions: { wordForwardBig: ["gw"], wordPreviousEnd: ["g-"] },
-        operatorMotions: { delete: ["wordForwardBig", "wordPreviousEnd"] },
-        commands: { redo: ["U"], showKeybindings: ["gk"] },
-        macros: { record: ["q"], play: ["@"] },
-        marks: { set: ["m"], jumpExact: ["`"], jumpLine: ["'"] },
-      },
+    startMode: "normal",
+    keymap: {
+      motions: { wordForwardBig: ["gw"], wordPreviousEnd: ["g-"] },
+      operatorMotions: { delete: ["wordForwardBig", "wordPreviousEnd"] },
+      commands: { redo: ["U"], showKeybindings: ["gk"] },
+      macros: { record: ["q"], play: ["@"] },
+      marks: { set: ["m"], jumpExact: ["`"], jumpLine: ["'"] },
     },
   }).options;
   const { editor } = createEditor(options);
@@ -1707,13 +1686,11 @@ test("VimEditor honors default paragraph motions and text objects", () => {
 
 test("VimEditor honors configured paragraph motion and text object keys", () => {
   const options = resolveVimOptions({
-    piVim: {
-      startMode: "normal",
-      keymap: {
-        motions: { paragraphForward: ["P"], paragraphBackward: ["N"] },
-        textObjects: { targets: { paragraph: ["g"] } },
-        operatorMotions: { delete: ["paragraphForward"] },
-      },
+    startMode: "normal",
+    keymap: {
+      motions: { paragraphForward: ["P"], paragraphBackward: ["N"] },
+      textObjects: { targets: { paragraph: ["g"] } },
+      operatorMotions: { delete: ["paragraphForward"] },
     },
   }).options;
   const { editor } = createEditor(options);
@@ -1733,13 +1710,11 @@ test("VimEditor honors default and configured sentence keys", () => {
   expect(editor.getText()).toBe("Foo bar. End.");
 
   const options = resolveVimOptions({
-    piVim: {
-      startMode: "normal",
-      keymap: {
-        motions: { sentenceForward: ["S"] },
-        textObjects: { targets: { sentence: ["z"] } },
-        operatorMotions: { delete: ["sentenceForward"] },
-      },
+    startMode: "normal",
+    keymap: {
+      motions: { sentenceForward: ["S"] },
+      textObjects: { targets: { sentence: ["z"] } },
+      operatorMotions: { delete: ["sentenceForward"] },
     },
   }).options;
   const configured = createEditor(options).editor;
@@ -1754,14 +1729,12 @@ test("VimEditor honors default and configured sentence keys", () => {
 
 test("VimEditor propagates configured paragraph options without dropping siblings", () => {
   const options = resolveVimOptions({
-    piVim: {
-      startMode: "normal",
-      keymap: {
-        motions: { paragraphForward: ["]"] },
-        commands: { redo: ["U"] },
-        macros: { record: ["q"], play: ["@"] },
-        marks: { set: ["m"], jumpExact: ["`"], jumpLine: ["'"] },
-      },
+    startMode: "normal",
+    keymap: {
+      motions: { paragraphForward: ["]"] },
+      commands: { redo: ["U"] },
+      macros: { record: ["q"], play: ["@"] },
+      marks: { set: ["m"], jumpExact: ["`"], jumpLine: ["'"] },
     },
   }).options;
   const { editor } = createEditor(options);
@@ -2619,9 +2592,7 @@ test("live editor visual S surrounds the selection", () => {
 });
 
 test("live editor keeps a configured surround operator", () => {
-  const options = resolveVimOptions({
-    piVim: { keymap: { operators: { surround: ["gs"] } } },
-  }).options;
+  const options = resolveVimOptions({ keymap: { operators: { surround: ["gs"] } } }).options;
   const { editor } = createEditor({ ...options, startMode: "normal" });
   editor.setText("word");
   typeKeys(editor, ["0", ..."gsiw]"]);

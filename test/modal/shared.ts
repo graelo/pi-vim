@@ -30,9 +30,7 @@ export const ctrlE = "\u001b[101;5u";
 export const ctrlP = "\u001b[112;5u";
 export const altV = "\u001bv";
 export const ctrlAltV = "\u001b[118;7u";
-export const escapeOptions = resolveVimOptions({
-  piVim: { keymap: { escape: ["<D-j>"] } },
-}).options;
+export const escapeOptions = resolveVimOptions({ keymap: { escape: ["<D-j>"] } }).options;
 
 export function applyAdapterCommand(
   command: Extract<ModalEffect, { type: "adapterCommand" }>["command"],

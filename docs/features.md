@@ -5,7 +5,7 @@ targets fast prompt editing inside Pi, not full Vim or Neovim parity.
 
 Use this guide for behavior. Use
 [`settings.md`](https://github.com/graelo/pi-vim/blob/main/docs/settings.md)
-for every `piVim` setting and default.
+for every setting and default.
 
 ## Activation and lifecycle
 
@@ -19,7 +19,8 @@ Runtime behavior:
 - Re-runs installation on the next tick for startup/resource timing reliability.
 - Registers `/vim [on|off|toggle|status]` to temporarily enable/disable
     the modal editor without uninstalling the extension.
-- Loads settings from global and project Pi settings whenever it installs.
+- Loads settings from the global and (in trusted projects) project
+    `extensions/pi-vim/config.json` files whenever it installs.
 - Adds no line to the Pi footer. When settings load with new warnings, shows
     one notification with the warning count and a pointer to `:vimdoctor`.
 - Keeps `bar` hardware cursors visible while Pi agent work is active,
@@ -70,7 +71,7 @@ handy when trying it in a new terminal.
 | Visual line  | `V-LINE`  | Linewise selection. Whole selected lines are highlighted.                                                                                    |
 | Visual block | `V-BLOCK` | Rectangular selection. Selected cells are highlighted.                                                                                       |
 
-Startup mode is `insert` by default. Configure `piVim.startMode` to start
+Startup mode is `insert` by default. Configure `startMode` to start
 new prompts in `normal` instead.
 
 ## Quick reference
@@ -85,7 +86,7 @@ supported; it is not a Vim/Neovim quickref clone.
 | Customization diagnostics            | `:vimdoctor`, `:keybindings`, `:keymap`, `:mapcheck`                          | Read-only diagnostics shown in popup output.                                                        |
 | Runtime help/inspectability          | `:help`, `:messages`, `:vim inspect`                                      | Read-only source-backed help and prompt-local state/message summaries shown in popup output.        |
 | Pi shortcut compatibility            | `Enter`, `Ctrl-C`, `Ctrl-G`, `Ctrl-P`, `Ctrl-v`, `Alt-v`, `Ctrl-Alt-v`, `Tab` | Pi-owned or protected shortcuts; use `:mapcheck <key>` to inspect ownership.                        |
-| Escape aliases                       | `<D-j>`, `<C-j>` via `piVim.keymap.escape`                                | Opt-in key aliases for leaving insert, visual, or pending Ex command states; not full Vim mappings. |
+| Escape aliases                       | `<D-j>`, `<C-j>` via `keymap.escape`                                | Opt-in key aliases for leaving insert, visual, or pending Ex command states; not full Vim mappings. |
 
 Non-goals: no public plugin action API,
 runtime `:map`, runtime `:action`, Vimscript, Neovim Lua, full Vim help tags,
@@ -96,7 +97,7 @@ help pager, or broad quickref parity.
 - Insert + inactive autocomplete: `Esc` enters normal mode and, as in Vim,
     moves the cursor one character left unless it is at the start of the line.
 - Insert + active autocomplete: `Esc` delegates to Pi so autocomplete can close.
-- Optional `piVim.keymap.escape` aliases such as `<D-j>` or `<C-j>` enter
+- Optional `keymap.escape` aliases such as `<D-j>` or `<C-j>` enter
     normal mode from insert mode when autocomplete is inactive, cancel visual
     modes, and cancel pending `:` Ex command-lines.
 - Raw printable text chords such as `jk` or `jj` are rejected; aliases are
@@ -112,24 +113,24 @@ help pager, or broad quickref parity.
     executes that pending operation instead; `Ctrl-C` and `Ctrl-G`
     reset/delegate.
 - In insert mode, non-`Esc` keys delegate to Pi unless they are part of
-    configured `piVim.keymap.escape` handling or configured
-    `piVim.keymap.insert` newline, edit, or movement bindings.
-- Configured insert newline bindings (`piVim.keymap.insert.openLineBelow`
+    configured `keymap.escape` handling or configured
+    `keymap.insert` newline, edit, or movement bindings.
+- Configured insert newline bindings (`keymap.insert.openLineBelow`
     / `openLineAbove`) open a blank line above or below the current prompt line
     while staying in insert mode. They only work when Pi autocomplete is
     inactive; autocomplete-active input keeps Pi ownership.
 - Configured insert edit bindings
-    (`piVim.keymap.insert.deleteWordBackward`, `deleteWordForward`,
+    (`keymap.insert.deleteWordBackward`, `deleteWordForward`,
     `deleteLineBackward`, `deleteLineForward`) edit prompt text in insert mode
     without writing Vim registers, marks, macros, or dot-repeat state.
 - Configured insert movement bindings
-    (`piVim.keymap.insert.moveWordBackward`, `moveWordForward`,
+    (`keymap.insert.moveWordBackward`, `moveWordForward`,
     `moveLineStart`, `moveLineEnd`) move the cursor in insert mode without
     changing prompt text.
 - Insert word movement and deletion reuse pi-vim lowercase small-word
     semantics, where keyword runs, punctuation runs, and whitespace are separate
     groups.
-- `piVim.keymap.insert` owns only physical insert edits and movement.
+- `keymap.insert` owns only physical insert edits and movement.
 - Insert bindings are not Vim mappings: no raw printable chords such as `jk`,
     `jj`, or `oo`, no multi-key insert sequences, no insert abbreviations, no
     recursive mappings, no `.vimrc`, no Vimscript, no Neovim Lua, no default
@@ -141,17 +142,15 @@ Readline-style example:
 
 ```json
 {
-  "piVim": {
-    "keymap": {
-      "insert": {
-        "deleteWordBackward": ["ctrl+w"],
-        "deleteLineBackward": ["ctrl+u"],
-        "deleteLineForward": ["ctrl+k"],
-        "moveWordBackward": ["alt+b"],
-        "moveWordForward": ["alt+f"],
-        "moveLineStart": ["ctrl+a"],
-        "moveLineEnd": ["ctrl+e"]
-      }
+  "keymap": {
+    "insert": {
+      "deleteWordBackward": ["ctrl+w"],
+      "deleteLineBackward": ["ctrl+u"],
+      "deleteLineForward": ["ctrl+k"],
+      "moveWordBackward": ["alt+b"],
+      "moveWordForward": ["alt+f"],
+      "moveLineStart": ["ctrl+a"],
+      "moveLineEnd": ["ctrl+e"]
     }
   }
 }
@@ -161,12 +160,10 @@ Home-row-mod example:
 
 ```json
 {
-  "piVim": {
-    "keymap": {
-      "insert": {
-        "openLineBelow": ["ctrl+o"],
-        "openLineAbove": ["ctrl+k"]
-      }
+  "keymap": {
+    "insert": {
+      "openLineBelow": ["ctrl+o"],
+      "openLineAbove": ["ctrl+k"]
     }
   }
 }
@@ -187,7 +184,7 @@ Example:
 Type prompt text in insert mode
 Esc          -> normal mode
 0wciwidea    -> move, change inner word, type replacement
-<D-j>        -> normal mode again when configured as piVim.keymap.escape
+<D-j>        -> normal mode again when configured as keymap.escape
 Enter        -> submit through Pi
 ```
 
@@ -514,8 +511,8 @@ Behavior:
 - The cursor lands on the opening character. Each surround is one undo step,
     and normal-mode surrounds repeat with `.`. Surround never writes registers.
 - The pending status shows the keys typed so far (`ysiw`, `cs"`).
-- Keys are configurable: `piVim.keymap.operators.surround` (default `ys`),
-    `piVim.keymap.commands.deleteSurround` (`ds`), `changeSurround` (`cs`), and
+- Keys are configurable: `keymap.operators.surround` (default `ys`),
+    `keymap.commands.deleteSurround` (`ds`), `changeSurround` (`cs`), and
     `surroundSelection` (`S`, visual modes only; normal `S` still substitutes
     the line). Rebinding the operator moves its line form too: with `gs`, use
     `gss`.
@@ -534,7 +531,7 @@ case-insensitive and prompt-wide. Up to 52 targets receive deterministic labels:
 Labels are render-only substitutions over unchanged prompt cells. Escape,
 invalid labels, and missing matches leave prompt text and undo/redo history
 unchanged. Valid labels move the cursor without creating an edit. Configure
-label color with `piVim.easymotion.labelColor`.
+label color with `easymotion.labelColor`.
 
 ## Character search
 
@@ -618,7 +615,7 @@ Search highlighting:
 
 - Successful `/`, `?`, `n`, and `N` can highlight matches.
 - Current match can use distinct styling.
-- Highlight rendering is capped by `piVim.search.maxHighlights`.
+- Highlight rendering is capped by `search.maxHighlights`.
 - Precedence is: cursor, visual selection, current search match, other search
     matches, plain text.
 - Search highlight can clear on cancelled search or insert-mode transition
@@ -639,7 +636,7 @@ Supported actions:
 - Motions extend selection: `h`, `j`, `k`, `l`, `0`, `$`, `^`, `_`, `w`, `b`,
     `e`, `gg`, `G`, `%`, search, and mark jumps.
 - `V` switches to visual line mode without resetting anchor.
-- A configured `piVim.keymap.commands.visualBlock` binding switches to
+- A configured `keymap.commands.visualBlock` binding switches to
     visual block mode without resetting anchor.
 - `y` yanks selection and returns normal.
 - `d` / `x` deletes selection and returns normal.
@@ -666,7 +663,7 @@ Supported actions:
 
 - Motions extend selected line range.
 - `v` switches to visual char mode without resetting anchor.
-- A configured `piVim.keymap.commands.visualBlock` binding switches to
+- A configured `keymap.commands.visualBlock` binding switches to
     visual block mode without resetting anchor.
 - `y`, `d`, `x`, `c`, `r{char}`, `u`, `U`, `~`, `>` / `<`, mark jumps, named
     register targeting, and `:` work linewise.
@@ -682,7 +679,7 @@ Vjp     replace selected lines with unnamed register
 
 ## Visual block mode
 
-Enter visual block mode with `piVim.keymap.commands.visualBlock`. The
+Enter visual block mode with `keymap.commands.visualBlock`. The
 default setting is empty because `Ctrl-v`, Windows-style `Alt-v`, and
 `Ctrl-Alt-v` delegate to Pi for image/clipboard paste in normal and visual
 modes. Use a non-protected binding such as `<A-b>`, or explicitly allow and bind
@@ -724,7 +721,7 @@ From normal mode, `gv` re-enters the last visual selection when available.
 - Restores the visual anchor and active cursor from the most recent visual exit.
 - Safe no-op when no previous selection exists or stored positions are stale
     after edits.
-- Configurable via `piVim.keymap.commands.reselectVisual` (default: `gv`).
+- Configurable via `keymap.commands.reselectVisual` (default: `gv`).
 
 Example:
 
@@ -1100,7 +1097,7 @@ Behavior:
 - Reset/submit keys (`Enter`, `Ctrl-C`, `Ctrl-G`), insert autocomplete-closing
     `Esc`, and delegated non-insert inputs are not recorded; insert-mode
     delegated keys outside those exceptions are recorded.
-- Replay input count is capped by `piVim.macros.maxReplaySteps`.
+- Replay input count is capped by `macros.maxReplaySteps`.
 
 Example:
 
@@ -1131,7 +1128,7 @@ Optional status item:
 Rendering behavior:
 
 - Status items are left-aligned by default;
-    `piVim.ui.status.position: "right"` moves the complete ordered status
+    `ui.status.position: "right"` moves the complete ordered status
     group to the far-right border slot.
 - Mode, pending state, selection, cursor position, and active macro recording
     (`REC {slot}`) always move together.
@@ -1146,7 +1143,7 @@ Rendering behavior:
     diagnostics, optional no-op feedback, and substitution results render
     in a dedicated row below the prompt and shrink prompt viewport by one row by
     default.
-- `piVim.ui.workbench.reservedRows` can reserve 0-5 width-safe workbench
+- `ui.workbench.reservedRows` can reserve 0-5 width-safe workbench
     rows; active feedback uses the first reserved row and blank reserved rows
     keep the prompt viewport height stable.
 - Pending workbench input also appears in status with an ellipsis when the
@@ -1180,11 +1177,11 @@ Pi remains owner of app-level shortcuts.
     model/thinking shortcuts, autocomplete controls, external editor shortcuts,
     and image paste stay Pi-owned unless a shortcut is explicitly implemented or
     explicitly bound by pi-vim.
-- Protected Pi shortcut names are rejected from `piVim.keymap` with
+- Protected Pi shortcut names are rejected from `keymap` with
     warnings that include the protected key reason. Use `:mapcheck <key>` for
     runtime ownership details.
 - Protected key rejection can be explicitly overridden per settings layer
-    through `piVim.keymap.allowProtectedOverrides`. See `docs/settings.md`
+    through `keymap.allowProtectedOverrides`. See `docs/settings.md`
     for allow-list rules, scope, and limits.
 - Overrides are not OS or terminal guarantees. pi-vim can only handle keys
     Pi delivers distinctly. Chorded shortcuts such as `ctrl+j` may arrive as
@@ -1196,11 +1193,11 @@ Pi remains owner of app-level shortcuts.
 
 ## Configuration features
 
-Most keys map to semantic actions through `piVim.keymap`; settings do not
-add arbitrary Vim grammar. Optional `piVim.leader` and trusted
+Most keys map to semantic actions through `keymap`; settings do not
+add arbitrary Vim grammar. Optional `leader` and trusted
 `vim.g.mapleader` settings expand leading `<leader>` mapping keys with one final
 global/JS/project value. Advanced users can add trusted global JS keybindings in
-`~/.pi/agent/pi-vim.config.js` with
+`<agent-dir>/extensions/pi-vim/config.js` with
 `vim.keymap.set(mode, key, vim.prompt.<builtin>(args?))` or simple replay
 mappings such as `vim.keymap.set("n", "zz", "llll")`.
 
@@ -1225,7 +1222,7 @@ Examples of configurable features:
 - mark enablement and slots
 - search highlight behavior
 - prompt-native structure enablement per target
-- optional no-op feedback (`piVim.feedback.noop`) for selected confusing
+- optional no-op feedback (`feedback.noop`) for selected confusing
     ignored inputs
 
 See

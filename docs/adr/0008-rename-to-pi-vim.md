@@ -9,6 +9,8 @@ tags:
 links:
 - target: 5
   kind: amends
+- target: 9
+  kind: amendedby
 ---
 
 # 8. Rename to pi-vim

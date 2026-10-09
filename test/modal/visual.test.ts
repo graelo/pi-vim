@@ -731,7 +731,7 @@ test("later visual exits replace previous stored selection", () => {
 
 test("configured reselectVisual key works", () => {
   const configuredOptions = resolveVimOptions({
-    piVim: { keymap: { commands: { reselectVisual: ["grv"] } } },
+    keymap: { commands: { reselectVisual: ["grv"] } },
   }).options;
 
   // Enter visual, select, escape

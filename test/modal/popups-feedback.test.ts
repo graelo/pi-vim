@@ -5,9 +5,7 @@ import { handleModalInputWithOptions as handleModalInput } from "../modal-test-h
 import { p, options, snapshot, applyModalKeys } from "./shared.ts";
 
 test("keybindings opens catalog popup without editing state", () => {
-  const configured = resolveVimOptions({
-    piVim: { keymap: { commands: { redo: ["U"] } } },
-  }).options;
+  const configured = resolveVimOptions({ keymap: { commands: { redo: ["U"] } } }).options;
   const initial: ModalState = {
     mode: "normal",
     register: { type: "char", text: "saved" },
@@ -562,7 +560,7 @@ test("message history cap discards oldest entries", () => {
 
 test("normal showKeybindings semantic command opens popup without modal side effects", () => {
   const configured = resolveVimOptions({
-    piVim: { keymap: { commands: { showKeybindings: ["gk"] } } },
+    keymap: { commands: { showKeybindings: ["gk"] } },
   }).options;
   const initial: ModalState = {
     mode: "normal",

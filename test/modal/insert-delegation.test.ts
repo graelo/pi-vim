@@ -146,9 +146,7 @@ test("physical escape keeps insert-mode behavior", () => {
 });
 
 const insertOptions = resolveVimOptions({
-  piVim: {
-    keymap: { insert: { openLineBelow: ["ctrl+j"], openLineAbove: ["ctrl+k"] } },
-  },
+  keymap: { insert: { openLineBelow: ["ctrl+j"], openLineAbove: ["ctrl+k"] } },
 }).options;
 
 test("default insert mode delegates non-escape keys to Pi", () => {
@@ -232,18 +230,16 @@ test("unconfigured insert key still delegates", () => {
 });
 
 const editOptions = resolveVimOptions({
-  piVim: {
-    keymap: {
-      insert: {
-        deleteWordBackward: ["ctrl+w"],
-        deleteWordForward: ["alt+d"],
-        deleteLineBackward: ["ctrl+u"],
-        deleteLineForward: ["ctrl+k"],
-        moveWordBackward: ["alt+b"],
-        moveWordForward: ["alt+f"],
-        moveLineStart: ["ctrl+a"],
-        moveLineEnd: ["ctrl+e"],
-      },
+  keymap: {
+    insert: {
+      deleteWordBackward: ["ctrl+w"],
+      deleteWordForward: ["alt+d"],
+      deleteLineBackward: ["ctrl+u"],
+      deleteLineForward: ["ctrl+k"],
+      moveWordBackward: ["alt+b"],
+      moveWordForward: ["alt+f"],
+      moveLineStart: ["ctrl+a"],
+      moveLineEnd: ["ctrl+e"],
     },
   },
 }).options;
@@ -379,7 +375,7 @@ test("insert after at line end preserves persistent modal state", () => {
 
 test("insert mode delegates configured showKeybindings keys to Pi", () => {
   const configured = resolveVimOptions({
-    piVim: { keymap: { commands: { showKeybindings: ["gk"] } } },
+    keymap: { commands: { showKeybindings: ["gk"] } },
   }).options;
   const update = handleModalInput({ mode: "insert" }, snapshot, configured, "g");
 

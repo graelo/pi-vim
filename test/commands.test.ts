@@ -177,9 +177,7 @@ test("pending key type guard", () => {
 });
 
 test("explicit motion binding wins over default macro record binding", () => {
-  const keymap = resolveVimOptions({
-    piVim: { keymap: { motions: { wordForward: ["q"] } } },
-  }).options.keymap;
+  const keymap = resolveVimOptions({ keymap: { motions: { wordForward: ["q"] } } }).options.keymap;
 
   expect(resolveNormalCommand("q", undefined, keymap)).toEqual({
     type: "motion",
@@ -188,9 +186,7 @@ test("explicit motion binding wins over default macro record binding", () => {
 });
 
 test("explicit single-key binding wins over default longer prefix bindings", () => {
-  const keymap = resolveVimOptions({
-    piVim: { keymap: { motions: { left: ["g"] } } },
-  }).options.keymap;
+  const keymap = resolveVimOptions({ keymap: { motions: { left: ["g"] } } }).options.keymap;
 
   expect(resolveNormalCommand("g", undefined, keymap)).toEqual({
     type: "motion",
@@ -199,9 +195,8 @@ test("explicit single-key binding wins over default longer prefix bindings", () 
 });
 
 test("active digit leader takes precedence over count parsing", () => {
-  const keymap = resolveVimOptions({
-    piVim: { leader: "1", keymap: { commands: { undo: ["<leader>u"] } } },
-  }).options.keymap;
+  const keymap = resolveVimOptions({ leader: "1", keymap: { commands: { undo: ["<leader>u"] } } })
+    .options.keymap;
 
   expect(resolveNormalCommand("1", undefined, keymap)).toEqual({ type: "pending", pending: "1" });
   expect(resolveNormalCommand("u", "1", keymap)).toEqual({ type: "command", command: "undo" });
@@ -253,9 +248,8 @@ test("resolves macro prefixes and targets separately from operator state", () =>
 });
 
 test("resolves configured keybindings popup command through semantic parser", () => {
-  const keymap = resolveVimOptions({
-    piVim: { keymap: { commands: { showKeybindings: ["gk"] } } },
-  }).options.keymap;
+  const keymap = resolveVimOptions({ keymap: { commands: { showKeybindings: ["gk"] } } }).options
+    .keymap;
 
   const pending = resolveNormalCommand("g", undefined, keymap);
   expect(pending).toEqual({ type: "pending", pending: "g" });
@@ -268,9 +262,8 @@ test("resolves configured keybindings popup command through semantic parser", ()
 });
 
 test("named terminal command mappings stay atomic at runtime", () => {
-  const keymap = resolveVimOptions({
-    piVim: { keymap: { commands: { undo: ["<Home>", "<F1>"] } } },
-  }).options.keymap!;
+  const keymap = resolveVimOptions({ keymap: { commands: { undo: ["<Home>", "<F1>"] } } }).options
+    .keymap!;
 
   expect(resolveNormalCommand("h", undefined, keymap)).toEqual({
     type: "motion",
@@ -915,12 +908,8 @@ test("keeps duplicate sequence resolution first-match deterministic", () => {
 });
 
 test("resolves distinct keymap identities without stale command cache", () => {
-  const leftKeymap = resolveVimOptions({
-    piVim: { keymap: { motions: { left: ["q"] } } },
-  }).options.keymap;
-  const undoKeymap = resolveVimOptions({
-    piVim: { keymap: { commands: { undo: ["q"] } } },
-  }).options.keymap;
+  const leftKeymap = resolveVimOptions({ keymap: { motions: { left: ["q"] } } }).options.keymap;
+  const undoKeymap = resolveVimOptions({ keymap: { commands: { undo: ["q"] } } }).options.keymap;
 
   expect(resolveNormalCommand("q", undefined, leftKeymap)).toEqual({
     type: "motion",
@@ -937,9 +926,8 @@ test("resolves distinct keymap identities without stale command cache", () => {
 });
 
 test("interleaves default and custom keymap resolution without contamination", () => {
-  const keymap = resolveVimOptions({
-    piVim: { keymap: { motions: { left: ["q"], wordForward: ["z"] } } },
-  }).options.keymap;
+  const keymap = resolveVimOptions({ keymap: { motions: { left: ["q"], wordForward: ["z"] } } })
+    .options.keymap;
 
   expect(resolveNormalCommand("q", undefined, DEFAULT_VIM_KEYMAP)).toEqual({ type: "none" });
   expect(resolveNormalCommand("q", undefined, keymap)).toEqual({
@@ -964,9 +952,8 @@ test("gv resolves to reselectVisual with default keymap", () => {
 });
 
 test("configured reselectVisual key executes", () => {
-  const keymap = resolveVimOptions({
-    piVim: { keymap: { commands: { reselectVisual: ["grv"] } } },
-  }).options.keymap;
+  const keymap = resolveVimOptions({ keymap: { commands: { reselectVisual: ["grv"] } } }).options
+    .keymap;
   const pendingG = resolveNormalCommand("g", undefined, keymap);
   const pendingR = resolveNormalCommand(
     "r",
@@ -1092,8 +1079,7 @@ test("multi-key operators accept the last-key line form", () => {
     count: 3,
   });
 
-  const keymap = resolveVimOptions({ piVim: { keymap: { operators: { surround: ["gs"] } } } })
-    .options.keymap!;
+  const keymap = resolveVimOptions({ keymap: { operators: { surround: ["gs"] } } }).options.keymap!;
   expect(resolveKeys(["g", "s", "s"], keymap)).toEqual({
     type: "lineCommand",
     operator: "surround",

@@ -37,7 +37,7 @@ describe("vim customization helpers", () => {
   });
 
   test("hides disabled macro and mark actions from diagnostics", () => {
-    const { options } = resolveVimOptions(undefined, { piVim: { preset: "minimal" } });
+    const { options } = resolveVimOptions(undefined, { preset: "minimal" });
     expect(keymapMessage(options.keymap!, "macro", options.macros, options.marks)).toBe(
       "keymap: no match for macro",
     );
@@ -56,11 +56,9 @@ describe("vim customization helpers", () => {
     expect(mapcheckMessage(keymap, "alt+v")).toContain("protected for image/clipboard paste");
     expect(mapcheckMessage(keymap, "ctrl+alt+v")).toContain("protected for image/clipboard paste");
     const { options: ctrlVOptions } = resolveVimOptions({
-      piVim: {
-        keymap: {
-          commands: { visualBlock: ["ctrl+v"] },
-          allowProtectedOverrides: ["ctrl+v"],
-        },
+      keymap: {
+        commands: { visualBlock: ["ctrl+v"] },
+        allowProtectedOverrides: ["ctrl+v"],
       },
     });
     expect(mapcheckMessage(ctrlVOptions.keymap!, "ctrl+v")).toBe(
@@ -75,9 +73,7 @@ describe("vim customization helpers", () => {
   });
 
   test("reports configured escape aliases as modal escape bindings", () => {
-    const { options } = resolveVimOptions({
-      piVim: { keymap: { escape: ["<C-j>", "<D-j>"] } },
-    });
+    const { options } = resolveVimOptions({ keymap: { escape: ["<C-j>", "<D-j>"] } });
 
     expect(keymapMessage(options.keymap!, "escape")).toContain("escape.alias ctrl+j,super+j");
     expect(keymapMessage(options.keymap!, "escape")).toContain("Ex command-line");
@@ -89,12 +85,10 @@ describe("vim customization helpers", () => {
 
   test("formats keybinding catalog from effective resolved bindings", () => {
     const { options } = resolveVimOptions({
-      piVim: {
-        leader: ",",
-        keymap: {
-          escape: ["<D-j>"],
-          commands: { redo: ["U"], undo: ["<leader>q"] },
-        },
+      leader: ",",
+      keymap: {
+        escape: ["<D-j>"],
+        commands: { redo: ["U"], undo: ["<leader>q"] },
       },
     });
     const lines = keybindingCatalogLines({
@@ -130,7 +124,7 @@ describe("vim customization helpers", () => {
   });
 
   test("catalog reports disabled effective feature families", () => {
-    const { options } = resolveVimOptions(undefined, { piVim: { preset: "minimal" } });
+    const { options } = resolveVimOptions(undefined, { preset: "minimal" });
     const lines = keybindingCatalogLines({
       keymap: options.keymap!,
       macros: options.macros,
@@ -145,10 +139,8 @@ describe("vim customization helpers", () => {
 
   test("formats keybinding detail matches and key ownership", () => {
     const { options, warnings } = resolveVimOptions({
-      piVim: {
-        keymap: {
-          commands: { redo: ["U"] },
-        },
+      keymap: {
+        commands: { redo: ["U"] },
       },
     });
     const context = {

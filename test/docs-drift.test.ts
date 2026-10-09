@@ -38,7 +38,7 @@ describe("config guide documentation", () => {
 
   test("global config examples resolve types from Pi's installed package", () => {
     const annotation =
-      '/** @type {import("./npm/node_modules/@graelo/pi-vim/config").VimConfig} */';
+      '/** @type {import("../../npm/node_modules/@graelo/pi-vim/config").VimConfig} */';
     for (const example of globalConfigExamples) expect(example).toContain(annotation);
   });
 
@@ -135,17 +135,17 @@ describe("documentation behavior", () => {
 describe("documentation data contracts", () => {
   test("settings docs stay aligned with source-backed defaults", () => {
     const defaults: Record<string, string> = {
-      "piVim.startMode": `"${DEFAULT_VIM_OPTIONS.startMode}"`,
-      "piVim.cursor.insert": `"${DEFAULT_VIM_OPTIONS.cursor.insert}"`,
-      "piVim.cursor.normal": `"${DEFAULT_VIM_OPTIONS.cursor.normal}"`,
-      "piVim.keymap.escape": JSON.stringify(DEFAULT_VIM_OPTIONS.keymap!.escape),
-      "piVim.search.highlight": String(DEFAULT_VIM_OPTIONS.search!.highlight),
-      "piVim.search.maxHighlights": String(DEFAULT_VIM_OPTIONS.search!.maxHighlights),
-      "piVim.feedback.noop": `"${DEFAULT_VIM_OPTIONS.feedback!.noop}"`,
-      "piVim.ui.workbench.reservedRows": String(DEFAULT_VIM_OPTIONS.ui!.workbench.reservedRows),
-      "piVim.macros.enabled": String(DEFAULT_VIM_OPTIONS.macros!.enabled),
-      "piVim.marks.enabled": String(DEFAULT_VIM_OPTIONS.marks!.enabled),
-      "piVim.promptStructures.enabled": String(DEFAULT_VIM_OPTIONS.promptStructures!.enabled),
+      startMode: `"${DEFAULT_VIM_OPTIONS.startMode}"`,
+      "cursor.insert": `"${DEFAULT_VIM_OPTIONS.cursor.insert}"`,
+      "cursor.normal": `"${DEFAULT_VIM_OPTIONS.cursor.normal}"`,
+      "keymap.escape": JSON.stringify(DEFAULT_VIM_OPTIONS.keymap!.escape),
+      "search.highlight": String(DEFAULT_VIM_OPTIONS.search!.highlight),
+      "search.maxHighlights": String(DEFAULT_VIM_OPTIONS.search!.maxHighlights),
+      "feedback.noop": `"${DEFAULT_VIM_OPTIONS.feedback!.noop}"`,
+      "ui.workbench.reservedRows": String(DEFAULT_VIM_OPTIONS.ui!.workbench.reservedRows),
+      "macros.enabled": String(DEFAULT_VIM_OPTIONS.macros!.enabled),
+      "marks.enabled": String(DEFAULT_VIM_OPTIONS.marks!.enabled),
+      "promptStructures.enabled": String(DEFAULT_VIM_OPTIONS.promptStructures!.enabled),
     };
 
     for (const [path, defaultValue] of Object.entries(defaults)) {
@@ -165,7 +165,7 @@ describe("documentation data contracts", () => {
     }
     expect(featuresDoc).toContain(":&");
     expect(featuresDoc).toContain(":delete a");
-    expect(featuresDoc).toContain("piVim.ui.workbench.reservedRows");
+    expect(featuresDoc).toContain("ui.workbench.reservedRows");
   });
 });
 
@@ -174,9 +174,9 @@ describe("keybinding popup documentation", () => {
     expect(featuresDoc).toContain(`<!-- ${POPUP_COMMAND_DOCS_METADATA[0]!.docsAnchor} -->`);
     expect(featuresDoc).toContain(":keybindings");
     expect(featuresDoc).toContain(":keybindings <query>");
-    expect(settingsDoc).toContain("piVim.keymap.commands.showKeybindings");
-    expect(settingsDoc).toContain("piVim.keymap.escape");
-    expect(featuresDoc).toContain("piVim.keymap.escape");
+    expect(settingsDoc).toContain("keymap.commands.showKeybindings");
+    expect(settingsDoc).toContain("keymap.escape");
+    expect(featuresDoc).toContain("keymap.escape");
     expect(featuresDoc).toContain("Esc");
     expect(featuresDoc).toContain("Ctrl-C");
     expect(featuresDoc).toContain("Ctrl-G");

@@ -175,10 +175,10 @@ const ENTRIES = [
   {
     id: "settings",
     category: "settings",
-    topics: ["settings", "config", "piVim", "options"],
+    topics: ["settings", "config", "options"],
     summary:
-      "piVim JSON settings control finite editor options; trusted global JavaScript setup and API: https://github.com/graelo/pi-vim/blob/main/docs/config.md#basic-setup",
-    examples: ["piVim.preset", "piVim.keymap", "/vim reload"],
+      "extensions/pi-vim/config.json in the agent dir and trusted repos sets finite editor options; trusted global JavaScript setup and API: https://github.com/graelo/pi-vim/blob/main/docs/config.md#basic-setup",
+    examples: ["preset", "keymap", "/vim reload"],
     limits: ["field-by-field validation", "trusted JavaScript is global and unsandboxed"],
     docsAnchor: "runtime-help:settings",
     specAnchor: "openspec/specs/pi-vim-documentation/spec.md",

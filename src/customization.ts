@@ -293,7 +293,7 @@ function escapeEntry(keymap: ResolvedVimKeymap): VimActionEntry[] {
           description:
             "escape alias for insert, visual, and Ex command-line states; no recursive mappings or timeoutlen",
           keys: keymap.escape,
-          aliases: ["escape", "piVim.keymap.escape"],
+          aliases: ["escape", "keymap.escape"],
         },
       ]
     : [];

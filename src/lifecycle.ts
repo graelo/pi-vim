@@ -7,7 +7,7 @@ import {
   DEFAULT_VIM_OPTIONS,
   loadVimOptions,
   type VimConfigLoadResult,
-  type VimConfigPaths,
+  type VimConfigLoadOptions,
   type VimRuntimeConfiguration,
 } from "./config.ts";
 import { type ResetTerminalCursorStyleOptions, VimEditor } from "./vim-editor.ts";
@@ -37,7 +37,9 @@ type Schedule = (callback: () => void) => void;
 
 export type VimLifecycleDependencies = {
   defaultOptions?: ResolvedVimEditorOptions;
-  loadOptions?: (paths: VimConfigPaths) => VimConfigLoadResult | Promise<VimConfigLoadResult>;
+  loadOptions?: (
+    options: VimConfigLoadOptions,
+  ) => VimConfigLoadResult | Promise<VimConfigLoadResult>;
   createEditor?: CreateEditor;
   schedule?: Schedule;
 };
@@ -102,7 +104,7 @@ function createConfigState(
   const refresh = (ctx: ExtensionContext): boolean | Promise<boolean> => {
     const generation = ++refreshGeneration;
     try {
-      const loaded = loadOptions({ cwd: ctx.cwd });
+      const loaded = loadOptions({ cwd: ctx.cwd, isProjectTrusted: ctx.isProjectTrusted() });
       if (loaded instanceof Promise) {
         return loaded.then(
           (result) => {

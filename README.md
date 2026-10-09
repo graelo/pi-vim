@@ -10,11 +10,14 @@ parity.
 
 ### v1.0.0
 
-- The fork is renamed from pi-vimmode to pi-vim. Rename the `piVimMode`
-    settings key to `piVim` and `~/.pi/agent/pi-vimmode.config.js` to
-    `~/.pi/agent/pi-vim.config.js`. Until you do, both are ignored with a
-    warning (see `:vimdoctor`). `/vimmode` is now `/vim`, and
-    `:vimmode inspect` is now `:vim inspect`.
+- The fork is renamed from pi-vimmode to pi-vim. `/vimmode` is now `/vim`,
+    and `:vimmode inspect` is now `:vim inspect`.
+- Options no longer live in Pi's `settings.json`. Move the old `piVimMode`
+    object, without its wrapper key, to
+    `~/.pi/agent/extensions/pi-vim/config.json` (or
+    `.pi/extensions/pi-vim/config.json` at a trusted repository's root), and
+    move `~/.pi/agent/pi-vimmode.config.js` to
+    `~/.pi/agent/extensions/pi-vim/config.js`. The old locations are not read.
 - See [`CHANGELOG.md`](CHANGELOG.md) for removed commands and settings.
 
 ### v0.7.0
@@ -23,16 +26,14 @@ parity.
     `Alt-v`, and `Ctrl-Alt-v` are delegated to Pi for image/clipboard paste in
     normal and visual modes unless explicitly rebound.
 - Visual block mode now has an empty default keybinding. Configure
-    `piVim.keymap.commands.visualBlock` with a non-protected key such as
+    `keymap.commands.visualBlock` with a non-protected key such as
     `<A-b>`, or explicitly allow and bind `<C-v>` if Vim-style visual block is
     more important than Pi image paste in your workflow.
 
 ```json
 {
-  "piVim": {
-    "keymap": {
-      "commands": { "visualBlock": ["<A-b>"] }
-    }
+  "keymap": {
+    "commands": { "visualBlock": ["<A-b>"] }
   }
 }
 ```
@@ -41,11 +42,9 @@ To intentionally reclaim `Ctrl-v` for visual block:
 
 ```json
 {
-  "piVim": {
-    "keymap": {
-      "commands": { "visualBlock": ["<C-v>"] },
-      "allowProtectedOverrides": ["<C-v>"]
-    }
+  "keymap": {
+    "commands": { "visualBlock": ["<C-v>"] },
+    "allowProtectedOverrides": ["<C-v>"]
   }
 }
 ```
@@ -142,7 +141,7 @@ Canonical user-facing docs live under `docs/`:
     command-line commands, registers, marks, macros, UI/status rendering, Pi
     shortcut compatibility, limitations, recovery, and validation examples.
 - [`docs/settings.md`](https://github.com/graelo/pi-vim/blob/main/docs/settings.md):
-    every supported `piVim` setting, defaults, accepted value shapes, merge
+    every supported setting, defaults, accepted value shapes, merge
     behavior, key sequence syntax, protected-key validation, warnings,
     troubleshooting, and practical config examples.
 - [`docs/adr/0002-user-facing-pi-vimmode-docs.md`](https://github.com/graelo/pi-vim/blob/main/docs/adr/0002-user-facing-pi-vimmode-docs.md):
@@ -153,13 +152,17 @@ reference in the canonical docs above.
 
 ## Common configuration
 
+Options go in `~/.pi/agent/extensions/pi-vim/config.json` (or under
+`PI_CODING_AGENT_DIR` when set). A trusted repository can override them in
+`.pi/extensions/pi-vim/config.json` at its root. See
+[`docs/settings.md`](https://github.com/graelo/pi-vim/blob/main/docs/settings.md#settings-files-and-precedence)
+for precedence.
+
 Minimal startup override:
 
 ```json
 {
-  "piVim": {
-    "startMode": "normal"
-  }
+  "startMode": "normal"
 }
 ```
 
@@ -167,22 +170,20 @@ Example keymap/UI override:
 
 ```json
 {
-  "piVim": {
-    "leader": " ",
-    "cursor": {
-      "normal": "block",
-      "insert": "bar"
-    },
-    "keymap": {
-      "commands": {
-        "startSearch": ["/"],
-        "showKeybindings": ["<leader>k"]
-      }
-    },
-    "ui": {
-      "status": {
-        "items": ["mode", "pending", "search", "macro", "cursorPosition", "warnings"]
-      }
+  "leader": " ",
+  "cursor": {
+    "normal": "block",
+    "insert": "bar"
+  },
+  "keymap": {
+    "commands": {
+      "startSearch": ["/"],
+      "showKeybindings": ["<leader>k"]
+    }
+  },
+  "ui": {
+    "status": {
+      "items": ["mode", "pending", "search", "macro", "cursorPosition", "warnings"]
     }
   }
 }
@@ -194,14 +195,12 @@ EasyMotion has no default binding. Bind `command.easymotion`, type a target
 character, then press its label to move the cursor. Matching is case-insensitive
 and prompt-wide, with up to 52 labels (lowercase, then uppercase). Labels are
 render-only substitutions, so prompt text and undo/redo history stay unchanged.
-Configure label color with `piVim.easymotion.labelColor`:
+Configure label color with `easymotion.labelColor`:
 
 ```json
 {
-  "piVim": {
-    "easymotion": {
-      "labelColor": "\u001b[31m"
-    }
+  "easymotion": {
+    "labelColor": "\u001b[31m"
   }
 }
 ```
@@ -210,12 +209,12 @@ Common ANSI color codes: `\u001b[31m` (red), `\u001b[32m` (green), `\u001b[33m`
 (yellow), `\u001b[34m` (blue), `\u001b[35m` (magenta), `\u001b[36m` (cyan),
 `\u001b[37m` (white). Default is red (`\u001b[31m`).
 
-Trusted global JS keybindings live at `~/.pi/agent/pi-vim.config.js` and run
-as unsandboxed local code with full Pi process privileges. See
+Trusted global JS keybindings live at `~/.pi/agent/extensions/pi-vim/config.js`
+and run as unsandboxed local code with full Pi process privileges. See
 [trusted JavaScript config guide](https://github.com/graelo/pi-vim/blob/main/docs/config.md#basic-setup):
 
 ```js
-/** @type {import("./npm/node_modules/@graelo/pi-vim/config").VimConfig} */
+/** @type {import("../../npm/node_modules/@graelo/pi-vim/config").VimConfig} */
 export default (vim) => {
   vim.g.mapleader = " ";
   vim.keymap.set("i", "<A-w>", vim.prompt.deleteWordBackward());
@@ -242,7 +241,8 @@ If the extension blocks editing or configuration goes wrong:
 - Use `pi list` to inspect installed extensions.
 - Use `pi remove` or `pi uninstall` with the installed extension identifier to
     remove it.
-- Use `pi config` or edit Pi config files to remove `piVim` overrides.
+- Remove or edit `extensions/pi-vim/config.json` in the agent directory or
+    the repository `.pi/` directory to drop pi-vim overrides.
 - Restart Pi after changing extension or config state.
 
 ## Architecture
@@ -297,7 +297,7 @@ Manual smoke checklist:
 3. Press `Esc`, use normal-mode motions and edits.
 4. Use `v`, `V`, and a configured visual-block binding such as `<A-b>`; confirm
     visual highlighting and selection operations.
-5. Configure `piVim.startMode`, `piVim.cursor`, a keymap binding, and
+5. Configure `startMode`, `cursor`, a keymap binding, and
     UI status items; confirm behavior changes.
 6. Confirm insert/normal submit and normal-mode `Esc` still delegate to Pi
     where expected.

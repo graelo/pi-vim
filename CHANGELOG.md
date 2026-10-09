@@ -11,10 +11,28 @@ project uses [Semantic Versioning](https://semver.org/).
 - Sentence motions `(` and `)`, with counts, in normal and visual modes and
   after operators (`d)`, `c(`, `y)`), and `is`/`as` sentence text objects.
   Sentences follow `:help sentence`. Keys are configurable under
-  `piVim.keymap.motions.sentenceBackward`, `sentenceForward`, and
-  `piVim.keymap.textObjects.targets.sentence`. Explicit
-  `piVim.keymap.operatorMotions` lists need the new motions added to allow
-  `d)` and friends.
+  `keymap.motions.sentenceBackward`, `sentenceForward`, and
+  `keymap.textObjects.targets.sentence`. Explicit `keymap.operatorMotions`
+  lists need the new motions added to allow `d)` and friends.
+
+### Changed
+
+- **Breaking:** configuration moved out of Pi's `settings.json` into
+  pi-vim's own files, located the same way as other `@graelo` pi extensions
+  (via `@graelo/pi-ext-config`):
+  1. Move the global `piVim` object, without the `piVim` wrapper, to
+     `<agent-dir>/extensions/pi-vim/config.json`. `<agent-dir>` is
+     `~/.pi/agent`, or `PI_CODING_AGENT_DIR` when set.
+  2. Move a project's `piVim` object, unwrapped, to
+     `<repo-root>/.pi/extensions/pi-vim/config.json`. It is read only when Pi
+     trusts the project, and only inside a git repository.
+  3. Move `~/.pi/agent/pi-vim.config.js` to
+     `<agent-dir>/extensions/pi-vim/config.js`. In that file, change the
+     JSDoc type import to `../../npm/node_modules/@graelo/pi-vim/config`.
+
+     The old locations are ignored without a warning. Warning texts now name
+     option paths without the `piVim.` prefix and use the source labels
+     `global config`, `global JS config`, and `project config`.
 
 ## [1.0.0] - 2026-10-08
 
@@ -62,9 +80,6 @@ editor behavior is unchanged from 0.9.0.
   - `~/.pi/agent/pi-vimmode.config.js` is now `~/.pi/agent/pi-vim.config.js`;
   - `/vimmode` is now `/vim`, and `:vimmode inspect` is now `:vim inspect`;
   - diagnostic metadata IDs moved from `vimmode.*` to `pi-vim.*`.
-
-    The old settings key and config file are ignored, with a warning (see
-    `:vimdoctor`).
 - The package now ships TypeScript sources directly; there is no bundled
   `dist/` build anymore.
 - `RELEASE.md` is replaced by this `CHANGELOG.md`.

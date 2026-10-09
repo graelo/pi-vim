@@ -69,7 +69,7 @@ function expectedActionIds(): string[] {
 }
 
 function expectedJsonPaths(): Set<string> {
-  return new Set(VIM_CONFIG_PROPERTY_METADATA.map(({ configPath }) => `piVim.${configPath}`));
+  return new Set(VIM_CONFIG_PROPERTY_METADATA.map(({ configPath }) => configPath));
 }
 
 function addDuplicateErrors(errors: string[], label: string, values: readonly string[]): void {

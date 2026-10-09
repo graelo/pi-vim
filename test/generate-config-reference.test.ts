@@ -68,13 +68,11 @@ describe("generated config reference", () => {
     expect(() =>
       validateMetadata(
         VIM_CONFIG_PROPERTY_METADATA.map((property) =>
-          property.configPath === "leader"
-            ? { ...property, jsonPaths: ["piVim.notReal"] }
-            : property,
+          property.configPath === "leader" ? { ...property, jsonPaths: ["notReal"] } : property,
         ) as VimConfigPropertyMetadata[],
         VIM_ACTION_METADATA,
       ),
-    ).toThrow(/unsupported JSON crosswalk: piVim\.notReal/);
+    ).toThrow(/unsupported JSON crosswalk: notReal/);
   });
 
   test("rejects missing or duplicate marker pairs and unresolved links", () => {

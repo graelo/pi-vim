@@ -1,4 +1,4 @@
-/** @type {import("./npm/node_modules/@graelo/pi-vim/config").VimConfig} */
+/** @type {import("../../npm/node_modules/@graelo/pi-vim/config").VimConfig} */
 export default (vim) => {
   vim.g.mapleader = " ";
   vim.keymap.set("i", "<A-w>", vim.prompt.deleteWordBackward());

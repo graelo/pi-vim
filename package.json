@@ -75,5 +75,8 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "@graelo/pi-ext-config": "^0.2.0"
   }
 }

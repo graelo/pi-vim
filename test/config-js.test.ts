@@ -5,13 +5,14 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { resolveNormalCommand } from "../src/commands.ts";
-import { loadVimJsConfig } from "../src/config-js.ts";
+import { defaultJsConfigPath, loadVimJsConfig } from "../src/config-js.ts";
 import { loadVimOptions, resolveVimOptions } from "../src/config.ts";
 import { encodeMappingTokens } from "../src/mapping-scopes.ts";
+import { configDirs } from "./config-files.ts";
 
 function fixture() {
   const dir = mkdtempSync(join(tmpdir(), "pi-vim-js-config-"));
-  const path = join(dir, "pi-vim.config.js");
+  const path = join(dir, "config.js");
   return {
     path,
     write: (content: string) => writeFileSync(path, content),
@@ -37,6 +38,21 @@ test("loads committed basic typed example without warnings", async () => {
     { kind: "leaf", path: "cursor.normal", value: "bar" },
     { kind: "leaf", path: "ui.status.position", value: "right" },
   ]);
+});
+
+test("JS config path lives in the extension directory of the given agent dir", () => {
+  expect(defaultJsConfigPath("/agent")).toBe("/agent/extensions/pi-vim/config.js");
+});
+
+test("JS config path defaults to PI_CODING_AGENT_DIR", () => {
+  const previous = process.env.PI_CODING_AGENT_DIR;
+  process.env.PI_CODING_AGENT_DIR = "/custom-agent";
+  try {
+    expect(defaultJsConfigPath()).toBe("/custom-agent/extensions/pi-vim/config.js");
+  } finally {
+    if (previous === undefined) delete process.env.PI_CODING_AGENT_DIR;
+    else process.env.PI_CODING_AGENT_DIR = previous;
+  }
 });
 
 test("missing JS config is quiet", async () => {
@@ -264,13 +280,11 @@ test("runtime prefixes exclude scoped unmap tombstones and normal-only commands"
 
   const tombstonedOperatorCommands = resolveVimOptions(
     {
-      piVim: {
-        keymap: {
-          commands: {
-            startSearch: ["zx"],
-            findChar: ["zy"],
-            repeatCharSearch: ["zz"],
-          },
+      keymap: {
+        commands: {
+          startSearch: ["zx"],
+          findChar: ["zy"],
+          repeatCharSearch: ["zz"],
         },
       },
     },
@@ -422,7 +436,7 @@ export default (vim) => {
     const resolved = resolveVimOptions(undefined, undefined, result);
     expect(resolved.warnings).toContainEqual(
       expect.stringContaining(
-        "global JS config: piVim.keymap.insert.deleteWordBackward contains unsupported printable text sequence",
+        "global JS config: keymap.insert.deleteWordBackward contains unsupported printable text sequence",
       ),
     );
     expect(resolved.plan.scopes.insert.exact).not.toHaveProperty("alt+xalt+y");
@@ -554,7 +568,7 @@ export default (vim) => {
 test("project JSON can override JS string remaps", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVim: { keymap: { commands: { insertBefore: ["z"] } } } },
+    { keymap: { commands: { insertBefore: ["z"] } } },
     {
       appendKeymap: true,
       warnings: [],
@@ -573,7 +587,7 @@ test("project JSON can override JS string remaps", () => {
 test("project exact action replaces inherited JS remap", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVim: { keymap: { commands: { redo: ["zq"] } } } },
+    { keymap: { commands: { redo: ["zq"] } } },
     {
       kind: "success",
       warnings: [],
@@ -593,7 +607,7 @@ test("project exact action replaces inherited JS remap", () => {
 test("project empty action removes JS descriptor across canonical scopes", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVim: { keymap: { motions: { wordForward: [] } } } },
+    { keymap: { motions: { wordForward: [] } } },
     {
       kind: "success",
       warnings: [],
@@ -618,7 +632,7 @@ test("project empty action removes JS descriptor across canonical scopes", () =>
 test("project empty insert action removes JS insert binding", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVim: { keymap: { insert: { deleteWordBackward: [] } } } },
+    { keymap: { insert: { deleteWordBackward: [] } } },
     {
       kind: "success",
       warnings: [],
@@ -635,8 +649,8 @@ test("project empty insert action removes JS insert binding", () => {
 
 test("insert action with only rejected keys keeps inherited bindings", () => {
   const result = resolveVimOptions(
-    { piVim: { keymap: { insert: { deleteWordBackward: ["ctrl+w"] } } } },
-    { piVim: { keymap: { insert: { deleteWordBackward: ["enter"] } } } },
+    { keymap: { insert: { deleteWordBackward: ["ctrl+w"] } } },
+    { keymap: { insert: { deleteWordBackward: ["enter"] } } },
   );
 
   expect(result.warnings.some((warning) => warning.includes("protected key enter"))).toBe(true);
@@ -665,7 +679,7 @@ test("operator-pending unmaps suppress inherited motions and text objects", () =
 test("project exact mappings restore lower JS unmaps", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVim: { keymap: { motions: { wordForward: ["w"] } } } },
+    { keymap: { motions: { wordForward: ["w"] } } },
     {
       kind: "success",
       warnings: [],
@@ -679,7 +693,7 @@ test("project exact mappings restore lower JS unmaps", () => {
 test("project action replaces JS descriptor across canonical scopes", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVim: { keymap: { motions: { wordForward: ["L"] } } } },
+    { keymap: { motions: { wordForward: ["L"] } } },
     {
       kind: "success",
       warnings: [],
@@ -704,22 +718,16 @@ test("project action replaces JS descriptor across canonical scopes", () => {
 });
 
 test("later JS remap replaces lower action in only claimed scopes", () => {
-  const result = resolveVimOptions(
-    {
-      piVim: { keymap: { operators: { uppercase: ["zq"] } } },
-    },
-    undefined,
-    {
-      kind: "success",
-      warnings: [],
-      operations: [
-        {
-          kind: "map",
-          mapping: { kind: "remap", key: "zq", inputs: ["l"], modes: ["normal"] },
-        },
-      ],
-    },
-  );
+  const result = resolveVimOptions({ keymap: { operators: { uppercase: ["zq"] } } }, undefined, {
+    kind: "success",
+    warnings: [],
+    operations: [
+      {
+        kind: "map",
+        mapping: { kind: "remap", key: "zq", inputs: ["l"], modes: ["normal"] },
+      },
+    ],
+  });
 
   expect(result.plan.scopes.normal.exact.zq?.kind).toBe("remap");
   expect(result.plan.scopes.visual.exact.zq?.id).toBe("operator.uppercase");
@@ -762,25 +770,21 @@ test("action bindings on same key survive in disjoint modes", () => {
 });
 
 test("plan preflights remap strict-prefix conflicts in concrete scope", () => {
-  const result = resolveVimOptions(
-    { piVim: { keymap: { commands: { undo: ["za"] } } } },
-    undefined,
-    {
-      kind: "success",
-      warnings: [],
-      operations: [
-        {
-          kind: "map",
-          mapping: {
-            kind: "remap",
-            key: "zab",
-            inputs: ["l"],
-            modes: ["normal", "visual"],
-          },
+  const result = resolveVimOptions({ keymap: { commands: { undo: ["za"] } } }, undefined, {
+    kind: "success",
+    warnings: [],
+    operations: [
+      {
+        kind: "map",
+        mapping: {
+          kind: "remap",
+          key: "zab",
+          inputs: ["l"],
+          modes: ["normal", "visual"],
         },
-      ],
-    },
-  );
+      },
+    ],
+  });
 
   expect(result.plan.scopes.normal.exact.za?.id).toBe("command.undo");
   expect(result.plan.scopes.normal.exact.zab).toBeUndefined();
@@ -794,20 +798,16 @@ test("plan preflights remap strict-prefix conflicts in concrete scope", () => {
 });
 
 test("printable plus sequences participate in strict-prefix preflight", () => {
-  const result = resolveVimOptions(
-    { piVim: { keymap: { commands: { undo: ["g+"] } } } },
-    undefined,
-    {
-      kind: "success",
-      warnings: [],
-      operations: [
-        {
-          kind: "map",
-          mapping: { kind: "remap", key: "g+x", inputs: ["l"], modes: ["normal"] },
-        },
-      ],
-    },
-  );
+  const result = resolveVimOptions({ keymap: { commands: { undo: ["g+"] } } }, undefined, {
+    kind: "success",
+    warnings: [],
+    operations: [
+      {
+        kind: "map",
+        mapping: { kind: "remap", key: "g+x", inputs: ["l"], modes: ["normal"] },
+      },
+    ],
+  });
 
   expect(result.plan.scopes.normal.exact["g+"]?.id).toBe("command.undo");
   expect(result.plan.scopes.normal.exact["g+x"]).toBeUndefined();
@@ -1043,10 +1043,8 @@ test("project leader actions override lower JS remaps after final expansion", ()
   const result = resolveVimOptions(
     undefined,
     {
-      piVim: {
-        leader: ",",
-        keymap: { commands: { redo: ["<leader>u"] } },
-      },
+      leader: ",",
+      keymap: { commands: { redo: ["<leader>u"] } },
     },
     {
       kind: "success",
@@ -1090,7 +1088,7 @@ test("JS escape descriptors stay in selected scopes", () => {
 test("project command mappings replace JS descriptors in visual scopes", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVim: { keymap: { commands: { toggleCase: ["Q"] } } } },
+    { keymap: { commands: { toggleCase: ["Q"] } } },
     {
       kind: "success",
       warnings: [],
@@ -1115,7 +1113,7 @@ test("project command mappings replace JS descriptors in visual scopes", () => {
 test("project escape mappings override lower JS mappings in escape scopes", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVim: { keymap: { escape: ["<D-j>"] } } },
+    { keymap: { escape: ["<D-j>"] } },
     {
       kind: "success",
       warnings: [],
@@ -1147,7 +1145,7 @@ test("project escape mappings override lower JS mappings in escape scopes", () =
 test("project escape array replaces lower JS escape descriptors", () => {
   const result = resolveVimOptions(
     undefined,
-    { piVim: { keymap: { escape: ["<C-[>"] } } },
+    { keymap: { escape: ["<C-[>"] } },
     {
       kind: "success",
       warnings: [],
@@ -1433,10 +1431,8 @@ test("leader-form unmaps suppress inherited bindings after expansion", async () 
     const loaded = await loadVimJsConfig(f.path);
     const resolved = resolveVimOptions(
       {
-        piVim: {
-          leader: ",",
-          keymap: { commands: { undo: ["<leader>x"] } },
-        },
+        leader: ",",
+        keymap: { commands: { undo: ["<leader>x"] } },
       },
       undefined,
       loaded,
@@ -1475,9 +1471,7 @@ test("project text-object bindings replace matching JS descriptors", () => {
   const resolved = resolveVimOptions(
     undefined,
     {
-      piVim: {
-        keymap: { textObjects: { kinds: { inner: ["z"] } } },
-      },
+      keymap: { textObjects: { kinds: { inner: ["z"] } } },
     },
     {
       kind: "success",
@@ -1582,11 +1576,7 @@ export default async (vim) => {
       warnings: ["global JS config: failed to load (export failure)"],
     });
 
-    const resolved = resolveVimOptions(
-      { piVim: { startMode: "normal" } },
-      { piVim: { leader: " " } },
-      failedExport,
-    );
+    const resolved = resolveVimOptions({ startMode: "normal" }, { leader: " " }, failedExport);
     expect(resolved.options.startMode).toBe("normal");
     expect(resolved.options.leader).toBe(" ");
     expect(resolved.options.keymap?.scoped).toEqual([]);
@@ -1676,19 +1666,17 @@ export default (vim) => {
 });
 
 test("applies presets to staged reads and replaces UI mode label records", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "pi-vim-js-ui-labels-"));
+  const dirs = configDirs("pi-vim-js-ui-labels-");
   try {
-    const globalPath = join(dir, "settings.json");
-    const jsConfigPath = join(dir, "pi-vim.config.js");
+    const globalPath = dirs.globalPath;
+    const jsConfigPath = dirs.jsConfigPath;
     writeFileSync(
       globalPath,
       JSON.stringify({
-        piVim: {
-          ui: {
-            mode: {
-              labels: { insert: "GLOBAL-INSERT" },
-              narrowLabels: { insert: "GI" },
-            },
+        ui: {
+          mode: {
+            labels: { insert: "GLOBAL-INSERT" },
+            narrowLabels: { insert: "GI" },
           },
         },
       }),
@@ -1704,8 +1692,9 @@ test("applies presets to staged reads and replaces UI mode label records", async
     );
 
     const result = await loadVimOptions({
-      globalSettingsPath: globalPath,
-      projectSettingsPath: join(dir, "missing-project-settings.json"),
+      agentDir: dirs.agentDir,
+      cwd: dirs.cwd,
+      isProjectTrusted: true,
       jsConfigPath,
     });
     expect(result.options.ui?.mode.labels).toMatchObject({ normal: "JS-NORMAL" });
@@ -1714,7 +1703,7 @@ test("applies presets to staged reads and replaces UI mode label records", async
     expect(Object.keys(result.options.ui?.mode.narrowLabels ?? {})).toEqual(["normal"]);
     expect(result.warnings).toEqual([]);
   } finally {
-    rmSync(dir, { recursive: true, force: true });
+    dirs.cleanup();
   }
 });
 
@@ -1741,13 +1730,13 @@ test("replays preset and leaf operations in source order", () => {
 });
 
 test("exposes validated domain options from global JSON without project settings", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "pi-vim-js-options-"));
+  const dirs = configDirs("pi-vim-js-options-");
   try {
-    const globalPath = join(dir, "settings.json");
-    const projectPath = join(dir, "project-settings.json");
-    const jsConfigPath = join(dir, "pi-vim.config.js");
-    writeFileSync(globalPath, JSON.stringify({ piVim: { startMode: "normal" } }));
-    writeFileSync(projectPath, JSON.stringify({ piVim: { startMode: "insert" } }));
+    const globalPath = dirs.globalPath;
+    const projectPath = dirs.projectPath;
+    const jsConfigPath = dirs.jsConfigPath;
+    writeFileSync(globalPath, JSON.stringify({ startMode: "normal" }));
+    writeFileSync(projectPath, JSON.stringify({ startMode: "insert" }));
     writeFileSync(
       jsConfigPath,
       `export default (vim) => {
@@ -1765,8 +1754,9 @@ test("exposes validated domain options from global JSON without project settings
     );
 
     const result = await loadVimOptions({
-      globalSettingsPath: globalPath,
-      projectSettingsPath: projectPath,
+      agentDir: dirs.agentDir,
+      cwd: dirs.cwd,
+      isProjectTrusted: true,
       jsConfigPath,
     });
     expect(result.options.startMode).toBe("insert");
@@ -1783,7 +1773,7 @@ test("exposes validated domain options from global JSON without project settings
     expect(Object.keys(result.options.keymap?.operatorMotions ?? [])).toEqual(["delete"]);
     expect(result.warnings).toEqual([]);
   } finally {
-    rmSync(dir, { recursive: true, force: true });
+    dirs.cleanup();
   }
 });
 
@@ -1827,8 +1817,8 @@ test("exposes every finite option path through trusted JavaScript", async () => 
   vim.promptStructures.targets = { codeFence: false };
 };`);
     const result = await loadVimOptions({
-      globalSettingsPath: join(tmpdir(), "missing-settings.json"),
-      projectSettingsPath: join(tmpdir(), "missing-project-settings.json"),
+      agentDir: dirname(f.path),
+      cwd: dirname(f.path),
       jsConfigPath: f.path,
     });
 
@@ -1881,13 +1871,13 @@ test("rejects invalid composite writes without changing frozen staged reads", as
   vim.search.unknown = true;
 };`);
     const result = await loadVimOptions({
-      globalSettingsPath: join(tmpdir(), "missing-settings.json"),
-      projectSettingsPath: join(tmpdir(), "missing-project-settings.json"),
+      agentDir: dirname(f.path),
+      cwd: dirname(f.path),
       jsConfigPath: f.path,
     });
     expect(result.options.macros?.enabled).toBe(false);
     expect(result.warnings).toEqual([
-      "global JS config: piVim.macros.slots only supports lowercase a-z slots",
+      "global JS config: macros.slots only supports lowercase a-z slots",
       "global JS config: unknown vim.search property unknown",
     ]);
   } finally {
@@ -1903,8 +1893,8 @@ test("rejects invalid prompt records and accepts empty replacements", async () =
   vim.promptStructures.targets = { codeFence: true, unknown: true };
 };`);
     const rejected = await loadVimOptions({
-      globalSettingsPath: join(tmpdir(), "missing-settings.json"),
-      projectSettingsPath: join(tmpdir(), "missing-project-settings.json"),
+      agentDir: dirname(f.path),
+      cwd: dirname(f.path),
       jsConfigPath: f.path,
     });
     expect(rejected.options.promptStructures?.targets).toMatchObject({ codeFence: false });
@@ -1915,8 +1905,8 @@ test("rejects invalid prompt records and accepts empty replacements", async () =
   vim.promptStructures.targets = {};
 };`);
       const cleared = await loadVimOptions({
-        globalSettingsPath: join(tmpdir(), "missing-settings.json"),
-        projectSettingsPath: join(tmpdir(), "missing-project-settings.json"),
+        agentDir: dirname(empty.path),
+        cwd: dirname(empty.path),
         jsConfigPath: empty.path,
       });
       expect(Object.keys(cleared.options.promptStructures?.targets ?? {})).toEqual([]);
@@ -1930,22 +1920,21 @@ test("rejects invalid prompt records and accepts empty replacements", async () =
 
 test("keeps valid prompt records from JSON when siblings are invalid", () => {
   const result = resolveVimOptions({
-    piVim: {
-      promptStructures: { targets: { codeFence: false, unknown: true } },
-    },
+    promptStructures: { targets: { codeFence: false, unknown: true } },
   });
 
   expect(result.options.promptStructures?.targets).toMatchObject({ codeFence: false });
 });
 
 test("loadVimOptions includes JS string remaps", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "pi-vim-js-remap-load-"));
+  const dirs = configDirs("pi-vim-js-remap-load-");
   try {
-    const jsConfigPath = join(dir, "pi-vim.config.js");
+    const jsConfigPath = dirs.jsConfigPath;
     writeFileSync(jsConfigPath, `export default (vim) => vim.keymap.set("n", "zz", "llll");`);
     const result = await loadVimOptions({
-      globalSettingsPath: join(dir, "missing-settings.json"),
-      projectSettingsPath: join(dir, "project-settings.json"),
+      agentDir: dirs.agentDir,
+      cwd: dirs.cwd,
+      isProjectTrusted: true,
       jsConfigPath,
     });
     expect(result.options.keymap?.remaps.accepted).toEqual([
@@ -1953,55 +1942,30 @@ test("loadVimOptions includes JS string remaps", async () => {
     ]);
     expect(result.warnings).toEqual([]);
   } finally {
-    rmSync(dir, { recursive: true, force: true });
+    dirs.cleanup();
   }
 });
 
 test("loadVimOptions includes the trusted global JS config layer", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "pi-vim-js-config-load-"));
+  const dirs = configDirs("pi-vim-js-config-load-");
   try {
-    const globalPath = join(dir, "settings.json");
-    const jsConfigPath = join(dir, "pi-vim.config.js");
-    writeFileSync(globalPath, JSON.stringify({ piVim: { startMode: "normal" } }));
+    const globalPath = dirs.globalPath;
+    const jsConfigPath = dirs.jsConfigPath;
+    writeFileSync(globalPath, JSON.stringify({ startMode: "normal" }));
     writeFileSync(
       jsConfigPath,
       `export default (vim) => vim.keymap.set("n", "zq", vim.action.operator.uppercase());`,
     );
     const result = await loadVimOptions({
-      globalSettingsPath: globalPath,
-      projectSettingsPath: join(dir, "project-settings.json"),
+      agentDir: dirs.agentDir,
+      cwd: dirs.cwd,
+      isProjectTrusted: true,
       jsConfigPath,
     });
     expect(result.options.startMode).toBe("normal");
     expect(result.options.keymap?.scoped.map((binding) => binding.key)).toEqual(["zq"]);
     expect(result.warnings).toEqual([]);
   } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
-});
-
-test("pre-rename settings key and JS config file are ignored with warnings", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "pi-vim-renamed-"));
-  try {
-    const globalPath = join(dir, "settings.json");
-    const projectPath = join(dir, "project-settings.json");
-    writeFileSync(globalPath, JSON.stringify({ piVimMode: { startMode: "normal" } }));
-    writeFileSync(projectPath, JSON.stringify({ piVimMode: { startMode: "normal" } }));
-    writeFileSync(join(dir, "pi-vimmode.config.js"), `export default (vim) => {};`);
-
-    const result = await loadVimOptions({
-      globalSettingsPath: globalPath,
-      projectSettingsPath: projectPath,
-      jsConfigPath: join(dir, "pi-vim.config.js"),
-    });
-
-    expect(result.options.startMode).toBe("insert");
-    expect(result.warnings).toEqual([
-      `${join(dir, "pi-vimmode.config.js")} was renamed to pi-vim.config.js in 1.0.0 and is ignored`,
-      "global settings: piVimMode was renamed to piVim in 1.0.0 and is ignored",
-      "project settings: piVimMode was renamed to piVim in 1.0.0 and is ignored",
-    ]);
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
+    dirs.cleanup();
   }
 });

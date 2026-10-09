@@ -40,6 +40,8 @@ type FakeUi = {
 
 type FakeContext = {
   cwd: string;
+  trusted: boolean;
+  isProjectTrusted: () => boolean;
   ui: FakeUi;
   shutdownCalls: number;
   shutdown: () => void;
@@ -79,6 +81,8 @@ function createUi(): FakeUi {
 function createContext(cwd = "/workspace"): FakeContext {
   const ctx: FakeContext = {
     cwd,
+    trusted: false,
+    isProjectTrusted: () => ctx.trusted,
     ui: createUi(),
     shutdownCalls: 0,
     shutdown: () => {
@@ -155,7 +159,7 @@ function createLifecycleHarness(
   const hooks = new Map<HookName, Hook>();
   const commands = new Map<string, Command>();
   const scheduled: Array<() => void> = [];
-  const loadCalls: Array<{ cwd?: string }> = [];
+  const loadCalls: Array<{ cwd?: string; isProjectTrusted?: boolean }> = [];
   const createdEditors: FakeEditor[] = [];
   const realEditors: VimEditor[] = [];
   const shutdownCallbacks: Array<(() => void) | undefined> = [];
@@ -251,7 +255,21 @@ test("session start installs immediately and schedules one delayed reinstall", (
   expect(ctx.ui.setCalls).toHaveLength(1);
   expect(ctx.ui.notifications).toEqual([]);
   expect(scheduled).toHaveLength(1);
-  expect(loadCalls).toEqual([{ cwd: "/repo" }]);
+  expect(loadCalls).toEqual([{ cwd: "/repo", isProjectTrusted: false }]);
+});
+
+test("settings load passes the context trust decision on each install", () => {
+  const { hooks, loadCalls } = createLifecycleHarness();
+  const ctx = createContext("/repo");
+
+  hooks.get("session_start")?.({}, ctx);
+  ctx.trusted = true;
+  hooks.get("agent_end")?.({}, ctx);
+
+  expect(loadCalls).toEqual([
+    { cwd: "/repo", isProjectTrusted: false },
+    { cwd: "/repo", isProjectTrusted: true },
+  ]);
 });
 
 test("resource discovery installs immediately and schedules one delayed reinstall", () => {
@@ -262,7 +280,7 @@ test("resource discovery installs immediately and schedules one delayed reinstal
 
   expect(ctx.ui.setCalls).toHaveLength(1);
   expect(scheduled).toHaveLength(1);
-  expect(loadCalls).toEqual([{ cwd: "/repo" }]);
+  expect(loadCalls).toEqual([{ cwd: "/repo", isProjectTrusted: false }]);
 });
 
 test("agent end installs immediately without delayed reinstall", () => {
@@ -273,7 +291,7 @@ test("agent end installs immediately without delayed reinstall", () => {
 
   expect(ctx.ui.setCalls).toHaveLength(1);
   expect(scheduled).toHaveLength(0);
-  expect(loadCalls).toEqual([{ cwd: "/repo" }]);
+  expect(loadCalls).toEqual([{ cwd: "/repo", isProjectTrusted: false }]);
 });
 
 test("agent end reports async install failures", async () => {
@@ -338,7 +356,10 @@ test("agent end marks tracked editors idle while preserving install behavior", (
 
   expect(createdEditors[0]!.busyCalls).toEqual([true, false]);
   expect(ctx.ui.setCalls).toEqual([factory]);
-  expect(loadCalls).toEqual([{ cwd: "/repo" }, { cwd: "/repo" }]);
+  expect(loadCalls).toEqual([
+    { cwd: "/repo", isProjectTrusted: false },
+    { cwd: "/repo", isProjectTrusted: false },
+  ]);
 });
 
 test("uses public editor factory API without inspecting foreign wrappers", async () => {
@@ -422,7 +443,10 @@ test("settings refresh reconfigures active editors and updates new editor option
   hooks.get("agent_end")?.({}, ctx);
   factory({}, {}, {});
 
-  expect(loadCalls).toEqual([{ cwd: "/repo" }, { cwd: "/repo" }]);
+  expect(loadCalls).toEqual([
+    { cwd: "/repo", isProjectTrusted: false },
+    { cwd: "/repo", isProjectTrusted: false },
+  ]);
   expect(ctx.ui.notifications).toEqual([["pi-vim: 1 settings warning; run :vimdoctor", "warning"]]);
   expect(createdEditors.map((editor) => editor.options.startMode)).toEqual(["normal", "normal"]);
   expect(createdEditors.map((editor) => editor.diagnostics.warnings)).toEqual([
@@ -498,10 +522,12 @@ test("async loads commit success and preserve it after rejection", async () => {
 test("newer async refresh alone reconfigures active editors", async () => {
   const initial = { ...DEFAULT_VIM_OPTIONS, startMode: "normal" as const };
   const stale = resolveVimOptions({
-    piVim: { startMode: "normal", keymap: { commands: { openLineBelow: [",s"] } } },
+    startMode: "normal",
+    keymap: { commands: { openLineBelow: [",s"] } },
   }).options;
   const newest = resolveVimOptions({
-    piVim: { startMode: "insert", keymap: { commands: { openLineBelow: [",n"] } } },
+    startMode: "insert",
+    keymap: { commands: { openLineBelow: [",n"] } },
   }).options;
   const { hooks, deferredLoads, resolveDeferred, createdEditors } = createLifecycleHarness([
     initial,
@@ -539,7 +565,8 @@ test("newer async refresh alone reconfigures active editors", async () => {
 test("older async refresh cannot commit after a newer refresh starts", async () => {
   const initial = { ...DEFAULT_VIM_OPTIONS, startMode: "normal" as const };
   const stale = resolveVimOptions({
-    piVim: { startMode: "normal", keymap: { commands: { openLineBelow: [",s"] } } },
+    startMode: "normal",
+    keymap: { commands: { openLineBelow: [",s"] } },
   }).options;
   const newest = { ...DEFAULT_VIM_OPTIONS, startMode: "insert" as const };
   const { hooks, deferredLoads, resolveDeferred, createdEditors } = createLifecycleHarness([
@@ -650,10 +677,10 @@ test("shutdown invalidates pending loads and delayed installs before next sessio
   const nativeFactory = (() => ({}) as FakeEditor) as unknown as FakeEditorComponent;
 
   hooks.get("session_start")?.({}, oldContext);
-  expect(loadCalls).toEqual([{ cwd: "/old" }]);
+  expect(loadCalls).toEqual([{ cwd: "/old", isProjectTrusted: false }]);
   hooks.get("session_shutdown")?.({ reason: "new" }, oldContext);
   scheduled[0]!();
-  expect(loadCalls).toEqual([{ cwd: "/old" }]);
+  expect(loadCalls).toEqual([{ cwd: "/old", isProjectTrusted: false }]);
 
   resolveDeferred.get(0)?.({
     plan: createVimConfigPlan(DEFAULT_VIM_OPTIONS, []),
@@ -785,7 +812,10 @@ test("delayed reinstall refreshes settings and catches stale context failures", 
   hooks.get("session_start")?.({}, ctx);
   scheduled[0]!();
 
-  expect(loadCalls).toEqual([{ cwd: "/repo" }, { cwd: "/repo" }]);
+  expect(loadCalls).toEqual([
+    { cwd: "/repo", isProjectTrusted: false },
+    { cwd: "/repo", isProjectTrusted: false },
+  ]);
 
   let failStatus = false;
   ctx.ui.getEditorComponent = () => {
@@ -851,7 +881,10 @@ test("vim command reloads options without toggling", async () => {
   await commands.get("vim")?.handler("reload", ctx);
   factory({}, {}, {});
 
-  expect(loadCalls).toEqual([{ cwd: "/repo" }, { cwd: "/repo" }]);
+  expect(loadCalls).toEqual([
+    { cwd: "/repo", isProjectTrusted: false },
+    { cwd: "/repo", isProjectTrusted: false },
+  ]);
   expect(ctx.ui.component).toBe(factory);
   expect(ctx.ui.notifications.at(-1)).toEqual(["pi-vim reloaded", "info"]);
   expect(createdEditors.map((editor) => editor.options.startMode)).toEqual(["normal", "normal"]);
@@ -865,7 +898,10 @@ test("vim reload stays disabled after refreshing options", async () => {
   await commands.get("vim")?.handler("off", ctx);
   await commands.get("vim")?.handler("reload", ctx);
 
-  expect(loadCalls).toEqual([{ cwd: "/repo" }, { cwd: "/repo" }]);
+  expect(loadCalls).toEqual([
+    { cwd: "/repo", isProjectTrusted: false },
+    { cwd: "/repo", isProjectTrusted: false },
+  ]);
   expect(ctx.ui.component).toBeUndefined();
   expect(ctx.ui.notifications.at(-1)).toEqual(["pi-vim config reloaded (disabled)", "info"]);
 });

@@ -82,12 +82,10 @@ test("modal status respects UI item config and cursor position format", () => {
 
 test("modal status moves the complete status group to the right", () => {
   const ui = resolveVimOptions({
-    piVim: {
-      ui: {
-        status: {
-          position: "right",
-          items: ["cursorPosition", "mode", "pendingOperator"],
-        },
+    ui: {
+      status: {
+        position: "right",
+        items: ["cursorPosition", "mode", "pendingOperator"],
       },
     },
   }).options.ui;
@@ -107,9 +105,7 @@ test("modal status moves the complete status group to the right", () => {
     visualAnchor: cursor,
     width: 40,
     ui: resolveVimOptions({
-      piVim: {
-        ui: { status: { position: "right", items: ["selection", "mode"] } },
-      },
+      ui: { status: { position: "right", items: ["selection", "mode"] } },
     }).options.ui,
   });
 
@@ -119,13 +115,11 @@ test("modal status moves the complete status group to the right", () => {
 
 test("right-positioned status honors mode visibility and narrow labels", () => {
   const configured = resolveVimOptions({
-    piVim: {
-      ui: {
-        status: { position: "right", items: ["mode"] },
-        mode: {
-          labels: { normal: "COMMAND" },
-          narrowLabels: { normal: "C" },
-        },
+    ui: {
+      status: { position: "right", items: ["mode"] },
+      mode: {
+        labels: { normal: "COMMAND" },
+        narrowLabels: { normal: "C" },
       },
     },
   }).options.ui;
@@ -135,27 +129,23 @@ test("right-positioned status honors mode visibility and narrow labels", () => {
     text: "",
     cursor,
     width: 40,
-    ui: resolveVimOptions({
-      piVim: { ui: { status: { position: "right" }, mode: { enabled: false } } },
-    }).options.ui,
+    ui: resolveVimOptions({ ui: { status: { position: "right" }, mode: { enabled: false } } })
+      .options.ui,
   });
   const omitted = modalStatus({
     mode: "normal",
     text: "",
     cursor,
     width: 40,
-    ui: resolveVimOptions({
-      piVim: { ui: { status: { position: "right", items: ["cursorPosition"] } } },
-    }).options.ui,
+    ui: resolveVimOptions({ ui: { status: { position: "right", items: ["cursorPosition"] } } })
+      .options.ui,
   });
   const disabled = modalStatus({
     mode: "normal",
     text: "",
     cursor,
     width: 40,
-    ui: resolveVimOptions({
-      piVim: { ui: { status: { enabled: false, position: "right" } } },
-    }).options.ui,
+    ui: resolveVimOptions({ ui: { status: { enabled: false, position: "right" } } }).options.ui,
   });
 
   expect(narrow.right).toBe(" C ");
