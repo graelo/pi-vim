@@ -4,7 +4,12 @@ import { join } from "node:path";
 
 import type { VimEditorOptions } from "../src/types.ts";
 
-import { DEFAULT_VIM_OPTIONS, loadVimOptions, resolveVimOptions } from "../src/config.ts";
+import {
+  cloneResolvedVimOptions,
+  DEFAULT_VIM_OPTIONS,
+  loadVimOptions,
+  resolveVimOptions,
+} from "../src/config.ts";
 import { configDirs } from "./config-files.ts";
 
 test("VimEditorOptions accepts partial consumer config shapes", () => {
@@ -1371,4 +1376,85 @@ test("non-operator strict prefixes are still rejected", () => {
     keymap: { commands: { deleteChar: ["x"], deleteSurround: ["xy"] } },
   });
   expect(result.warnings.some((warning) => warning.includes("strict-prefix conflict"))).toBe(true);
+});
+
+test("mode colors accept palette indices and hex strings", () => {
+  const result = resolveVimOptions({
+    ui: {
+      mode: {
+        colors: {
+          normal: { bg: 2, fg: 15 },
+          insert: { bg: "#268BD2" },
+          visual: { fg: 0 },
+        },
+      },
+    },
+  });
+  expect(result.options.ui?.mode.colors).toEqual({
+    normal: { bg: 2, fg: 15 },
+    insert: { bg: "#268bd2" },
+    visual: { fg: 0 },
+  });
+  expect(result.warnings).toEqual([]);
+});
+
+test("invalid mode colors warn per field and keep valid siblings", () => {
+  const result = resolveVimOptions({
+    ui: {
+      mode: {
+        colors: {
+          normal: { bg: 256, fg: 15 },
+          insert: { bg: 1.5, fg: "#12345" },
+          visual: "magenta",
+          visualLine: { bg: 5, underline: true },
+          command: { bg: 1 },
+        },
+      },
+    },
+  });
+  expect(result.options.ui?.mode.colors).toEqual({
+    normal: { fg: 15 },
+    insert: {},
+    visualLine: { bg: 5 },
+  });
+  expect(result.warnings).toEqual([
+    'global config: ui.mode.colors.normal.bg must be a palette index 0-255 or "#rrggbb"',
+    'global config: ui.mode.colors.insert.bg must be a palette index 0-255 or "#rrggbb"',
+    'global config: ui.mode.colors.insert.fg must be a palette index 0-255 or "#rrggbb"',
+    "global config: ui.mode.colors.visual must be an object",
+    "global config: unsupported ui.mode.colors.visualLine.underline",
+    "global config: unsupported ui.mode.colors.command",
+  ]);
+});
+
+test("non-object mode colors warn and keep other mode settings", () => {
+  const result = resolveVimOptions({
+    ui: { mode: { colors: [2], labels: { normal: "N!" } } },
+  });
+  expect(result.options.ui?.mode.colors).toEqual({});
+  expect(result.options.ui?.mode.labels.normal).toBe("N!");
+  expect(result.warnings).toEqual(["global config: ui.mode.colors must be an object"]);
+});
+
+test("project mode colors merge per mode over global colors", () => {
+  const result = resolveVimOptions(
+    { ui: { mode: { colors: { normal: { bg: 2, fg: 15 }, insert: { bg: 4 } } } } },
+    { ui: { mode: { colors: { insert: { fg: 7 } } } } },
+  );
+  expect(result.options.ui?.mode.colors).toEqual({
+    normal: { bg: 2, fg: 15 },
+    insert: { fg: 7 },
+  });
+});
+
+test("resolved mode colors are isolated from the input and clones", () => {
+  const settings = { ui: { mode: { colors: { normal: { bg: 2 } } } } };
+  const resolved = resolveVimOptions(settings).options;
+  expect(resolved.ui?.mode.colors.normal).not.toBe(settings.ui.mode.colors.normal);
+
+  const clone = cloneResolvedVimOptions(resolved);
+  clone.ui!.mode.colors.normal!.bg = 9;
+  expect(resolved.ui?.mode.colors.normal?.bg).toBe(2);
+  expect(settings.ui.mode.colors.normal.bg).toBe(2);
+  expect(DEFAULT_VIM_OPTIONS.ui?.mode.colors).toEqual({});
 });

@@ -1117,7 +1117,9 @@ The editor renders a bordered prompt area and configurable status border.
 
 Default status items:
 
-- mode label: `INSERT`, `NORMAL`, `VISUAL`, `V-LINE`, `V-BLOCK`
+- mode label: `INSERT`, `NORMAL`, `VISUAL`, `V-LINE`, `V-BLOCK`, optionally
+    drawn as a colored block per mode (`ui.mode.colors`, palette indices or
+    hex)
 - pending operator or prefix, e.g. `d…`, `g…`, `/query…`, `m…`, `:command…`
 - visual selection summary and preview
 
@@ -1216,6 +1218,7 @@ Examples of configurable features:
 - allowed operator motions
 - status item order
 - mode labels and narrow labels
+- mode label colors
 - visual preview width
 - cursor position format/base
 - macro enablement, slots, replay cap

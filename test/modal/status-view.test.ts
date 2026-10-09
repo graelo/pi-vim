@@ -69,6 +69,7 @@ test("modal status respects UI item config and cursor position format", () => {
           visualLine: "VL",
           visualBlock: "VB",
         },
+        colors: {},
       },
       selection: { enabled: false, previewMaxChars: 4 },
       cursorPosition: { enabled: true, base: 1, format: "L{line}:C{column}" },
@@ -120,6 +121,7 @@ test("right-positioned status honors mode visibility and narrow labels", () => {
       mode: {
         labels: { normal: "COMMAND" },
         narrowLabels: { normal: "C" },
+        colors: {},
       },
     },
   }).options.ui;
@@ -189,6 +191,7 @@ test("modal status shows active macro recording", () => {
           visualLine: "VL",
           visualBlock: "VB",
         },
+        colors: {},
       },
       selection: { enabled: true, previewMaxChars: 16 },
       cursorPosition: { enabled: false, base: 1, format: "{line}:{column}" },
@@ -196,4 +199,45 @@ test("modal status shows active macro recording", () => {
     },
   });
   expect(modeHidden).toEqual({ left: "", right: " REC a " });
+});
+
+function modeStatus(
+  mode: "normal" | "insert" | "visual" | "visualLine" | "visualBlock",
+  colors: unknown,
+  width = 40,
+) {
+  const ui = resolveVimOptions({ ui: { status: { items: ["mode"] }, mode: { colors } } }).options
+    .ui;
+  return modalStatus({ mode, text: "abc", cursor, visualAnchor: cursor, width, ui }).left;
+}
+
+test("mode colors render palette indices as a padded block", () => {
+  expect(modeStatus("normal", { normal: { bg: 2, fg: 15 } })).toBe(
+    " \x1b[48;5;2;38;5;15m NORMAL \x1b[0m ",
+  );
+});
+
+test("mode colors render hex colors as 24-bit SGR", () => {
+  expect(modeStatus("insert", { insert: { bg: "#268bd2", fg: "#FDF6E3" } })).toBe(
+    " \x1b[48;2;38;139;210;38;2;253;246;227m INSERT \x1b[0m ",
+  );
+  expect(modeStatus("insert", { insert: { bg: "#268bd2" } })).toBe(
+    " \x1b[48;2;38;139;210m INSERT \x1b[0m ",
+  );
+});
+
+test("mode colors also wrap the narrow label", () => {
+  expect(modeStatus("normal", { normal: { bg: 2 } }, 6)).toBe(" \x1b[48;5;2m N \x1b[0m ");
+});
+
+test("visual line and block fall back to visual colors unless set", () => {
+  const colors = { visual: { bg: 5 }, visualBlock: { bg: 13 } };
+  expect(modeStatus("visualLine", colors)).toBe(" \x1b[48;5;5m V-LINE \x1b[0m ");
+  expect(modeStatus("visualBlock", colors)).toBe(" \x1b[48;5;13m V-BLOCK \x1b[0m ");
+});
+
+test("mode labels stay plain without colors for the current mode", () => {
+  expect(modeStatus("normal", undefined)).toBe(" NORMAL ");
+  expect(modeStatus("insert", { normal: { bg: 2 } })).toBe(" INSERT ");
+  expect(modeStatus("normal", { normal: {} })).toBe(" NORMAL ");
 });

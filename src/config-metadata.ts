@@ -255,6 +255,11 @@ const PROPERTY_FACTS = {
     assignment: "replaces whole record; does not merge keys",
     aliases: [],
   },
+  "ui.mode.colors": {
+    acceptedShape: 'partial record of Vim modes to { bg?, fg? } palette indices 0-255 or "#rrggbb"',
+    assignment: "replaces whole record; does not merge keys",
+    aliases: [],
+  },
   "ui.selection.enabled": {
     acceptedShape: "boolean",
     assignment: "replaces value",

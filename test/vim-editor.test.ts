@@ -2600,3 +2600,38 @@ test("live editor keeps a configured surround operator", () => {
   typeKeys(editor, ["0", ..."gss)"]);
   expectEditorState(editor, { text: "([word])" });
 });
+
+test("colored mode label stays width-safe and ends its color before the border", () => {
+  const options = resolveVimOptions({
+    startMode: "normal",
+    ui: { mode: { colors: { normal: { bg: 2, fg: 15 } } } },
+  }).options;
+  const { editor } = createEditor(options);
+  const start = "\x1b[48;5;2;38;5;15m";
+
+  for (const width of [40, 12, 8, 5, 3]) {
+    const lines = editor.render(width);
+    expectRenderedWidth(lines, width);
+    const statusLine = lines.at(-1) ?? "";
+    const colored = statusLine.slice(Math.max(0, statusLine.indexOf(start)));
+    if (!statusLine.includes(start)) continue;
+    const reset = colored.indexOf("\x1b[0m");
+    const dash = colored.indexOf("─");
+    expect(reset).toBeGreaterThan(0);
+    if (dash >= 0) expect(reset).toBeLessThan(dash);
+  }
+  expect(editor.render(40).at(-1)).toContain(`${start} NORMAL \x1b[0m`);
+});
+
+test("reconfigure applies new mode colors to the live editor", () => {
+  const { editor } = createEditor({ ...DEFAULT_VIM_OPTIONS, startMode: "normal" });
+  expect(editor.render(40).at(-1)).not.toContain("\x1b[48;5;");
+
+  const options = resolveVimOptions({
+    startMode: "normal",
+    ui: { mode: { colors: { normal: { bg: 2 } } } },
+  }).options;
+  editor.reconfigure(createVimConfigPlan(options, []), { warnings: [] });
+
+  expect(editor.render(40).at(-1)).toContain("\x1b[48;5;2m NORMAL \x1b[0m");
+});

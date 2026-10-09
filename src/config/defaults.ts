@@ -199,6 +199,7 @@ export const DEFAULT_VIM_UI = Object.freeze({
       visualLine: "VL",
       visualBlock: "VB",
     }),
+    colors: Object.freeze({}),
   }),
   selection: Object.freeze({
     enabled: true,

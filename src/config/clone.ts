@@ -121,6 +121,12 @@ export function clonePromptStructures(
   return { enabled: promptStructures.enabled, targets: { ...promptStructures.targets } };
 }
 
+function cloneModeColors(colors: ResolvedVimUi["mode"]["colors"]): ResolvedVimUi["mode"]["colors"] {
+  return Object.fromEntries(
+    Object.entries(colors).map(([mode, entry]) => [mode, { ...entry }]),
+  ) as ResolvedVimUi["mode"]["colors"];
+}
+
 export function cloneUi(ui: ResolvedVimUi = DEFAULT_VIM_UI): ResolvedVimUi {
   return {
     status: {
@@ -132,6 +138,7 @@ export function cloneUi(ui: ResolvedVimUi = DEFAULT_VIM_UI): ResolvedVimUi {
       enabled: ui.mode.enabled,
       labels: clonePlainRecord(ui.mode.labels),
       narrowLabels: clonePlainRecord(ui.mode.narrowLabels),
+      colors: cloneModeColors(ui.mode.colors),
     },
     selection: clonePlainRecord(ui.selection),
     cursorPosition: clonePlainRecord(ui.cursorPosition),

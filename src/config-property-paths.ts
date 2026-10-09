@@ -14,6 +14,7 @@ export const TRUSTED_JS_OPTION_PATHS = [
   "ui.mode.enabled",
   "ui.mode.labels",
   "ui.mode.narrowLabels",
+  "ui.mode.colors",
   "ui.selection.enabled",
   "ui.selection.previewMaxChars",
   "ui.cursorPosition.enabled",

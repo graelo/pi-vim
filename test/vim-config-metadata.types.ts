@@ -74,11 +74,13 @@ type ExpectedPropertyShape<Path extends DeclaredPropertyPaths> = Path extends "p
                           ? '"off" | "status"'
                           : Path extends "ui.mode.labels" | "ui.mode.narrowLabels"
                             ? "partial record of Vim modes to strings"
-                            : Path extends "promptStructures.targets"
-                              ? "partial record of prompt-structure targets to booleans"
-                              : Path extends "ui.cursorPosition.format"
-                                ? "string"
-                                : "boolean";
+                            : Path extends "ui.mode.colors"
+                              ? 'partial record of Vim modes to { bg?, fg? } palette indices 0-255 or "#rrggbb"'
+                              : Path extends "promptStructures.targets"
+                                ? "partial record of prompt-structure targets to booleans"
+                                : Path extends "ui.cursorPosition.format"
+                                  ? "string"
+                                  : "boolean";
 type ExpectedPropertyAliases<Path extends DeclaredPropertyPaths> = Path extends "leader"
   ? readonly [`vim.g.${keyof VimConfigApi["g"] & string}`]
   : readonly [];
@@ -123,6 +125,7 @@ type PropertyValueCoverage = Assert<
       "ui.mode.enabled": boolean;
       "ui.mode.labels": VimConfigApi["ui"]["mode"]["labels"];
       "ui.mode.narrowLabels": VimConfigApi["ui"]["mode"]["narrowLabels"];
+      "ui.mode.colors": VimConfigApi["ui"]["mode"]["colors"];
       "ui.selection.enabled": boolean;
       "ui.selection.previewMaxChars": number;
       "ui.cursorPosition.enabled": boolean;

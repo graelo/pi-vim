@@ -211,6 +211,7 @@ function partialFromJsOperations(operations: readonly VimJsConfigOperation[]): V
 const JS_REPLACED_RECORD_PATHS = new Set([
   "ui.mode.labels",
   "ui.mode.narrowLabels",
+  "ui.mode.colors",
   "promptStructures.targets",
 ]);
 

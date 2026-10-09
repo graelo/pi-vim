@@ -83,6 +83,7 @@ function mergeUi(target: ResolvedVimUi, partial: PartialUiOptions): void {
       enabled: partial.mode.enabled ?? target.mode.enabled,
       labels: { ...target.mode.labels, ...partial.mode.labels },
       narrowLabels: { ...target.mode.narrowLabels, ...partial.mode.narrowLabels },
+      colors: { ...target.mode.colors, ...partial.mode.colors },
     };
   }
   if (partial.selection) target.selection = { ...target.selection, ...partial.selection };

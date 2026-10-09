@@ -828,6 +828,48 @@ aligned group is truncated as needed to preserve terminal width.
 
 Narrow labels are used when the prompt width is too small for the full label.
 
+### Mode label colors
+
+| Path                 | Default | Accepted values                              | Effect                                                     |
+| -------------------- | ------- | -------------------------------------------- | ---------------------------------------------------------- |
+| `ui.mode.colors`     | `{}`    | object keyed by mode                         | Per-mode label colors. Absent modes render as plain text.  |
+| `ui.mode.colors.<mode>.bg` | absent | palette index `0`–`255` or `"#rrggbb"` | Background of the mode label block.                        |
+| `ui.mode.colors.<mode>.fg` | absent | palette index `0`–`255` or `"#rrggbb"` | Foreground of the mode label block.                        |
+
+`<mode>` is `insert`, `normal`, `visual`, `visualLine`, or `visualBlock`. When
+the current mode has a `bg` or `fg`, its label (full or narrow) renders as a
+colored block with one space of padding on each side. `visualLine` and
+`visualBlock` use the `visual` colors unless they have their own entry.
+
+A palette index uses the terminal's 256-color palette, so indices `0`–`15`
+follow your terminal theme. A hex string is drawn as 24-bit color regardless of
+theme. Colors are off by default.
+
+Global and project config merge per mode: a project entry for `insert` replaces
+the global `insert` entry and keeps the global `normal` entry. Trusted JS
+`vim.ui.mode.colors` replaces the whole record.
+
+Invalid values warn and are ignored per field: an unknown mode, a non-object
+entry, an unknown key inside an entry, or a color that is not an integer
+`0`–`255` or a 6-digit `#rrggbb` string. Valid sibling colors still apply.
+
+Example for a Solarized terminal palette (`2` green, `4` blue, `5` magenta,
+`15` bright white):
+
+```json
+{
+  "ui": {
+    "mode": {
+      "colors": {
+        "normal": { "bg": 2, "fg": 15 },
+        "insert": { "bg": 4, "fg": 15 },
+        "visual": { "bg": 5, "fg": 15 }
+      }
+    }
+  }
+}
+```
+
 ### Selection status
 
 | Path                                     | Default | Accepted values      | Effect                                                                                               |

@@ -315,6 +315,16 @@ in [`docs/settings.md`](settings.md).
 - JSON crosswalk: `ui.cursorPosition.format`
 - Compatibility aliases: none
 
+#### `vim.ui.mode.colors`
+
+<a id="config-property-ui-mode-colors"></a>
+
+- Accepted shape: `partial record of Vim modes to { bg?, fg? } palette indices 0-255 or "#rrggbb"`
+- Built-in default: `{}`
+- Assignment semantics: replaces whole record; does not merge keys
+- JSON crosswalk: `ui.mode.colors`
+- Compatibility aliases: none
+
 #### `vim.ui.mode.enabled`
 
 <a id="config-property-ui-mode-enabled"></a>

@@ -275,6 +275,12 @@ export type ResolvedVimEasymotion = VimEasymotionOptions;
 
 export type PartialVimEasymotionOptions = Partial<ResolvedVimEasymotion>;
 
+/** A 256-color palette index (`0`-`255`) or a `#rrggbb` hex string. */
+export type VimModeColor = number | `#${string}`;
+
+/** Mode label colors; a mode with neither color renders as plain text. */
+export type VimModeColors = { bg?: VimModeColor; fg?: VimModeColor };
+
 export type VimUiOptions = {
   status: {
     enabled: boolean;
@@ -285,6 +291,7 @@ export type VimUiOptions = {
     enabled: boolean;
     labels: Record<VimMode, string>;
     narrowLabels: Record<VimMode, string>;
+    colors: Partial<Record<VimMode, VimModeColors>>;
   };
   selection: {
     enabled: boolean;
@@ -306,6 +313,7 @@ export type VimUiEditorOptions = {
     enabled?: boolean;
     labels?: Partial<Record<VimMode, string>>;
     narrowLabels?: Partial<Record<VimMode, string>>;
+    colors?: Partial<Record<VimMode, VimModeColors>>;
   };
   selection?: Partial<VimUiOptions["selection"]>;
   cursorPosition?: Partial<VimUiOptions["cursorPosition"]>;

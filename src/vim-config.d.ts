@@ -242,6 +242,8 @@ export type VimConfigApi = {
       enabled: boolean;
       labels: Partial<Record<VimMode, string>>;
       narrowLabels: Partial<Record<VimMode, string>>;
+      /** Palette index `0`-`255` or `#rrggbb` per mode; `visualLine`/`visualBlock` fall back to `visual`. */
+      colors: Partial<Record<VimMode, { bg?: number | `#${string}`; fg?: number | `#${string}` }>>;
     };
     selection: {
       enabled: boolean;

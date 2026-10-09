@@ -14,6 +14,11 @@ project uses [Semantic Versioning](https://semver.org/).
   `keymap.motions.sentenceBackward`, `sentenceForward`, and
   `keymap.textObjects.targets.sentence`. Explicit `keymap.operatorMotions`
   lists need the new motions added to allow `d)` and friends.
+- Mode label colors: `ui.mode.colors.<mode>` takes `{ "bg", "fg" }`, each a
+  256-color palette index (`0`–`255`, following the terminal theme) or a
+  `"#rrggbb"` hex string, and draws the mode label as a padded colored block.
+  `visualLine` and `visualBlock` fall back to the `visual` colors. Off by
+  default; also settable from trusted JS as `vim.ui.mode.colors`.
 
 ### Changed
 

@@ -1969,3 +1969,45 @@ test("loadVimOptions includes the trusted global JS config layer", async () => {
     dirs.cleanup();
   }
 });
+
+test("trusted JS replaces the whole mode colors record", async () => {
+  const dirs = configDirs("pi-vim-js-mode-colors-");
+  try {
+    writeFileSync(
+      dirs.globalPath,
+      JSON.stringify({ ui: { mode: { colors: { insert: { bg: 4 } } } } }),
+    );
+    writeFileSync(
+      dirs.jsConfigPath,
+      `export default (vim) => {
+  if (vim.ui.mode.colors.insert?.bg !== 4) throw new Error("missing global seed");
+  vim.ui.mode.colors = { normal: { bg: 2, fg: 15 } };
+};`,
+    );
+    const result = await loadVimOptions({ agentDir: dirs.agentDir, cwd: dirs.cwd });
+    expect(result.options.ui?.mode.colors).toEqual({ normal: { bg: 2, fg: 15 } });
+    expect(result.warnings).toEqual([]);
+  } finally {
+    dirs.cleanup();
+  }
+});
+
+test("trusted JS rejects invalid mode colors without changing the record", async () => {
+  const f = fixture();
+  try {
+    f.write(`export default (vim) => {
+  vim.ui.mode.colors = { normal: { bg: 300 } };
+};`);
+    const result = await loadVimOptions({
+      agentDir: dirname(f.path),
+      cwd: dirname(f.path),
+      jsConfigPath: f.path,
+    });
+    expect(result.options.ui?.mode.colors).toEqual({});
+    expect(result.warnings.some((warning) => warning.includes("ui.mode.colors.normal.bg"))).toBe(
+      true,
+    );
+  } finally {
+    f.cleanup();
+  }
+});

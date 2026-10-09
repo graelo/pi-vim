@@ -1,4 +1,12 @@
-import type { CursorStyle, CursorStyles, ResolvedVimUi, VimMode, VimStatusItem } from "../types.ts";
+import type {
+  CursorStyle,
+  CursorStyles,
+  ResolvedVimUi,
+  VimMode,
+  VimModeColor,
+  VimModeColors,
+  VimStatusItem,
+} from "../types.ts";
 
 import {
   CURSOR_STYLES,
@@ -30,6 +38,63 @@ function parseModeLabelMap(
     else warnings.push(`${sourceLabel}: ui.mode.${field}.${mode} must be a non-empty string`);
   }
   return Object.keys(labels).length > 0 ? labels : undefined;
+}
+
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+const MODE_COLOR_KEYS = new Set(["bg", "fg"]);
+
+function parseModeColor(value: unknown): VimModeColor | undefined {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 255)
+    return value;
+  if (typeof value === "string" && HEX_COLOR_PATTERN.test(value))
+    return value.toLowerCase() as VimModeColor;
+  return undefined;
+}
+
+function parseModeColorEntry(
+  value: unknown,
+  sourceLabel: string,
+  path: string,
+  warnings: string[],
+): VimModeColors | undefined {
+  if (!isRecord(value)) {
+    warnings.push(`${sourceLabel}: ${path} must be an object`);
+    return undefined;
+  }
+  const entry: VimModeColors = {};
+  for (const key of Object.keys(value)) {
+    if (!MODE_COLOR_KEYS.has(key)) warnings.push(`${sourceLabel}: unsupported ${path}.${key}`);
+  }
+  for (const key of ["bg", "fg"] as const) {
+    if (value[key] === undefined) continue;
+    const color = parseModeColor(value[key]);
+    if (color === undefined)
+      warnings.push(`${sourceLabel}: ${path}.${key} must be a palette index 0-255 or "#rrggbb"`);
+    else entry[key] = color;
+  }
+  return entry;
+}
+
+function parseModeColors(
+  value: unknown,
+  sourceLabel: string,
+  warnings: string[],
+): Partial<Record<VimMode, VimModeColors>> | undefined {
+  if (value === undefined) return undefined;
+  if (!isRecord(value)) {
+    warnings.push(`${sourceLabel}: ui.mode.colors must be an object`);
+    return undefined;
+  }
+  const colors: Partial<Record<VimMode, VimModeColors>> = {};
+  for (const [mode, entry] of Object.entries(value)) {
+    if (!(VIM_MODES as readonly string[]).includes(mode)) {
+      warnings.push(`${sourceLabel}: unsupported ui.mode.colors.${mode}`);
+      continue;
+    }
+    const parsed = parseModeColorEntry(entry, sourceLabel, `ui.mode.colors.${mode}`, warnings);
+    if (parsed) colors[mode as VimMode] = parsed;
+  }
+  return Object.keys(colors).length > 0 ? colors : undefined;
 }
 
 function parseUiStatus(
@@ -87,6 +152,7 @@ function parseUiMode(
   if (modeEnabled !== undefined) mode.enabled = modeEnabled;
   mode.labels = parseModeLabelMap(value.labels, sourceLabel, "labels", warnings);
   mode.narrowLabels = parseModeLabelMap(value.narrowLabels, sourceLabel, "narrowLabels", warnings);
+  mode.colors = parseModeColors(value.colors, sourceLabel, warnings);
   return mode;
 }
 
