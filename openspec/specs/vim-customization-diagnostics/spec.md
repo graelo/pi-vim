@@ -32,7 +32,7 @@ code.
 
 - **WHEN** the editor executes `:vimdoctor`
 - **THEN** diagnostics are based on the options and warnings retained for that
-    editor instance rather than re-reading global or project settings files
+    editor instance rather than re-reading global or project config files
 
 ### Requirement: Customization commands preserve prompt editing state
 
@@ -240,7 +240,7 @@ inspect settings files or source code.
 #### Scenario: Catalog reflects configured overrides
 
 - **WHEN** resolved settings change a semantic binding such as
-    `piVim.keymap.commands.redo`
+    `keymap.commands.redo`
 - **THEN** the keybindings catalog reports the effective configured binding
     rather than only built-in defaults or raw settings text
 
@@ -316,22 +316,3 @@ boundaries as existing customization diagnostics.
     `:mapcheck <key>`
 - **THEN** it preserves the protected shortcut catalog boundary and does not
     present protected Pi shortcuts as available pi-vim bindings
-
-### Requirement: Pre-rename configuration is ignored with warnings
-
-The settings loader SHALL ignore the pre-1.0.0 `piVimMode` settings key and
-the pre-1.0.0 `pi-vimmode.config.js` file, and SHALL add a retained warning for
-each one it finds so `:vimdoctor` shows the rename.
-
-#### Scenario: Old settings key warns
-
-- **WHEN** global or project settings contain a `piVimMode` object
-- **THEN** its values are not applied and the warnings include
-    `<source> settings: piVimMode was renamed to piVim in 1.0.0 and is ignored`
-
-#### Scenario: Old JS config file warns
-
-- **WHEN** `pi-vimmode.config.js` exists next to the expected
-    `pi-vim.config.js`
-- **THEN** it is not loaded and the warnings include
-    `<path> was renamed to pi-vim.config.js in 1.0.0 and is ignored`

@@ -234,7 +234,8 @@ coordination while preserving existing lifecycle installation behavior.
 ### Requirement: Lifecycle installation refreshes settings and notifies warnings
 
 The Vim extension lifecycle SHALL refresh Vim options during each install
-attempt by loading settings for the active context `cwd`. It MUST NOT set a Pi
+attempt by loading settings for the active context `cwd` and the context's
+project trust decision. It MUST NOT set a Pi
 footer status entry. When the retained settings diagnostics change and contain
 warnings, it SHALL show one transient warning notification with the warning
 count that points to `:vimdoctor`.
@@ -242,7 +243,14 @@ count that points to `:vimdoctor`.
 #### Scenario: Settings load uses context cwd
 
 - **WHEN** installation runs for a context with `cwd`
-- **THEN** the lifecycle calls the Vim settings loader with that `cwd`
+- **THEN** the lifecycle calls the Vim settings loader with that `cwd` and
+    with the result of the context's `isProjectTrusted()`
+
+#### Scenario: Trust change applies on the next install
+
+- **WHEN** the user trusts a project after a session started and a later
+    install attempt runs
+- **THEN** that install reads the project config
 
 #### Scenario: Lifecycle sets no footer status
 

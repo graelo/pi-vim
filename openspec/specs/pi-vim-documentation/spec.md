@@ -29,23 +29,24 @@ explicit limitations.
 - **THEN** the section includes at least one practical example or workflow for
     the documented feature area
 
-### Requirement: Settings reference covers every piVim option
+### Requirement: Settings reference covers every pi-vim option
 
 The project SHALL provide `docs/settings.md` as a complete reference for the
-`piVim` settings object.
+options read from pi-vim's `config.json` files.
 
 #### Scenario: User checks a setting
 
 - **WHEN** a user opens `docs/settings.md`
-- **THEN** the document lists every supported `piVim` key, nested key,
+- **THEN** the document lists every supported option key, nested key,
     default value, accepted value shape, behavior, and relevant validation or
     fallback behavior
 
 #### Scenario: User configures pi-vim
 
 - **WHEN** a user reads `docs/settings.md`
-- **THEN** the document explains global settings, project settings, merge
-    precedence, warning behavior, protected key handling, Vim-style key
+- **THEN** the document explains the global and project `config.json`
+    locations, the project trust requirement, the trusted JS config location,
+    merge precedence, warning behavior, protected key handling, Vim-style key
     notation, and practical JSON examples
 
 ### Requirement: Documentation records source-of-truth policy
@@ -110,7 +111,7 @@ The project SHALL document runtime customization diagnostics in
 
 ### Requirement: Settings reference covers presets and feedback
 
-The project SHALL document every new `piVim` customization setting in
+The project SHALL document every new pi-vim customization setting in
 `docs/settings.md`.
 
 #### Scenario: User reads preset settings
@@ -211,13 +212,13 @@ change is complete.
 
 ### Requirement: Settings reference remains aligned with config source
 
-The project SHALL keep `docs/settings.md` aligned with supported `piVim`
+The project SHALL keep `docs/settings.md` aligned with supported pi-vim
 settings, defaults, accepted value shapes, and validation behavior when runtime
 help or drift guard metadata references settings.
 
 #### Scenario: Settings docs key is missing from source metadata
 
-- **WHEN** `docs/settings.md` lists a `piVim` setting path that is neither
+- **WHEN** `docs/settings.md` lists a setting path that is neither
     supported by source config/types metadata nor listed as an approved ignored
     legacy setting
 - **THEN** the documentation drift guard fails with the unexpected setting path
@@ -396,7 +397,7 @@ normal-mode keybinding for the dedicated keybindings popup command.
 #### Scenario: Settings reference lists command path
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** it lists `piVim.keymap.commands.showKeybindings`, its default
+- **THEN** it lists `keymap.commands.showKeybindings`, its default
     empty binding list, and its effect of opening the keybindings popup
 
 #### Scenario: Settings reference documents validation rules
@@ -411,7 +412,7 @@ normal-mode keybinding for the dedicated keybindings popup command.
 - **WHEN** the user opens `docs/settings.md`
 - **THEN** it clarifies that `pi-vim.*` diagnostic/help metadata IDs cannot
     be bound to keys, and users should configure
-    `piVim.keymap.commands.showKeybindings` for a shortcut to the
+    `keymap.commands.showKeybindings` for a shortcut to the
     keybindings popup
 
 ### Requirement: README remains a quickstart and docs index
@@ -524,7 +525,7 @@ settings references.
 
 - **WHEN** a user opens `docs/settings.md`
 - **THEN** the keymap command reference lists
-    `piVim.keymap.commands.reselectVisual`, its default `gv` binding, and
+    `keymap.commands.reselectVisual`, its default `gv` binding, and
     its normal-mode behavior
 
 ### Requirement: Documentation explains safe insert editing layer
@@ -536,7 +537,7 @@ explicit non-goals.
 #### Scenario: Settings reference lists insert action options
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** the settings reference lists each `piVim.keymap.insert` action,
+- **THEN** the settings reference lists each `keymap.insert` action,
     its empty default, accepted key shape, protected-key allow-list behavior,
     duplicate binding diagnostics, autocomplete delegation, and raw printable
     rejection
@@ -566,7 +567,7 @@ explicit non-goals.
 #### Scenario: Documentation keeps action surfaces separate
 
 - **WHEN** docs describe safe insert bindings
-- **THEN** they state that `piVim.keymap.insert` owns only physical insert
+- **THEN** they state that `keymap.insert` owns only physical insert
     edits and movement
 
 #### Scenario: Documentation states insert mapping non-goals

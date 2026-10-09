@@ -203,21 +203,21 @@ completion is active.
 
 #### Scenario: Configured mode label updates
 
-- **WHEN** the editor switches modes and `piVim.ui.mode.labels` configures
+- **WHEN** the editor switches modes and `ui.mode.labels` configures
     labels for those modes
 - **THEN** the rendered editor shows the configured active-mode label where
     the mode status item is enabled and width permits
 
 #### Scenario: Status group can be right-aligned
 
-- **WHEN** `piVim.ui.status.position` is set to `"right"`
+- **WHEN** `ui.status.position` is set to `"right"`
 - **THEN** the complete ordered status group, including mode, pending state,
     visual selection status, cursor position, and macro recording, renders at
     the right edge
 
 #### Scenario: Mode status can be hidden by config
 
-- **WHEN** `piVim.ui.mode.enabled` is set to `false` or the status item
+- **WHEN** `ui.mode.enabled` is set to `false` or the status item
     list omits `mode`
 - **THEN** the rendered editor omits mode feedback from both border slots
     while preserving prompt editing behavior
@@ -238,7 +238,7 @@ completion is active.
 #### Scenario: Visual selection status hidden by config
 
 - **WHEN** the editor is in visual mode with a non-empty selection and
-    `piVim.ui.selection.enabled` is set to `false`
+    `ui.selection.enabled` is set to `false`
 - **THEN** visual highlighting remains active but visual selection summary
     text is omitted from the status UI
 
@@ -372,14 +372,14 @@ behavior and current limitations.
 
 ### Requirement: Configured escape aliases leave insert, visual, and Ex command-line states
 
-The Vim editor SHALL treat configured `piVim.keymap.escape` sequences as
+The Vim editor SHALL treat configured `keymap.escape` sequences as
 aliases for physical `Esc` in insert mode when autocomplete is inactive, in
 visual modes, and while an Ex command-line is pending, while preserving default
 insert-mode delegation for all unrelated input.
 
 #### Scenario: Configured alias exits insert mode
 
-- **WHEN** `piVim.keymap.escape` includes `<D-j>`, autocomplete is
+- **WHEN** `keymap.escape` includes `<D-j>`, autocomplete is
     inactive, and the editor is in insert mode
 - **THEN** pressing the corresponding modified `j` key enters normal mode and
     does not insert text into the prompt
@@ -392,41 +392,41 @@ insert-mode delegation for all unrelated input.
 
 #### Scenario: Unrelated insert text remains delegated
 
-- **WHEN** `piVim.keymap.escape` includes `<D-j>` and the editor receives
+- **WHEN** `keymap.escape` includes `<D-j>` and the editor receives
     ordinary insert-mode text
 - **THEN** the text is delegated to Pi's default editor behavior and inserted
     normally
 
 #### Scenario: Raw text chords remain text
 
-- **WHEN** `piVim.keymap.escape` is configured with raw text such as `jk`
+- **WHEN** `keymap.escape` is configured with raw text such as `jk`
 - **THEN** the invalid alias is ignored, typing `j` followed by `k` inserts
     `jk`, and the editor remains in insert mode
 
 #### Scenario: Alias does not fire while autocomplete is open
 
-- **WHEN** `piVim.keymap.escape` includes `<D-j>`, Pi autocomplete is
+- **WHEN** `keymap.escape` includes `<D-j>`, Pi autocomplete is
     open, and the editor is in insert mode
 - **THEN** pressing the configured modified key delegates to Pi
     autocomplete/default editing behavior instead of entering normal mode
 
 #### Scenario: Configured alias exits visual modes
 
-- **WHEN** `piVim.keymap.escape` includes `<D-j>` and the editor is in
+- **WHEN** `keymap.escape` includes `<D-j>` and the editor is in
     visual, visual-line, or visual-block mode
 - **THEN** pressing the corresponding modified key cancels visual selection
     and enters normal mode like physical `Esc`
 
 #### Scenario: Configured alias cancels pending Ex command-line
 
-- **WHEN** `piVim.keymap.escape` includes `<D-j>` and the editor has a
+- **WHEN** `keymap.escape` includes `<D-j>` and the editor has a
     pending `:` Ex command-line
 - **THEN** pressing the corresponding modified key cancels the pending Ex
     command-line like physical `Esc` without delegating to Pi
 
 #### Scenario: Normal mode keeps existing key behavior
 
-- **WHEN** `piVim.keymap.escape` includes `<D-j>` and the editor is in
+- **WHEN** `keymap.escape` includes `<D-j>` and the editor is in
     normal mode
 - **THEN** existing normal-mode behavior remains unchanged and the escape
     alias is not evaluated
@@ -439,7 +439,7 @@ default behavior when aliases are absent.
 
 #### Scenario: Fast path remains safe
 
-- **WHEN** `piVim.keymap.escape` includes `<D-j>`
+- **WHEN** `keymap.escape` includes `<D-j>`
 - **THEN** ordinary insert text may still use the guarded insert fast path,
     while configured alias input is routed through modal handling
 
@@ -459,7 +459,7 @@ default behavior when aliases are absent.
 
 #### Scenario: Default behavior is unchanged without aliases
 
-- **WHEN** no `piVim.keymap.escape` setting is configured
+- **WHEN** no `keymap.escape` setting is configured
 - **THEN** insert-mode typing, physical `Esc`, autocomplete, Pi shortcuts,
     macro recording/replay, and fast-path delegation behave as they did before
     this change
@@ -487,7 +487,7 @@ and default Pi delegation for unconfigured input.
 #### Scenario: Configured insert command opens line below
 
 - **WHEN** the editor is in insert mode, autocomplete is inactive,
-    `piVim.keymap.insert.openLineBelow` includes `ctrl+j`, and the user
+    `keymap.insert.openLineBelow` includes `ctrl+j`, and the user
     presses `Ctrl+J`
 - **THEN** a blank line is inserted below the current prompt line, the cursor
     moves to that blank line, and the editor remains in insert mode
@@ -495,7 +495,7 @@ and default Pi delegation for unconfigured input.
 #### Scenario: Configured insert command opens line above
 
 - **WHEN** the editor is in insert mode, autocomplete is inactive,
-    `piVim.keymap.insert.openLineAbove` includes `ctrl+k`, and the user
+    `keymap.insert.openLineAbove` includes `ctrl+k`, and the user
     presses `Ctrl+K`
 - **THEN** a blank line is inserted above the current prompt line, the cursor
     moves to that blank line, and the editor remains in insert mode
@@ -588,7 +588,7 @@ their own cursor behavior.
 
 #### Scenario: Escape alias moves the cursor left
 
-- **WHEN** `piVim.keymap.escape` includes `<D-j>`, the cursor is after `abc`
+- **WHEN** `keymap.escape` includes `<D-j>`, the cursor is after `abc`
     in insert mode, and the user presses `<D-j>`
 - **THEN** the editor is in normal mode with the cursor on `c`
 

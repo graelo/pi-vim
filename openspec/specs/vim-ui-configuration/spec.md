@@ -10,50 +10,50 @@ border.
 
 ### Requirement: Status UI items are configurable
 
-The Vim editor SHALL read `piVim.ui.status` to determine which status items
+The Vim editor SHALL read `ui.status` to determine which status items
 are rendered and in what order while preserving the current status UI by
 default.
 
 #### Scenario: Default status UI preserved
 
-- **WHEN** no `piVim.ui` setting is configured
+- **WHEN** no `ui` setting is configured
 - **THEN** the editor shows the current mode label, pending operator when
     present, and visual selection summary when visual selection is active
 
 #### Scenario: Status item order configured
 
-- **WHEN** `piVim.ui.status.items` is set to a valid ordered list of
+- **WHEN** `ui.status.items` is set to a valid ordered list of
     supported items
 - **THEN** the editor renders those enabled status items in the configured
     order when each item has content
 
 #### Scenario: Status UI disabled
 
-- **WHEN** `piVim.ui.status.enabled` is set to `false`
+- **WHEN** `ui.status.enabled` is set to `false`
 - **THEN** the editor omits Vim status items while preserving prompt editing
     behavior and terminal-width safety
 
 #### Scenario: Invalid status item falls back
 
-- **WHEN** `piVim.ui.status.items` contains an unsupported item name
+- **WHEN** `ui.status.items` contains an unsupported item name
 - **THEN** the unsupported item is ignored, a warning is recorded, and
     supported status items remain usable
 
 #### Scenario: Status position defaults left
 
-- **WHEN** no `piVim.ui.status.position` setting is configured
+- **WHEN** no `ui.status.position` setting is configured
 - **THEN** the complete ordered status group remains left-aligned
 
 #### Scenario: Status position configured right
 
-- **WHEN** `piVim.ui.status.position` is set to `"right"`
+- **WHEN** `ui.status.position` is set to `"right"`
 - **THEN** the complete ordered status group, including mode, pending state,
     selection, cursor position, and macro recording, renders in the right border
     slot
 
 #### Scenario: Invalid status position falls back
 
-- **WHEN** `piVim.ui.status.position` is neither `"left"` nor `"right"`
+- **WHEN** `ui.status.position` is neither `"left"` nor `"right"`
 - **THEN** settings resolution records a warning, retains the inherited status
     position, and preserves valid sibling UI fields
 
@@ -64,20 +64,20 @@ visual, and visual line modes.
 
 #### Scenario: Mode labels configured
 
-- **WHEN** `piVim.ui.mode.labels.normal` is set to a non-empty string and
+- **WHEN** `ui.mode.labels.normal` is set to a non-empty string and
     the editor is in normal mode
 - **THEN** the rendered mode status uses the configured normal-mode label when
     width permits
 
 #### Scenario: Narrow mode labels configured
 
-- **WHEN** `piVim.ui.mode.narrowLabels.visualLine` is set to a non-empty
+- **WHEN** `ui.mode.narrowLabels.visualLine` is set to a non-empty
     string and available status width is narrow
 - **THEN** the rendered visual-line mode status uses the configured narrow label
 
 #### Scenario: Mode status disabled
 
-- **WHEN** `piVim.ui.mode.enabled` is set to `false`
+- **WHEN** `ui.mode.enabled` is set to `false`
 - **THEN** the mode label item is omitted from the Vim status UI
 
 #### Scenario: Invalid mode label falls back
@@ -93,18 +93,18 @@ UI.
 
 #### Scenario: Cursor position enabled
 
-- **WHEN** `piVim.ui.cursorPosition.enabled` is set to `true`
+- **WHEN** `ui.cursorPosition.enabled` is set to `true`
 - **THEN** the status UI includes the current cursor line and column using the
     configured base and format
 
 #### Scenario: Cursor position base configured
 
-- **WHEN** `piVim.ui.cursorPosition.base` is set to `0`
+- **WHEN** `ui.cursorPosition.base` is set to `0`
 - **THEN** line and column values are rendered with zero-based coordinates
 
 #### Scenario: Cursor position format configured
 
-- **WHEN** `piVim.ui.cursorPosition.format` contains `{line}` and
+- **WHEN** `ui.cursorPosition.format` contains `{line}` and
     `{column}` placeholders
 - **THEN** the status UI replaces those placeholders with the current cursor
     line and column values
@@ -122,28 +122,28 @@ changing selection semantics.
 
 #### Scenario: Selection preview length configured
 
-- **WHEN** `piVim.ui.selection.previewMaxChars` is set to a supported
+- **WHEN** `ui.selection.previewMaxChars` is set to a supported
     non-negative integer
 - **THEN** visual selection preview text is truncated to that configured
     display width
 
 #### Scenario: Selection status disabled
 
-- **WHEN** `piVim.ui.selection.enabled` is set to `false`
+- **WHEN** `ui.selection.enabled` is set to `false`
 - **THEN** active visual selections still highlight and operate normally, but
     selection summary text is omitted from the status UI
 
 ### Requirement: UI config is the only status configuration surface
 
-The Vim editor SHALL use `piVim.ui` as the single source of truth for status
-display and SHALL warn when legacy `piVim.vimOptions` aliases are
+The Vim editor SHALL use `ui` as the single source of truth for status
+display and SHALL warn when legacy `vimOptions` aliases are
 configured.
 
 #### Scenario: Legacy Vim option aliases are ignored
 
-- **WHEN** `piVim.vimOptions.showmode`, `showcmd`, or `ruler` is configured
+- **WHEN** `vimOptions.showmode`, `showcmd`, or `ruler` is configured
 - **THEN** the editor records a warning, ignores `vimOptions`, and renders
-    status from `piVim.ui` and defaults only
+    status from `ui` and defaults only
 
 ### Requirement: UI configuration is width-safe, documented, and validated
 
@@ -174,43 +174,43 @@ configuration.
 #### Scenario: Settings reference documents UI config
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** it documents `piVim.ui`, supported status items, label
+- **THEN** it documents `ui`, supported status items, label
     examples, cursor position examples, and unsupported full Vimscript/Neovim
     Lua import
 
 ### Requirement: Search highlight behavior is configurable
 
-The Vim editor SHALL read `piVim.search` to control prompt search
+The Vim editor SHALL read `search` to control prompt search
 highlighting while preserving safe defaults when settings are absent or invalid.
 
 #### Scenario: Search highlighting defaults are enabled
 
-- **WHEN** no `piVim.search` setting is configured
+- **WHEN** no `search` setting is configured
 - **THEN** successful prompt search renders all literal matches and distinctly
     renders the current match
 
 #### Scenario: Search highlighting disabled
 
-- **WHEN** `piVim.search.highlight` is set to `false`
+- **WHEN** `search.highlight` is set to `false`
 - **THEN** successful prompt search moves the cursor and updates repeat search
     state without rendering search highlights
 
 #### Scenario: Current match highlight disabled
 
-- **WHEN** `piVim.search.highlightCurrent` is set to `false`
+- **WHEN** `search.highlightCurrent` is set to `false`
 - **THEN** successful prompt search renders matches with one search style
     instead of a distinct current-match style
 
 #### Scenario: Highlight count is bounded
 
-- **WHEN** `piVim.search.maxHighlights` is configured with a supported
+- **WHEN** `search.maxHighlights` is configured with a supported
     non-negative integer
 - **THEN** rendered non-current search matches are limited to that count while
     search motion behavior remains unchanged
 
 #### Scenario: Invalid search config falls back
 
-- **WHEN** `piVim.search` contains invalid field types or unsupported values
+- **WHEN** `search` contains invalid field types or unsupported values
 - **THEN** invalid fields fall back to defaults, warnings are recorded, and
     the rest of the configuration remains usable
 
@@ -221,26 +221,26 @@ or editing events without corrupting repeat search state.
 
 #### Scenario: Cancelled search clears highlights when configured
 
-- **WHEN** search highlights are visible, `piVim.search.clearOnCancel` is
+- **WHEN** search highlights are visible, `search.clearOnCancel` is
     `true`, and the user starts `/` then presses `Esc`
 - **THEN** visible search highlights clear and prompt text remains unchanged
 
 #### Scenario: Cancelled search preserves highlights when configured
 
-- **WHEN** search highlights are visible, `piVim.search.clearOnCancel` is
+- **WHEN** search highlights are visible, `search.clearOnCancel` is
     `false`, and the user starts `/` then presses `Esc`
 - **THEN** existing visible search highlights remain
 
 #### Scenario: Insert mode clears highlights when configured
 
-- **WHEN** search highlights are visible, `piVim.search.clearOnInsert` is
+- **WHEN** search highlights are visible, `search.clearOnInsert` is
     `true`, and the editor enters insert mode
 - **THEN** visible search highlights clear while the previous search can still
     be repeated after returning to normal mode
 
 #### Scenario: Insert mode preserves highlights when configured
 
-- **WHEN** search highlights are visible, `piVim.search.clearOnInsert` is
+- **WHEN** search highlights are visible, `search.clearOnInsert` is
     `false`, and the editor enters insert mode
 - **THEN** visible search highlights remain until another configured clear
     event or successful search changes them
@@ -292,7 +292,7 @@ search highlight rendering, or configured workbench row reservation.
 
 #### Scenario: Ex row uses configured reserved viewport
 
-- **WHEN** the Ex row is visible and `piVim.ui.workbench.reservedRows` is
+- **WHEN** the Ex row is visible and `ui.workbench.reservedRows` is
     greater than one
 - **THEN** the prompt box and status UI render with the configured
     reserved-row count removed from the prompt viewport while the Ex row renders
@@ -355,7 +355,7 @@ configured row reservation, and existing Vim UI.
 
 #### Scenario: Workbench row uses configured reserved rows
 
-- **WHEN** `piVim.ui.workbench.reservedRows` is configured and a search,
+- **WHEN** `ui.workbench.reservedRows` is configured and a search,
     Ex, success, or error workbench row is visible
 - **THEN** the prompt editor viewport uses the greater of one active workbench
     row and the configured reserved-row count so total rendering remains bounded
@@ -363,7 +363,7 @@ configured row reservation, and existing Vim UI.
 
 #### Scenario: Reserved idle workbench area is width-safe
 
-- **WHEN** `piVim.ui.workbench.reservedRows` is greater than zero and no
+- **WHEN** `ui.workbench.reservedRows` is greater than zero and no
     search, Ex, success, or error workbench row is visible
 - **THEN** the editor still reserves the configured blank workbench rows below
     the prompt while every rendered line fits within the provided width
@@ -559,41 +559,41 @@ highlights, cursor style, status rendering, or compact workbench feedback.
 
 ### Requirement: Workbench row reservation is configurable
 
-The Vim editor SHALL support `piVim.ui.workbench.reservedRows` as the
+The Vim editor SHALL support `ui.workbench.reservedRows` as the
 Pi-native configuration surface for reserving bounded workbench rows below the
 prompt.
 
 #### Scenario: Default workbench reservation preserves current layout
 
-- **WHEN** no `piVim.ui.workbench.reservedRows` setting is configured and
+- **WHEN** no `ui.workbench.reservedRows` setting is configured and
     no workbench input or message is active
 - **THEN** the editor reserves no idle workbench rows and preserves the
     existing prompt viewport height
 
 #### Scenario: Active workbench row still appears with default reservation
 
-- **WHEN** no `piVim.ui.workbench.reservedRows` setting is configured and
+- **WHEN** no `ui.workbench.reservedRows` setting is configured and
     search input, Ex input, success, or error feedback is active
 - **THEN** the editor reserves one workbench row for active feedback according
     to existing behavior
 
 #### Scenario: Reserved rows keep idle command area visible
 
-- **WHEN** `piVim.ui.workbench.reservedRows` is set to `2` and no
+- **WHEN** `ui.workbench.reservedRows` is set to `2` and no
     workbench input or message is active
 - **THEN** the editor reserves two width-safe rows below the prompt and the
     prompt viewport uses two fewer terminal rows
 
 #### Scenario: Active feedback renders within reserved rows
 
-- **WHEN** `piVim.ui.workbench.reservedRows` is set to `2` and Ex
+- **WHEN** `ui.workbench.reservedRows` is set to `2` and Ex
     command-line mode is active
 - **THEN** the Ex command text renders in the reserved workbench area without
     subtracting an additional row beyond the configured two rows
 
 #### Scenario: Reserved rows are bounded
 
-- **WHEN** `piVim.ui.workbench.reservedRows` is configured with an
+- **WHEN** `ui.workbench.reservedRows` is configured with an
     unsupported value such as a negative number, non-integer, non-number, or
     value greater than the documented maximum
 - **THEN** settings resolution records a warning, ignores the invalid field,
@@ -603,14 +603,14 @@ prompt.
 #### Scenario: Live editor honors workbench reservation
 
 - **WHEN** a live `VimEditor` is constructed with resolved
-    `piVim.ui.workbench.reservedRows`
+    `ui.workbench.reservedRows`
 - **THEN** rendering uses the resolved reserved-row count rather than silently
     falling back to defaults
 
 #### Scenario: Settings reference documents workbench reservation
 
 - **WHEN** the user opens `docs/settings.md`
-- **THEN** it documents `piVim.ui.workbench.reservedRows`, default
+- **THEN** it documents `ui.workbench.reservedRows`, default
     behavior, supported bounds, examples, and the relationship between reserved
     rows and active workbench feedback
 

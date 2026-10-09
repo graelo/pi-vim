@@ -96,7 +96,7 @@ SHALL preserve the current documented behavior.
 
 #### Scenario: Default operator-motion combinations remain available
 
-- **WHEN** no `piVim.keymap.operatorMotions` setting is configured
+- **WHEN** no `keymap.operatorMotions` setting is configured
 - **THEN** `d`, `c`, and `y` followed by `w`, `b`, `0`, `^`, or `$` keep their
     existing delete, change, and yank behavior
 

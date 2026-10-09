@@ -80,7 +80,7 @@
 - [x] 6.1 Run `npm test`, `npm run check`, `npm run lint`,
   `npm run check:config-reference` and `openspec validate --specs --strict`,
   and verify that all pass.
-- [ ] 6.2 Smoke-test in pi:
+- [x] 6.2 Smoke-test in pi:
   - create `<agent-dir>/extensions/pi-vim/config.json` containing
     `{ "startMode": "normal" }`;
   - run `pi -e ./src/index.ts`;
