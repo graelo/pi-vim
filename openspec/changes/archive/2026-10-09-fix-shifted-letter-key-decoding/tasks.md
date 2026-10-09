@@ -35,7 +35,7 @@
 - [x] 5.1 Run `npm test`, `npm run check`, `npm run lint`,
   `npm run check:config-reference` and `openspec validate --specs --strict`,
   and verify that all pass.
-- [ ] 5.2 Smoke-test in pi under tmux and in a Kitty-protocol terminal: run
+- [x] 5.2 Smoke-test in pi under tmux and in a Kitty-protocol terminal: run
   `pi -e ./src/index.ts`, type `abcd`, press Escape, then `X`, and check that
   `c` (the char before the cursor) is deleted.
 
