@@ -22,13 +22,16 @@ The modal engine already implements `X` correctly; only key decoding is wrong.
   line, insert-mode mappings).
 - Plain `X` and Kitty events that carry the shifted key keep decoding as
   today.
+- A keymap binding containing a `shift+<letter>` key (`<S-x>` or `shift+x`),
+  in JSON or trusted JS config, warns with the uppercase letter to use and is
+  ignored; valid siblings still apply.
 
 ## Non-goals
 
 - Shifted non-letters (`shift+1`), whose character depends on the keyboard
   layout.
 - Caps Lock without Shift.
-- Changes to how keymap bindings are configured or validated.
+- Rewriting `shift+<letter>` bindings to the uppercase letter automatically.
 
 ## Capabilities
 
@@ -43,12 +46,14 @@ None.
 
 ## Impact
 
-- **Code:** `src/modal/core.ts` (`keySequence`, `insertKeySequence`).
-- **Tests:** decoder unit tests and modal tests that send each encoding of
-  Shift+x.
-- **Docs:** CHANGELOG `[Unreleased]` entry under Fixed; a `docs/solutions`
-  entry.
+- **Code:** `src/modal/core.ts` (`keySequence`, `insertKeySequence`);
+  `src/mapping-scopes.ts`, `src/config/fields.ts` and `src/config-js.ts` for
+  the binding warning.
+- **Tests:** decoder unit tests, modal tests that send each encoding of
+  Shift+x, and JSON and trusted JS config warning tests.
+- **Docs:** `docs/settings.md` key syntax rules; CHANGELOG `[Unreleased]`
+  entries under Fixed; a `docs/solutions` entry.
 - **Dependencies:** none.
 - **Compatibility:** a binding written as `shift+<letter>` no longer fires,
-  because the input now resolves to the uppercase letter; bind the uppercase
-  letter instead, as in Vim.
+  because the input now resolves to the uppercase letter. It now warns and
+  names the uppercase letter to bind instead, as in Vim.

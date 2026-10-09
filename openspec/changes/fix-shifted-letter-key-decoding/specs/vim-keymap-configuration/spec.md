@@ -28,6 +28,14 @@ field, or an xterm modifyOtherKeys event.
     Shift+letter event in any of these encodings
 - **THEN** the target is the uppercase letter
 
+#### Scenario: Shift+letter binding warns
+
+- **WHEN** a JSON keymap binding or a trusted JS `vim.keymap.set` left-hand
+    side contains `<S-x>` or `shift+x`
+- **THEN** the extension records a warning naming `X` as the key to use,
+    ignores that binding, keeps valid sibling bindings, and does not fail
+    session startup
+
 #### Scenario: Unshifted input is unchanged
 
 - **WHEN** the editor receives a plain lowercase letter or a Kitty event
