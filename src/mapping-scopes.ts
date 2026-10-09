@@ -88,18 +88,16 @@ export function appendMappingToken(
 }
 
 export function mappingSequencePrefixes(sequence: string): string[] {
+  const tokens = mappingSequenceTokens(sequence);
   if (sequence.includes(MAPPING_TOKEN_SEPARATOR)) {
-    const tokens = sequence.split(MAPPING_TOKEN_SEPARATOR);
     return tokens.slice(1).map((_, index) => encodeMappingTokens(tokens.slice(0, index + 1)));
   }
 
   const prefixes: string[] = [];
-  let offset = 0;
-  while (offset < sequence.length) {
-    const tokenLength = mappingTokenLengthAt(sequence, offset);
-    if (!tokenLength) break;
-    offset += tokenLength;
-    if (offset < sequence.length) prefixes.push(sequence.slice(0, offset));
+  let prefix = "";
+  for (const token of tokens) {
+    prefix += token;
+    if (prefix.length < sequence.length) prefixes.push(prefix);
   }
   return prefixes;
 }
