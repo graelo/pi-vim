@@ -1,5 +1,6 @@
 import { decodeKittyPrintable, matchesKey, parseKey } from "@earendil-works/pi-tui";
 
+import type { SearchMatcherMode } from "../buffer.ts";
 import type {
   EditResult,
   ResolvedVimKeymap,
@@ -199,9 +200,17 @@ export function withSearchHighlight(
   options: ModalOptions,
   query: string,
   current: EditorSnapshot["cursor"],
+  matcherMode: SearchMatcherMode,
 ): ModalState {
   return searchForOptions(options).highlight
-    ? { ...state, searchHighlight: { query, current } }
+    ? {
+        ...state,
+        searchHighlight: {
+          query,
+          current,
+          ...(matcherMode === "word" ? { matcherMode } : {}),
+        },
+      }
     : state;
 }
 

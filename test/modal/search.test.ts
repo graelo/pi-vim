@@ -58,9 +58,13 @@ test("star searches the word under the cursor forward", () => {
   expect(result.state.lastSearch).toEqual({
     query: "one",
     direction: "forward",
-    matcherMode: "literal",
+    matcherMode: "word",
   });
-  expect(result.state.searchHighlight).toEqual({ query: "one", current: p(0, 8) });
+  expect(result.state.searchHighlight).toEqual({
+    query: "one",
+    current: p(0, 8),
+    matcherMode: "word",
+  });
   expect(result.state.pendingSearch).toBeUndefined();
 });
 
@@ -71,9 +75,33 @@ test("hash searches the word under the cursor backward", () => {
   expect(result.state.lastSearch).toEqual({
     query: "one",
     direction: "backward",
-    matcherMode: "literal",
+    matcherMode: "word",
   });
-  expect(result.state.searchHighlight).toEqual({ query: "one", current: p(0, 0) });
+  expect(result.state.searchHighlight).toEqual({
+    query: "one",
+    current: p(0, 0),
+    matcherMode: "word",
+  });
+});
+
+test("word search treats accented words as complete keyword matches", () => {
+  const text = "création recréation création";
+  const star = applyModalKeys({ mode: "normal" }, text, p(0, 0), ["*"]);
+  expect(star.cursor).toEqual(p(0, 20));
+  expect(star.state.lastSearch).toEqual({
+    query: "création",
+    direction: "forward",
+    matcherMode: "word",
+  });
+  expect(star.state.searchHighlight).toEqual({
+    query: "création",
+    current: p(0, 20),
+    matcherMode: "word",
+  });
+  expect(applyModalKeys(star.state, text, p(0, 20), ["n"]).cursor).toEqual(p(0, 0));
+
+  const hash = applyModalKeys({ mode: "normal" }, text, p(0, 20), ["#"]);
+  expect(hash.cursor).toEqual(p(0, 0));
 });
 
 test("word search uses the preceding word at an insertion-point cursor", () => {
@@ -82,7 +110,7 @@ test("word search uses the preceding word at an insertion-point cursor", () => {
   expect(result.state.lastSearch).toEqual({
     query: "foo",
     direction: "forward",
-    matcherMode: "literal",
+    matcherMode: "word",
   });
 });
 
@@ -93,9 +121,13 @@ test("word search on a unique word records search without moving the cursor", ()
   expect(result.state.lastSearch).toEqual({
     query: "beta",
     direction: "forward",
-    matcherMode: "literal",
+    matcherMode: "word",
   });
-  expect(result.state.searchHighlight).toEqual({ query: "beta", current: p(0, 6) });
+  expect(result.state.searchHighlight).toEqual({
+    query: "beta",
+    current: p(0, 6),
+    matcherMode: "word",
+  });
 });
 
 test("word search with no word under the cursor is a safe no-op", () => {
@@ -128,7 +160,20 @@ test("n repeats search follows the hash direction", () => {
 
 test("word search records prompt-local search history", () => {
   const result = applyModalKeys({ mode: "normal" }, "one two one", p(0, 0), ["*"]);
-  expect(result.state.searchHistory).toEqual([{ query: "one", matcherMode: "literal" }]);
+  expect(result.state.searchHistory).toEqual([{ query: "one", matcherMode: "word" }]);
+});
+
+test("word search history preserves complete-word matching", () => {
+  const text = "création recréation création";
+  const star = applyModalKeys({ mode: "normal" }, text, p(0, 0), ["*"]);
+  const recalled = applyModalKeys(star.state, text, p(0, 20), ["/", "\x1b[A", "\r"]);
+  expect(recalled.cursor).toEqual(p(0, 0));
+  expect(recalled.state.lastSearch).toEqual({
+    query: "création",
+    direction: "forward",
+    matcherMode: "word",
+  });
+  expect(recalled.state.searchHistory).toEqual([{ query: "création", matcherMode: "word" }]);
 });
 
 test("insert mode delegates star and hash to Pi default editing", () => {

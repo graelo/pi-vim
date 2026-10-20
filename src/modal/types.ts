@@ -1,3 +1,4 @@
+import type { SearchMatcherMode } from "../buffer.ts";
 import type { ReadOnlyPopup } from "../read-only-popup.ts";
 import type {
   CursorStyle,
@@ -66,7 +67,6 @@ export type CharSearchState = {
 };
 
 export type SearchDirection = "forward" | "backward";
-export type SearchMatcherMode = "literal" | "regex";
 
 export type PendingSearchTarget = {
   query: string;
@@ -74,6 +74,7 @@ export type PendingSearchTarget = {
   operator?: VimOperatorAction;
   historyIndex?: number;
   historyDraft?: string;
+  historyMatcherMode?: SearchMatcherMode;
 };
 
 export type SearchState = {

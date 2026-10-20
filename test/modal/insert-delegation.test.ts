@@ -260,6 +260,31 @@ test("configured insert deleteWordBackward deletes backward without writing regi
   expect(editEffect!.result.register).toBeUndefined();
 });
 
+test("configured insert word actions keep accented keyword words contiguous", () => {
+  const text = "création suivante";
+  const backward = handleModalInput(
+    { mode: "insert" },
+    { text, lines: [text], cursor: p(0, 9) },
+    editOptions,
+    ctrlW,
+  );
+  expect(backward.effects).toContainEqual({
+    type: "edit",
+    result: { text: "suivante", cursor: p(0, 0), changed: true },
+  });
+
+  const forward = handleModalInput(
+    { mode: "insert" },
+    { text, lines: [text], cursor: p(0, 0) },
+    editOptions,
+    altD,
+  );
+  expect(forward.effects).toContainEqual({
+    type: "edit",
+    result: { text: "suivante", cursor: p(0, 0), changed: true },
+  });
+});
+
 test("configured insert deleteWordForward supports legacy and enhanced alt keys", () => {
   const textSnapshot = { text: "hello world foo", lines: ["hello world foo"], cursor: p(0, 0) };
   for (const input of [altD, csiAltD]) {

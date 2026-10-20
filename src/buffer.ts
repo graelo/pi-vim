@@ -129,7 +129,48 @@ function isWhitespace(char: string | undefined): boolean {
 }
 
 function isKeywordWordChar(char: string | undefined): boolean {
-  return char !== undefined && /[A-Za-z0-9_]/.test(char);
+  return char !== undefined && /^(?:[\p{L}\p{Nd}]|_)$/u.test(char);
+}
+
+function codePointAt(text: string, offset: number): string | undefined {
+  const point = text.codePointAt(offset);
+  return point === undefined ? undefined : String.fromCodePoint(point);
+}
+
+function isLowSurrogate(code: number): boolean {
+  return code >= 0xdc00 && code <= 0xdfff;
+}
+
+function isHighSurrogate(code: number): boolean {
+  return code >= 0xd800 && code <= 0xdbff;
+}
+
+function codePointStart(text: string, offset: number): number {
+  const safeOffset = Math.max(0, Math.min(offset, text.length));
+  if (
+    safeOffset > 0 &&
+    safeOffset < text.length &&
+    isLowSurrogate(text.charCodeAt(safeOffset)) &&
+    isHighSurrogate(text.charCodeAt(safeOffset - 1))
+  )
+    return safeOffset - 1;
+  return safeOffset;
+}
+
+function nextCodePointOffset(text: string, offset: number): number {
+  const start = codePointStart(text, offset);
+  return Math.min(text.length, start + (codePointAt(text, start)?.length ?? 1));
+}
+
+function previousCodePointOffset(text: string, offset: number): number {
+  const end = Math.max(0, Math.min(offset, text.length));
+  if (end === 0) return 0;
+  const previous = end - 1;
+  return previous > 0 &&
+    isLowSurrogate(text.charCodeAt(previous)) &&
+    isHighSurrogate(text.charCodeAt(previous - 1))
+    ? previous - 1
+    : previous;
 }
 
 function wordKind(char: string | undefined): "keyword" | "punctuation" | "whitespace" {
@@ -146,25 +187,32 @@ function boundaryKind(model: WordBoundaryModel, char: string | undefined): WordB
   return isWhitespace(char) ? "whitespace" : "word";
 }
 
-function isSameBoundaryKind(
+function boundaryKindAt(model: WordBoundaryModel, text: string, offset: number): WordBoundaryKind {
+  return boundaryKind(model, codePointAt(text, offset));
+}
+
+function isSameBoundaryKindAt(
   model: WordBoundaryModel,
-  left: string | undefined,
-  right: string | undefined,
+  text: string,
+  left: number,
+  right: number,
 ): boolean {
-  const leftKind = boundaryKind(model, left);
-  return leftKind !== "whitespace" && leftKind === boundaryKind(model, right);
+  const leftKind = boundaryKindAt(model, text, left);
+  return leftKind !== "whitespace" && leftKind === boundaryKindAt(model, text, right);
 }
 
 function nextWordStartOffsetFor(model: WordBoundaryModel, text: string, offset: number): number {
-  let index = Math.max(0, Math.min(offset, text.length));
+  let index = codePointStart(text, offset);
   if (index >= text.length) return index;
 
-  const kind = boundaryKind(model, text[index]);
+  const kind = boundaryKindAt(model, text, index);
   if (kind !== "whitespace") {
-    while (index < text.length && boundaryKind(model, text[index]) === kind) index++;
+    while (index < text.length && boundaryKindAt(model, text, index) === kind)
+      index = nextCodePointOffset(text, index);
   }
 
-  while (index < text.length && isWhitespace(text[index])) index++;
+  while (index < text.length && isWhitespace(codePointAt(text, index)))
+    index = nextCodePointOffset(text, index);
   return index;
 }
 
@@ -177,23 +225,33 @@ function nextWORDStartOffset(text: string, offset: number): number {
 }
 
 function skipWhitespace(text: string, index: number): number {
-  while (index < text.length && isWhitespace(text[index])) index++;
-  return index;
+  let next = codePointStart(text, index);
+  while (next < text.length && isWhitespace(codePointAt(text, next)))
+    next = nextCodePointOffset(text, next);
+  return next;
 }
 
 function boundaryEndOffset(model: WordBoundaryModel, text: string, index: number): number {
-  const kind = boundaryKind(model, text[index]);
-  while (index + 1 < text.length && boundaryKind(model, text[index + 1]) === kind) index++;
-  return index;
+  let end = codePointStart(text, index);
+  const kind = boundaryKindAt(model, text, end);
+  let next = nextCodePointOffset(text, end);
+  while (next < text.length && boundaryKindAt(model, text, next) === kind) {
+    end = next;
+    next = nextCodePointOffset(text, next);
+  }
+  return end;
 }
 
 function wordEndOffsetFor(model: WordBoundaryModel, text: string, offset: number): number {
-  let index = Math.max(0, Math.min(offset, text.length));
+  let index = codePointStart(text, offset);
   if (index >= text.length) return text.length;
-  if (isWhitespace(text[index])) index = skipWhitespace(text, index);
-  else if (isSameBoundaryKind(model, text[index], text[index + 1]))
-    return boundaryEndOffset(model, text, index);
-  else index++;
+  if (isWhitespace(codePointAt(text, index))) index = skipWhitespace(text, index);
+  else {
+    const next = nextCodePointOffset(text, index);
+    if (next < text.length && isSameBoundaryKindAt(model, text, index, next))
+      return boundaryEndOffset(model, text, index);
+    index = next;
+  }
   if (index >= text.length) return text.length;
   index = skipWhitespace(text, index);
   return index >= text.length ? text.length : boundaryEndOffset(model, text, index);
@@ -207,16 +265,20 @@ function wordEndWORDOffset(text: string, offset: number): number {
 }
 
 function previousWordEndOffsetFor(model: WordBoundaryModel, text: string, offset: number): number {
-  const current = Math.max(0, Math.min(offset, text.length));
+  const current = codePointStart(text, offset);
   if (current === 0 || text.length === 0) return 0;
 
-  let index = current - 1;
-  if (current < text.length && isSameBoundaryKind(model, text[index], text[current])) {
-    const kind = boundaryKind(model, text[current]);
-    while (index >= 0 && boundaryKind(model, text[index]) === kind) index--;
+  let index = previousCodePointOffset(text, current);
+  if (current < text.length && isSameBoundaryKindAt(model, text, index, current)) {
+    const kind = boundaryKindAt(model, text, current);
+    while (index >= 0 && boundaryKindAt(model, text, index) === kind) {
+      if (index === 0) return 0;
+      index = previousCodePointOffset(text, index);
+    }
   }
-  while (index >= 0 && isWhitespace(text[index])) index--;
-  return Math.max(0, index);
+  while (index > 0 && isWhitespace(codePointAt(text, index)))
+    index = previousCodePointOffset(text, index);
+  return index;
 }
 
 function previousWordEndOffset(text: string, offset: number): number {
@@ -232,13 +294,18 @@ function previousWordStartOffsetFor(
   text: string,
   offset: number,
 ): number {
-  let index = Math.max(0, Math.min(offset, text.length));
+  let index = codePointStart(text, offset);
   if (index === 0) return 0;
 
-  index--;
-  while (index > 0 && isWhitespace(text[index])) index--;
-  const kind = boundaryKind(model, text[index]);
-  while (index > 0 && boundaryKind(model, text[index - 1]) === kind) index--;
+  index = previousCodePointOffset(text, index);
+  while (index > 0 && isWhitespace(codePointAt(text, index)))
+    index = previousCodePointOffset(text, index);
+  const kind = boundaryKindAt(model, text, index);
+  while (index > 0) {
+    const previous = previousCodePointOffset(text, index);
+    if (boundaryKindAt(model, text, previous) !== kind) break;
+    index = previous;
+  }
   return index;
 }
 
@@ -1479,9 +1546,12 @@ export function findSearchHighlightRanges(
   return ranges;
 }
 
+export type SearchMatcherMode = "literal" | "regex" | "word";
+
 export type SearchMatcher =
   | { mode: "literal"; query: string }
-  | { mode: "regex"; query: string; regex: RegExp };
+  | { mode: "regex"; query: string; regex: RegExp }
+  | { mode: "word"; query: string };
 
 export type SearchMatch = { position: Position; length: number };
 
@@ -1513,23 +1583,63 @@ export function findSearchMatch(
   return findSearchMatchWithMatcher(text, cursor, { mode: "literal", query }, direction)?.position;
 }
 
+function keywordWordMatches(text: string, query: string, maxMatches = Number.POSITIVE_INFINITY) {
+  if (query.length === 0 || query.includes("\n") || maxMatches <= 0) return [];
+  const matches: Array<{ offset: number; length: number }> = [];
+  let offset = 0;
+  while (matches.length < maxMatches) {
+    const match = text.indexOf(query, offset);
+    if (match < 0) break;
+    const end = match + query.length;
+    const before =
+      match === 0 ? undefined : codePointAt(text, previousCodePointOffset(text, match));
+    const after = codePointAt(text, end);
+    if (!isKeywordWordChar(before) && !isKeywordWordChar(after))
+      matches.push({ offset: match, length: query.length });
+    offset = end;
+  }
+  return matches;
+}
+
+export function findWordSearchHighlightRanges(
+  text: string,
+  query: string,
+  maxRanges = Number.POSITIVE_INFINITY,
+): TextRange[] {
+  const lines = splitText(text);
+  const starts = lineStartOffsets(lines);
+  const toPosition = (target: number) =>
+    offsetToPositionFromLineStarts(lines, starts, target, text.length);
+  return keywordWordMatches(text, query, maxRanges).map((match) => ({
+    start: toPosition(match.offset),
+    end: toPosition(match.offset + match.length - 1),
+  }));
+}
+
 export function wordUnderCursor(text: string, cursor: Position): string | undefined {
-  const offset = positionToOffset(text, cursor);
-  const at = text[offset];
-  if (isKeywordWordChar(at)) {
+  const offset = codePointStart(text, positionToOffset(text, cursor));
+  if (isKeywordWordChar(codePointAt(text, offset))) {
     let start = offset;
-    let end = offset + 1;
-    while (start > 0 && isKeywordWordChar(text[start - 1])) start--;
-    while (end < text.length && isKeywordWordChar(text[end])) end++;
+    let end = nextCodePointOffset(text, offset);
+    while (start > 0) {
+      const previous = previousCodePointOffset(text, start);
+      if (!isKeywordWordChar(codePointAt(text, previous))) break;
+      start = previous;
+    }
+    while (end < text.length && isKeywordWordChar(codePointAt(text, end)))
+      end = nextCodePointOffset(text, end);
     return text.slice(start, end);
   }
-  const before = text[offset - 1];
-  if (isKeywordWordChar(before)) {
-    let start = offset - 1;
-    while (start > 0 && isKeywordWordChar(text[start - 1])) start--;
-    return text.slice(start, offset);
+  if (offset === 0) return undefined;
+  const before = previousCodePointOffset(text, offset);
+  if (!isKeywordWordChar(codePointAt(text, before))) return undefined;
+  let start = before;
+  while (start > 0) {
+    const previous = previousCodePointOffset(text, start);
+    if (!isKeywordWordChar(codePointAt(text, previous))) break;
+    start = previous;
   }
-  return undefined;
+  return text.slice(start, offset);
 }
 
 export function findSearchMatchWithMatcher(
@@ -1541,6 +1651,7 @@ export function findSearchMatchWithMatcher(
   if (matcher.query.length === 0 || matcher.query.includes("\n")) return undefined;
   if (matcher.mode === "literal")
     return findLiteralSearchMatch(text, cursor, matcher.query, direction);
+  if (matcher.mode === "word") return findWordSearchMatch(text, cursor, matcher.query, direction);
   if (text.length > REGEX_SEARCH_SUBJECT_MAX_LENGTH) return undefined;
   return findRegexSearchMatch(text, cursor, matcher.regex, direction);
 }
@@ -1566,6 +1677,24 @@ function findLiteralSearchMatch(
   const wrapped = text.lastIndexOf(query);
   return wrapped >= 0
     ? { position: offsetToPosition(text, wrapped), length: query.length }
+    : undefined;
+}
+
+function findWordSearchMatch(
+  text: string,
+  cursor: Position,
+  query: string,
+  direction: SearchDirection,
+): SearchMatch | undefined {
+  const matches = keywordWordMatches(text, query);
+  if (matches.length === 0) return undefined;
+  const start = positionToOffset(text, cursor);
+  const found =
+    direction === "forward"
+      ? (matches.find((match) => match.offset > start) ?? matches[0])
+      : (matches.findLast((match) => match.offset < start) ?? matches.at(-1));
+  return found
+    ? { position: offsetToPosition(text, found.offset), length: found.length }
     : undefined;
 }
 
@@ -2185,22 +2314,41 @@ function wordRunKind(model: WordBoundaryModel, char: string | undefined) {
   return char === undefined || char === "\n" ? undefined : boundaryKind(model, char);
 }
 
+function wordRunKindAt(model: WordBoundaryModel, text: string, offset: number) {
+  return wordRunKind(model, codePointAt(text, offset));
+}
+
 function runRange(text: string, index: number, model: WordBoundaryModel): OffsetRange {
-  const kind = wordRunKind(model, text[index]);
-  let start = index;
-  while (start > 0 && wordRunKind(model, text[start - 1]) === kind) start--;
-  let end = index + 1;
-  while (end < text.length && wordRunKind(model, text[end]) === kind) end++;
+  const current = codePointStart(text, index);
+  const kind = wordRunKindAt(model, text, current);
+  let start = current;
+  while (start > 0) {
+    const previous = previousCodePointOffset(text, start);
+    if (wordRunKindAt(model, text, previous) !== kind) break;
+    start = previous;
+  }
+  let end = nextCodePointOffset(text, current);
+  while (end < text.length && wordRunKindAt(model, text, end) === kind)
+    end = nextCodePointOffset(text, end);
   return { start, end };
 }
 
 /** Add blanks after `range`, or before it when there are none after (Vim `aw`, `a"`). */
 function aroundWordRange(text: string, range: OffsetRange): OffsetRange {
   let end = range.end;
-  while (end < text.length && isWhitespace(text[end]) && text[end] !== "\n") end++;
+  while (
+    end < text.length &&
+    isWhitespace(codePointAt(text, end)) &&
+    codePointAt(text, end) !== "\n"
+  )
+    end = nextCodePointOffset(text, end);
   if (end !== range.end) return { start: range.start, end };
   let start = range.start;
-  while (start > 0 && isWhitespace(text[start - 1]) && text[start - 1] !== "\n") start--;
+  while (start > 0) {
+    const previous = previousCodePointOffset(text, start);
+    if (!isWhitespace(codePointAt(text, previous)) || codePointAt(text, previous) === "\n") break;
+    start = previous;
+  }
   return { start, end: range.end };
 }
 
@@ -2211,15 +2359,16 @@ function wordTextObjectOffsets(
   model: WordBoundaryModel,
   kind: VimTextObjectKind,
 ): OffsetRange | undefined {
-  let index = positionToOffset(text, cursor);
-  if (wordRunKind(model, text[index]) === undefined) {
-    if (index > 0 && wordRunKind(model, text[index - 1]) !== undefined) index--;
+  let index = codePointStart(text, positionToOffset(text, cursor));
+  if (wordRunKindAt(model, text, index) === undefined) {
+    if (index > 0 && wordRunKindAt(model, text, previousCodePointOffset(text, index)) !== undefined)
+      index = previousCodePointOffset(text, index);
     else return undefined;
   }
   const run = runRange(text, index, model);
   if (kind === "inner") return run;
-  if (wordRunKind(model, text[index]) !== "whitespace") return aroundWordRange(text, run);
-  return wordRunKind(model, text[run.end]) === undefined
+  if (wordRunKindAt(model, text, index) !== "whitespace") return aroundWordRange(text, run);
+  return wordRunKindAt(model, text, run.end) === undefined
     ? run
     : { start: run.start, end: runRange(text, run.end, model).end };
 }

@@ -82,6 +82,29 @@ describe("search highlight render helper", () => {
     expectWidthSafe(lines, 20);
   });
 
+  test("renders only complete keyword-word search highlights", () => {
+    const lines = renderPromptEditor({
+      snapshot: {
+        text: "création recréation création",
+        lines: ["création recréation création"],
+        cursor: p(0, 20),
+      },
+      cursorStyle: "block",
+      viewport: { width: 40, focused: false },
+      search: {
+        query: "création",
+        current: p(0, 20),
+        matcherMode: "word",
+        highlightCurrent: true,
+        maxHighlights: 20,
+      },
+    });
+    const output = lines.join("\n");
+    expect(output.split(SEARCH_START)).toHaveLength(9);
+    expect(output.split(SEARCH_CURRENT_START)).toHaveLength(8);
+    expectWidthSafe(lines, 40);
+  });
+
   test("visual selection takes precedence over search highlights", () => {
     const lines = renderVisualEditor({
       snapshot: { text: "one two one", lines: ["one two one"], cursor: p(0, 2) },

@@ -110,6 +110,15 @@ describe("documentation behavior", () => {
     expect(allUserDocs).toContain("display-line motions");
   });
 
+  test("docs describe Unicode keyword words and complete word search", () => {
+    expect(featuresDoc).toContain("Unicode alphabetic characters");
+    expect(featuresDoc).toContain("`création` searches `création`, not `cr`");
+    expect(featuresDoc).toContain("does not match inside `recréation`");
+    expect(featuresDoc).toContain("does not expose Vim's configurable `'iskeyword'` option");
+    expect(settingsDoc).toContain("complete Unicode-aware keyword word");
+    expect(allUserDocs).not.toContain("contiguous run of ASCII letters, digits, and `_`");
+  });
+
   test("docs cover paragraph motion and text object names and defaults", () => {
     for (const key of ["`{`", "`}`", "`ip`", "`ap`", "d}", "c{", "dap"]) {
       expect(featuresDoc).toContain(key);

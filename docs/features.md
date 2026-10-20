@@ -128,8 +128,9 @@ help pager, or broad quickref parity.
     `moveLineStart`, `moveLineEnd`) move the cursor in insert mode without
     changing prompt text.
 - Insert word movement and deletion reuse pi-vim lowercase small-word
-    semantics, where keyword runs, punctuation runs, and whitespace are separate
-    groups.
+    semantics: keyword runs include Unicode alphabetic characters (such as
+    `création`), decimal digits, and `_`; punctuation runs and whitespace remain
+    separate groups.
 - `keymap.insert` owns only physical insert edits and movement.
 - Insert bindings are not Vim mappings: no raw printable chords such as `jk`,
     `jj`, or `oo`, no multi-key insert sequences, no insert abbreviations, no
@@ -197,7 +198,7 @@ Enter        -> submit through Pi
 | `h` / `j` / `k` / `l` | left / down / up / right                | Counts repeat adapter movement, e.g. `5l`. Arrow keys (Left, Down, Up, Right) are aliases for the same directional motions. |
 | `0` / `$`             | line start / line end                   | Current prompt line.                                                                                                        |
 | `^` / `_`             | first non-blank on line                 | Both map to same action.                                                                                                    |
-| `w` / `b` / `e`       | word forward / word backward / word end | Prompt-local word movement; current behavior remains unchanged.                                                             |
+| `w` / `b` / `e`       | word forward / word backward / word end | Prompt-local Unicode-aware keyword movement; punctuation and whitespace remain separate runs.                              |
 | `W` / `B` / `E`       | WORD forward / backward / end           | Whitespace-delimited WORD tokens, useful for flags and paths.                                                               |
 | `ge` / `gE`           | previous word / WORD end                | Move backward to previous word-end or whitespace WORD-end.                                                                  |
 | `gg` / `G`            | prompt start / prompt end               | `G` moves to end of last line.                                                                                              |
@@ -236,7 +237,8 @@ Motion limitations: this feature set does not add subword/camelCase navigation,
 display-line motions such as `gj`/`gk`, full-page scroll keys such as
 `<C-f>`/`<C-b>`, viewport recentering such as `zz`/`zt`/`zb`, recursive
 mappings, Vimscript, `.vimrc`, or full Vim/Neovim parity. Lowercase `w`, `b`,
-and `e` keep their current prompt-local boundary behavior.
+and `e` use a fixed Unicode-aware keyword boundary model; pi-vim does not expose
+Vim's configurable `'iskeyword'` option.
 
 Example:
 
@@ -406,9 +408,10 @@ Text objects work after `d`, `c`, `y`, the case operators, and `ys`.
 | `ip` / `ap`               | inner/around blank-line paragraph           |
 | `is` / `as` | inner/around sentence |
 
-Word objects follow Vim: `iw` selects a run of keyword characters (`A-Z`,
-`a-z`, `0-9`, `_`), a run of other non-blank characters, or a run of blanks;
-`iW` splits on blanks only. `aw`/`aW` add trailing blanks, or leading blanks
+Word objects follow pi-vim's Vim-style boundary model: `iw` selects a run of
+Unicode alphabetic characters, decimal digits, or `_` (so `création` is one
+keyword run), a run of other non-blank characters, or a run of blanks; `iW`
+splits on blanks only. `aw`/`aW` add trailing blanks, or leading blanks
 when there are none trailing. Quote objects pair quotes as Vim does: on a quote,
 quotes pair up from the start of the line; otherwise the nearest quote before
 the cursor opens the string, or the first string after the cursor is used.
@@ -581,14 +584,15 @@ Word search:
 
 - `*` searches forward for the keyword word under the cursor; `#` searches
     backward.
-- A keyword word is a contiguous run of ASCII letters, digits, and `_`. The
-    cursor on a keyword character uses that containing word; a cursor
-    immediately after a keyword word (including at line end) uses that preceding
-    word.
+- A keyword word is a contiguous run of Unicode alphabetic characters, decimal
+    digits, and `_`. The cursor on a keyword character uses that containing
+    word; a cursor immediately after a keyword word (including at line end) uses
+    that preceding word. Thus `*` on `création` searches `création`, not `cr`.
 - `*` and `#` are normal-mode only and reuse prompt search repeat state, so
     `n` repeats the chosen direction and `N` searches the opposite direction.
-    They share literal matching, wrapping, search history, and search
-    highlighting with `/` and `?`.
+    They match complete keyword words only: `création` does not match inside
+    `recréation`. They share wrapping, search history, and search highlighting
+    with `/` and `?`; `/` and `?` remain literal substring search by default.
 - Insert-mode `*` and `#` delegate to Pi default editing.
 - Limitations: no `iskeyword` configuration, no regex query generation from
     the word, no smartcase, no search offsets, and no visual or operator-motion

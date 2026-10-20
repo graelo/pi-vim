@@ -1,3 +1,4 @@
+import type { SearchMatcher, SearchMatcherMode } from "../buffer.ts";
 import type { VimOperatorAction } from "../types.ts";
 import type {
   EditorSnapshot,
@@ -62,50 +63,43 @@ const SEARCH_HISTORY_LIMIT = 50;
 
 type ResolvedSearchQuery = {
   query: string;
-  matcherMode: "literal" | "regex";
-  matcher: { mode: "literal"; query: string } | { mode: "regex"; query: string; regex: RegExp };
+  matcherMode: SearchMatcherMode;
+  matcher: SearchMatcher;
 };
+
+type ResolvedSearchResult =
+  | { ok: true; value?: ResolvedSearchQuery }
+  | { ok: false; message: string };
+
+function resolvedSearchQuery(query: string, matcherMode: SearchMatcherMode): ResolvedSearchResult {
+  if (matcherMode === "regex") {
+    const compiled = compileRegexSearchMatcher(query);
+    return compiled.ok
+      ? { ok: true, value: { query, matcherMode, matcher: compiled.matcher } }
+      : compiled;
+  }
+  return {
+    ok: true,
+    value: { query, matcherMode, matcher: { mode: matcherMode, query } },
+  };
+}
 
 function resolveSearchQuery(
   rawQuery: string,
   previous: ModalState["lastSearch"],
-): { ok: true; value?: ResolvedSearchQuery } | { ok: false; message: string } {
+  historyMatcherMode?: SearchMatcherMode,
+): ResolvedSearchResult {
   if (rawQuery.length === 0) {
     if (!previous) return { ok: true };
-    const matcherMode = previous.matcherMode ?? "literal";
-    if (matcherMode === "regex") {
-      const compiled = compileRegexSearchMatcher(previous.query);
-      return compiled.ok
-        ? { ok: true, value: { query: previous.query, matcherMode, matcher: compiled.matcher } }
-        : compiled;
-    }
-    return {
-      ok: true,
-      value: {
-        query: previous.query,
-        matcherMode,
-        matcher: { mode: "literal", query: previous.query },
-      },
-    };
+    return resolvedSearchQuery(previous.query, previous.matcherMode ?? "literal");
   }
 
   if (rawQuery.startsWith("\\r")) {
     const query = rawQuery.slice(2);
-    if (query.length === 0) return { ok: true };
-    const compiled = compileRegexSearchMatcher(query);
-    return compiled.ok
-      ? { ok: true, value: { query, matcherMode: "regex", matcher: compiled.matcher } }
-      : compiled;
+    return query.length === 0 ? { ok: true } : resolvedSearchQuery(query, "regex");
   }
 
-  return {
-    ok: true,
-    value: {
-      query: rawQuery,
-      matcherMode: "literal",
-      matcher: { mode: "literal", query: rawQuery },
-    },
-  };
+  return resolvedSearchQuery(rawQuery, historyMatcherMode === "word" ? "word" : "literal");
 }
 
 function addSearchHistory(
@@ -124,8 +118,8 @@ function completeResolvedSearch(
   snapshot: EditorSnapshot,
   options: ModalOptions,
   query: string,
-  matcherMode: "literal" | "regex",
-  matcher: { mode: "literal"; query: string } | { mode: "regex"; query: string; regex: RegExp },
+  matcherMode: SearchMatcherMode,
+  matcher: SearchMatcher,
   direction: "forward" | "backward",
 ): ModalUpdate {
   const baseState = clearPending(state);
@@ -134,10 +128,10 @@ function completeResolvedSearch(
   const searchState = { query, direction, matcherMode };
   const searchHistory = addSearchHistory(state.searchHistory, { query, matcherMode });
   const searchedState = { ...baseState, lastSearch: searchState, searchHistory };
-  return withEffects(withSearchHighlight(searchedState, options, query, target.position), [
-    { type: "restoreCursor", position: target.position },
-    { type: "invalidate" },
-  ]);
+  return withEffects(
+    withSearchHighlight(searchedState, options, query, target.position, matcherMode),
+    [{ type: "restoreCursor", position: target.position }, { type: "invalidate" }],
+  );
 }
 
 export function searchWordUnderCursor(
@@ -153,8 +147,8 @@ export function searchWordUnderCursor(
     snapshot,
     options,
     word,
-    "literal",
-    { mode: "literal", query: word },
+    "word",
+    { mode: "word", query: word },
     direction,
   );
 }
@@ -165,7 +159,7 @@ function completeSearch(
   options: ModalOptions,
   search: PendingSearchTarget,
 ): ModalUpdate {
-  const resolved = resolveSearchQuery(search.query, state.lastSearch);
+  const resolved = resolveSearchQuery(search.query, state.lastSearch, search.historyMatcherMode);
   const baseState = clearPending(state);
   if (!resolved.ok)
     return invalidate(withRuntimeMessage(baseState, { kind: "error", text: resolved.message }));
@@ -193,7 +187,13 @@ function completeSearch(
     if (search.operator === "yank") {
       const register = yankSearchMatchRange(snapshot.text, snapshot.cursor, target);
       return yankUpdate(
-        withSearchHighlight(searchedState, options, resolved.value.query, target.position),
+        withSearchHighlight(
+          searchedState,
+          options,
+          resolved.value.query,
+          target.position,
+          resolved.value.matcherMode,
+        ),
         register,
       );
     }
@@ -226,12 +226,7 @@ export function repeatSearch(
   const direction = reverse
     ? oppositeSearchDirection(state.lastSearch.direction)
     : state.lastSearch.direction;
-  const resolved = resolveSearchQuery(
-    state.lastSearch.matcherMode === "regex"
-      ? `\\r${state.lastSearch.query}`
-      : state.lastSearch.query,
-    state.lastSearch,
-  );
+  const resolved = resolveSearchQuery("", state.lastSearch);
   if (!resolved.ok || !resolved.value) return invalidate(clearCommandPending(state));
   const target = findSearchMatchWithMatcher(
     snapshot.text,
@@ -246,6 +241,7 @@ export function repeatSearch(
       options,
       state.lastSearch.query,
       target.position,
+      resolved.value.matcherMode,
     ),
     [{ type: "restoreCursor", position: target.position }, { type: "invalidate" }],
   );
@@ -274,7 +270,13 @@ function navigateSearchHistory(
   if (nextIndex >= history.length) {
     return {
       ...state,
-      pendingSearch: { ...search, query: draft, historyIndex: undefined, historyDraft: undefined },
+      pendingSearch: {
+        ...search,
+        query: draft,
+        historyIndex: undefined,
+        historyDraft: undefined,
+        historyMatcherMode: undefined,
+      },
     };
   }
   const entry = history[nextIndex];
@@ -286,6 +288,7 @@ function navigateSearchHistory(
       query: historyText(entry),
       historyIndex: nextIndex,
       historyDraft: draft,
+      historyMatcherMode: entry.matcherMode,
     },
   };
 }
@@ -318,6 +321,7 @@ export function handlePendingSearchInput(
         query: search.query.slice(0, -1),
         historyIndex: undefined,
         historyDraft: undefined,
+        historyMatcherMode: undefined,
       },
     });
   }
@@ -333,6 +337,7 @@ export function handlePendingSearchInput(
       query: search.query + key,
       historyIndex: undefined,
       historyDraft: undefined,
+      historyMatcherMode: undefined,
     },
   });
 }
