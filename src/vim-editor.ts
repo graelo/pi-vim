@@ -425,6 +425,7 @@ export class VimEditor extends CustomEditor {
     return {
       query: this.modalState.searchHighlight.query,
       current: this.modalState.searchHighlight.current,
+      matcherMode: this.modalState.searchHighlight.matcherMode,
       highlightCurrent: search.highlightCurrent,
       maxHighlights: search.maxHighlights,
     };

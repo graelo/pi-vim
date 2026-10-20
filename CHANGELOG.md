@@ -6,6 +6,12 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Small-word motions, word text objects, and configured insert word actions now
+  treat Unicode alphabetic characters as keyword characters. `*` and `#` now
+  search whole Unicode-aware keyword words rather than embedded substrings.
+
 ## [1.0.1] - 2026-10-09
 
 ### Fixed

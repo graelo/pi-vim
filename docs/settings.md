@@ -385,8 +385,9 @@ Rules:
 - Insert movement bindings preserve prompt text, search highlights, and
     registers.
 - Insert word movement and deletion reuse pi-vim lowercase small-word
-    semantics where keyword runs, punctuation runs, and whitespace are separate
-    groups.
+    semantics: keyword runs include Unicode alphabetic characters (such as
+    `création`), decimal digits, and `_`; punctuation runs and whitespace remain
+    separate groups.
 - `keymap.insert` owns only physical insert edits and movement.
 - Autocomplete-active input keeps Pi ownership and does not run insert bindings.
 - These are opt-in: with no `keymap.insert` config, every
@@ -485,8 +486,8 @@ mark-target shift ranges are unsupported safe no-ops.
 | `keymap.commands.startSearchBackward`     | `["?"]`      | Start prompt-local backward search. Also works after operator as search motion.                                                                                          |
 | `keymap.commands.repeatSearch`            | `["n"]`      | Repeat last prompt search direction.                                                                                                                                     |
 | `keymap.commands.repeatSearchReverse`     | `["N"]`      | Repeat prompt search opposite direction.                                                                                                                                 |
-| `keymap.commands.searchWordForward`       | `["*"]`      | Normal-mode only: search forward for the keyword word under the cursor; reuses prompt search repeat state.                                                               |
-| `keymap.commands.searchWordBackward`      | `["#"]`      | Normal-mode only: search backward for the keyword word under the cursor; reuses prompt search repeat state.                                                              |
+| `keymap.commands.searchWordForward`       | `["*"]`      | Normal-mode only: search forward for the complete Unicode-aware keyword word under the cursor; reuses prompt search repeat state.                                        |
+| `keymap.commands.searchWordBackward`      | `["#"]`      | Normal-mode only: search backward for the complete Unicode-aware keyword word under the cursor; reuses prompt search repeat state.                                       |
 | `keymap.commands.startExCommand`          | `[":"]`      | Open Ex command-line row. Count in normal mode pre-fills a line range.                                                                                                   |
 | `keymap.commands.repeatChange`            | `["."]`      | Repeat last supported completed normal-mode change.                                                                                                                      |
 | `keymap.commands.reselectVisual`          | `["gv"]`     | Re-enter the last valid visual selection from normal mode.                                                                                                               |

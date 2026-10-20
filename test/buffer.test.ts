@@ -20,6 +20,8 @@ import {
   findCharOnLine,
   findSearchHighlightRanges,
   findSearchMatch,
+  findSearchMatchWithMatcher,
+  findWordSearchHighlightRanges,
   deleteSearchRange,
   insertBlockText,
   joinExLineRange,
@@ -780,6 +782,20 @@ describe("operator-motion helpers", () => {
     expect(wordForwardPosition("/tmp/a-b next", p(0, 6))).toEqual(p(0, 7));
   });
 
+  test("keeps accented keyword words contiguous across small-word operations", () => {
+    const text = "création suivante";
+    expect(wordForwardPosition(text, p(0, 0))).toEqual(p(0, 9));
+    expect(wordBackwardPosition(text, p(0, 9))).toEqual(p(0, 0));
+    expect(wordEndPosition(text, p(0, 0))).toEqual(p(0, 7));
+    expect(wordPreviousEndPosition(text, p(0, 9))).toEqual(p(0, 7));
+    expect(deleteByMotion(text, p(0, 0), "w")).toMatchObject({
+      text: "suivante",
+      register: { type: "char", text: "création " },
+    });
+    expect(wordForwardPosition("a😀b", p(0, 0))).toEqual(p(0, 1));
+    expect(wordForwardPosition("a😀b", p(0, 1))).toEqual(p(0, 3));
+  });
+
   test("keeps WORD navigation whitespace-delimited on punctuation-heavy text", () => {
     expect(wordForwardBigPosition("foo/bar baz qux", p(0, 0))).toEqual(p(0, 8));
     expect(wordEndBigPosition("foo/bar baz qux", p(0, 0))).toEqual(p(0, 6));
@@ -897,6 +913,19 @@ describe("roadmap buffer helpers", () => {
     expect(findSearchMatch(text, p(0, 0), "beta", "backward")).toEqual(p(1, 6));
     expect(findSearchMatch(text, p(0, 0), "missing", "forward")).toBeUndefined();
     expect(findSearchMatch(text, p(0, 0), "", "forward")).toBeUndefined();
+  });
+
+  test("finds complete keyword-word matches without changing literal substring search", () => {
+    const text = "création recréation création";
+    expect(findSearchMatchWithMatcher(text, p(0, 0), { mode: "word", query: "création" })).toEqual({
+      position: p(0, 20),
+      length: 8,
+    });
+    expect(findWordSearchHighlightRanges(text, "création")).toEqual([
+      { start: p(0, 0), end: p(0, 7) },
+      { start: p(0, 20), end: p(0, 27) },
+    ]);
+    expect(findSearchMatch(text, p(0, 0), "création")).toEqual(p(0, 11));
   });
 
   test("finds bounded literal search highlight ranges", () => {
@@ -1019,6 +1048,8 @@ describe("roadmap buffer helpers", () => {
     expect(yankWord('say "world"', 5, "inner", "bigWord")).toBe('"world"');
     expect(yankWord('say "world" x', 5, "around", "bigWord")).toBe('"world" ');
     expect(yankWord("abc", 3, "inner")).toBe("abc");
+    expect(yankWord("création suivante", 2, "inner")).toBe("création");
+    expect(yankWord("création suivante", 2, "around")).toBe("création ");
   });
 
   test("quote and bracket text objects follow Vim pairing", () => {
@@ -1611,9 +1642,10 @@ describe("wordUnderCursor", () => {
     expect(wordUnderCursor("foo bar", p(0, 7))).toBe("bar");
   });
 
-  test("includes underscore and digits as keyword characters", () => {
+  test("includes underscore digits and accented letters as keyword characters", () => {
     expect(wordUnderCursor("foo_bar 1a2b", p(0, 4))).toBe("foo_bar");
     expect(wordUnderCursor("foo_bar 1a2b", p(0, 10))).toBe("1a2b");
+    expect(wordUnderCursor("création suivante", p(0, 2))).toBe("création");
   });
 
   test("returns undefined when no keyword char is under or before the cursor", () => {

@@ -2,7 +2,11 @@ import { CURSOR_MARKER, truncateToWidth, visibleWidth } from "@earendil-works/pi
 
 import type { CursorStyle, EasymotionTarget, Position, TextRange, VimMode } from "./types.ts";
 
-import { findSearchHighlightRanges } from "./buffer.ts";
+import {
+  findSearchHighlightRanges,
+  findWordSearchHighlightRanges,
+  type SearchMatcherMode,
+} from "./buffer.ts";
 import { isVisualCellSelected, isVisualLineSelected } from "./visual-selection.ts";
 
 export const SELECTION_START = "\x1b[7m";
@@ -32,6 +36,7 @@ export type SearchHighlightRenderInput = {
   current?: Position;
   currentRange?: TextRange;
   ranges?: TextRange[];
+  matcherMode?: SearchMatcherMode;
   highlightCurrent: boolean;
   maxHighlights: number;
 };
@@ -378,7 +383,10 @@ function createSearchRanges(
 ): TextRange[] {
   if (!search) return [];
   if (search.ranges) return search.ranges.slice(0, Math.max(0, search.maxHighlights));
-  return findSearchHighlightRanges(text, search.query, Math.max(0, search.maxHighlights));
+  const maxHighlights = Math.max(0, search.maxHighlights);
+  return search.matcherMode === "word"
+    ? findWordSearchHighlightRanges(text, search.query, maxHighlights)
+    : findSearchHighlightRanges(text, search.query, maxHighlights);
 }
 
 function createPromptRenderView(input: PromptRenderInput): VisualRenderView {
