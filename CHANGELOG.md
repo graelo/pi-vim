@@ -6,6 +6,8 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-10-20
+
 ### Fixed
 
 - Small-word motions, word text objects, and configured insert word actions now
