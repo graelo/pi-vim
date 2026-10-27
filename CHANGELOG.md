@@ -6,6 +6,8 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-10-27
+
 ### Fixed
 
 - Normal-mode cursor motions now follow logical prompt lines and clamp at
