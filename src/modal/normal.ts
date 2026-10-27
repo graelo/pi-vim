@@ -21,6 +21,8 @@ import type {
 import {
   adjustNumberAtOrAfterCursor,
   changeLine,
+  charBackwardPosition,
+  charForwardPosition,
   deleteByCharSearch,
   deleteByMotion,
   deleteCharAt,
@@ -161,15 +163,32 @@ function moveEffectFor(
   count = 1,
 ): ModalEffect | undefined {
   const adapterCommands: Partial<Record<VimMotionAction, AdapterCommand>> = {
-    left: "left",
-    down: "down",
-    up: "up",
-    right: "right",
     lineStart: "lineStart",
     lineEnd: "lineEnd",
   };
   const command = adapterCommands[motion];
   if (command) return { type: "adapterCommand", command };
+  // Directional motions are computed from the logical buffer instead of
+  // delegating raw movement keys: Pi's editor moves by visual (wrapped) row
+  // and by grapheme, wraps across logical-line boundaries, and treats up at
+  // the top visual line as prompt-history navigation. All of that drifts
+  // from Vim's logical-line semantics on wrapped prompts.
+  if (motion === "down" || motion === "up") {
+    const direction = motion === "down" ? 1 : -1;
+    return {
+      type: "restoreCursor",
+      position: moveByPromptLines(snapshot.text, snapshot.cursor, direction * count),
+    };
+  }
+  if (motion === "left" || motion === "right") {
+    return {
+      type: "restoreCursor",
+      position:
+        motion === "left"
+          ? charBackwardPosition(snapshot.text, snapshot.cursor, count)
+          : charForwardPosition(snapshot.text, snapshot.cursor, count),
+    };
+  }
   const wordEffect = wordMoveEffect(motion, snapshot, count);
   if (wordEffect) return wordEffect;
   if (motion === "bufferStart") {

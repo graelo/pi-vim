@@ -6,6 +6,12 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Normal-mode cursor motions now follow logical prompt lines and clamp at
+  line boundaries, so wrapped lines, horizontal movement, and prompt history
+  no longer cause subsequent edits to affect a different line.
+
 ## [1.0.2] - 2026-10-20
 
 ### Fixed
