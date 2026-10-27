@@ -195,7 +195,7 @@ Enter        -> submit through Pi
 
 | Key                   | Action                                  | Notes                                                                                                                       |
 | --------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `h` / `j` / `k` / `l` | left / down / up / right                | Counts repeat adapter movement, e.g. `5l`. Arrow keys (Left, Down, Up, Right) are aliases for the same directional motions. |
+| `h` / `j` / `k` / `l` | left / down / up / right                | Counts repeat the motion, e.g. `5l`. Movement is logical-line based and clamps at line and prompt boundaries. Arrow keys (Left, Down, Up, Right) are aliases for the same directional motions. |
 | `0` / `$`             | line start / line end                   | Current prompt line.                                                                                                        |
 | `^` / `_`             | first non-blank on line                 | Both map to same action.                                                                                                    |
 | `w` / `b` / `e`       | word forward / word backward / word end | Prompt-local Unicode-aware keyword movement; punctuation and whitespace remain separate runs.                              |

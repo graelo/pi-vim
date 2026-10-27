@@ -26,7 +26,7 @@ test("visual mode uses configured motion keys", () => {
   expect(
     handleModalInput({ mode: "visual", visualAnchor: cursor }, snapshot, configuredOptions, "r")
       .effects,
-  ).toEqual([{ type: "adapterCommand", command: "right" }, { type: "invalidate" }]);
+  ).toEqual([{ type: "restoreCursor", position: p(0, 1) }, { type: "invalidate" }]);
 });
 
 test("visual mode supports configured multi-key motions and operators", () => {
@@ -47,7 +47,7 @@ test("visual mode supports configured multi-key motions and operators", () => {
   );
   expect(pendingMotion.state.pending).toBe("r");
   expect(handleModalInput(pendingMotion.state, snapshot, configuredOptions, "r").effects).toEqual([
-    { type: "adapterCommand", command: "right" },
+    { type: "restoreCursor", position: p(0, 1) },
     { type: "invalidate" },
   ]);
 

@@ -241,3 +241,52 @@ test("normal operators support prompt-native text objects and repeat", () => {
   ]);
   expect(repeated.text).toBe("# A\n# B\n");
 });
+
+test("directional motions move in logical lines and clamp at boundaries", () => {
+  const text = "one\ntwo\nthree";
+
+  // j/k traverse logical lines and clamp at buffer edges.
+  expect(applyModalKeys({ mode: "normal" }, text, p(0, 0), ["j"]).cursor).toEqual(p(1, 0));
+  expect(applyModalKeys({ mode: "normal" }, text, p(0, 0), ["2", "j"]).cursor).toEqual(p(2, 0));
+  expect(applyModalKeys({ mode: "normal" }, text, p(2, 0), ["j"]).cursor).toEqual(p(2, 0));
+  expect(applyModalKeys({ mode: "normal" }, text, p(0, 0), ["k"]).cursor).toEqual(p(0, 0));
+
+  // Column clamps to the target line length.
+  expect(applyModalKeys({ mode: "normal" }, "one\ntwo\nthree", p(0, 2), ["j"]).cursor).toEqual(
+    p(1, 2),
+  );
+
+  // h/l clamp at line boundaries without wrapping to adjacent lines.
+  expect(applyModalKeys({ mode: "normal" }, text, p(1, 0), ["h"]).cursor).toEqual(p(1, 0));
+  expect(applyModalKeys({ mode: "normal" }, text, p(1, 3), ["l"]).cursor).toEqual(p(1, 3));
+  expect(applyModalKeys({ mode: "normal" }, text, p(1, 1), ["3", "h"]).cursor).toEqual(p(1, 0));
+  expect(applyModalKeys({ mode: "normal" }, text, p(1, 1), ["3", "l"]).cursor).toEqual(p(1, 3));
+});
+
+test("directional motions step one code point and never land mid-grapheme", () => {
+  // l steps over the emoji as one character (two code units).
+  expect(applyModalKeys({ mode: "normal" }, "a😀b", p(0, 1), ["l"]).cursor).toEqual(p(0, 3));
+  expect(applyModalKeys({ mode: "normal" }, "a😀b", p(0, 3), ["h"]).cursor).toEqual(p(0, 1));
+  // h/l clamp at the line, not the buffer.
+  expect(applyModalKeys({ mode: "normal" }, "a😀\nb", p(0, 3), ["l"]).cursor).toEqual(p(0, 3));
+  expect(applyModalKeys({ mode: "normal" }, "a\n😀b", p(1, 1), ["h"]).cursor).toEqual(p(1, 0));
+});
+
+test("visual mode extends selection with logical-line directional motions", () => {
+  const down = applyModalKeys(
+    { mode: "visual", visualAnchor: p(0, 0) },
+    "one\ntwo\nthree",
+    p(0, 0),
+    ["j"],
+  );
+  expect(down.cursor).toEqual(p(1, 0));
+  expect(down.state.visualAnchor).toEqual(p(0, 0));
+
+  const clamped = applyModalKeys(
+    { mode: "visual", visualAnchor: p(2, 0) },
+    "one\ntwo\nthree",
+    p(2, 0),
+    ["j"],
+  );
+  expect(clamped.cursor).toEqual(p(2, 0));
+});

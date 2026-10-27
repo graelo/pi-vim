@@ -83,6 +83,47 @@ const KEY = {
   undo: "\x1f",
 } as const satisfies Record<Exclude<AdapterCommand, "redo">, string>;
 
+type PiCursorStateEditor = {
+  state?: { cursorLine?: unknown };
+  setCursorCol?: (col: number) => unknown;
+  getCursor?: () => { line: number; col: number };
+};
+
+/**
+ * Resolves Pi's private cursor-state writer for an editor, or `undefined`
+ * when the structural assumption no longer holds. The returned writer sets
+ * the logical cursor position and verifies it through Pi's public cursor
+ * reader, returning false when the write cannot be confirmed. Kept as one
+ * exported seam so the canary test pins the exact same assumption the
+ * adapter relies on; callers fall back to movement-key replay when it is
+ * unavailable.
+ */
+export function piCursorWriter(editor: unknown): ((position: Position) => boolean) | undefined {
+  const target = editor as PiCursorStateEditor;
+  const state = target.state;
+  const setCursorCol = target.setCursorCol;
+  const getCursor = target.getCursor;
+  if (
+    !state ||
+    typeof state !== "object" ||
+    typeof state.cursorLine !== "number" ||
+    typeof setCursorCol !== "function" ||
+    typeof getCursor !== "function"
+  ) {
+    return undefined;
+  }
+  return (position) => {
+    try {
+      state.cursorLine = position.line;
+      setCursorCol.call(editor, position.col);
+    } catch {
+      return false;
+    }
+    const cursor = getCursor.call(editor);
+    return cursor.line === position.line && cursor.col === position.col;
+  };
+}
+
 function fitWidth(text: string, width: number): string {
   if (width <= 0) return "";
   const truncated = truncateToWidth(text, width, "");
@@ -731,6 +772,27 @@ export class VimEditor extends CustomEditor {
 
   private restoreCursor(position: Position): void {
     const target = normalizeBufferPosition(this.getText(), position);
+    if (this.setBufferCursor(target)) return;
+    this.replayCursorKeys(target);
+  }
+
+  /**
+   * Writes the logical cursor position into Pi's editor cursor state and
+   * verifies the result through the public cursor reader. Pi exposes no
+   * public cursor setter, and replaying movement keys drifts on wrapped
+   * prompts because Pi moves the cursor by visual row and grapheme. The
+   * direct write targets Pi's cursor state fields; when the shape, the
+   * write, or the read-back fails, callers fall back to key replay so the
+   * failure mode is the previous behavior, never a silently diverged
+   * cursor. A canary test guards the structural assumption against future
+   * Pi TUI releases.
+   */
+  private setBufferCursor(target: Position): boolean {
+    const write = piCursorWriter(this);
+    return write ? write(target) : false;
+  }
+
+  private replayCursorKeys(target: Position): void {
     const current = this.getCursor();
 
     if (current.line > target.line) {

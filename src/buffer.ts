@@ -518,6 +518,34 @@ export function moveByPromptLines(text: string, cursor: Position, lineDelta: num
   return { line, col: Math.max(0, Math.min(pos.col, lines[line]?.length ?? 0)) };
 }
 
+/** Moves right by count characters (code points), stopping at the line end. */
+export function charForwardPosition(text: string, cursor: Position, count = 1): Position {
+  const lines = splitText(text);
+  const pos = clampPosition(lines, cursor);
+  const line = lines[pos.line] ?? "";
+  let col = codePointStart(line, pos.col);
+  for (let step = 0; step < Math.max(1, count); step++) {
+    const next = nextCodePointOffset(line, col);
+    if (next === col) break;
+    col = next;
+  }
+  return { line: pos.line, col };
+}
+
+/** Moves left by count characters (code points), stopping at the line start. */
+export function charBackwardPosition(text: string, cursor: Position, count = 1): Position {
+  const lines = splitText(text);
+  const pos = clampPosition(lines, cursor);
+  const line = lines[pos.line] ?? "";
+  let col = pos.col;
+  for (let step = 0; step < Math.max(1, count); step++) {
+    const next = previousCodePointOffset(line, col);
+    if (next === col) break;
+    col = next;
+  }
+  return { line: pos.line, col };
+}
+
 export type SubstituteLineRangeOptions = {
   range: LineRange;
   pattern: string;

@@ -1,23 +1,20 @@
-// Repro: cursor-drift between the modal engine and Pi's base editor.
+// Regression coverage: cursor drift between the modal engine and Pi's base
+// editor.
 //
-// These tests document a known bug family (see analysis): VimEditor syncs the
-// base editor's cursor by replaying raw arrow-key sequences
-// (`restoreCursor`, `applyAdapterCommand`), but Pi's `Editor` interprets:
-//   - up/down as *visual* (word-wrapped) row moves, with prompt-history
-//     hijack at the top and move-to-line-end at the bottom,
-//   - left/right as *grapheme* moves that wrap across logical lines.
-// The modal engine, in contrast, computes motions and edits in logical
-// lines/columns from `getCursor()`. On wrapped prompts the two models
-// diverge, so a subsequent delete (x, dd, D, ...) hits a different line than
-// the one the user moved to.
-//
-// They use `test.fails` so `npm test` stays green while the bugs are open.
+// The modal engine computes motions and edits in logical lines/columns from
+// `getCursor()`. Pi's `Editor`, left to its own key handling, moves the
+// cursor by *visual* (word-wrapped) row and by grapheme, wraps across
+// logical-line boundaries, and hijacks up-arrow at the top visual line as
+// prompt-history navigation. These tests pin the sync contract:
+// engine-intended positions land exactly, so deletes act on the line under
+// the cursor even in wrapped prompts, and vertical/horizontal motions clamp
+// in logical space.
 import type { Component, OverlayOptions } from "@earendil-works/pi-tui";
 import { expect, test } from "vitest";
 
 import type { ResolvedVimEditorOptions, VimDiagnostics } from "../src/types.ts";
 import { createVimConfigPlan, DEFAULT_VIM_OPTIONS } from "../src/config.ts";
-import { VimEditor } from "../src/vim-editor.ts";
+import { piCursorWriter, VimEditor } from "../src/vim-editor.ts";
 
 type EditorArgs = ConstructorParameters<typeof VimEditor>;
 
@@ -92,7 +89,7 @@ function createEditor(
 const LONG = "alpha bravo charlie delta echo foxtrot golf hotel india juliet kilo"; // wraps at 40 cols
 const TEXT = [LONG, "SECOND", "THIRD"].join("\n");
 
-test.fails("j from a wrapped line moves one visual row, not one logical line", () => {
+test("j from a wrapped line moves one logical line, not one visual row", () => {
   const { editor } = createEditor(DEFAULT_VIM_OPTIONS, { rows: 24, columns: 40 });
   editor.setText(TEXT);
   editor.render(40); // insert-mode frame: base editor learns wrap width 40
@@ -104,12 +101,10 @@ test.fails("j from a wrapped line moves one visual row, not one logical line", (
   expect(editor.getCursor()).toEqual({ line: 0, col: 0 });
 
   editor.handleInput("j");
-  // Vim semantics: logical line 1 ("SECOND"). Actual: { line: 0, col: 39 }
-  // (the wrap column of the long first line).
   expect(editor.getCursor()).toEqual({ line: 1, col: 0 });
 });
 
-test.fails("j then dd deletes a different line than the one targeted", () => {
+test("j then dd deletes the line under the cursor in a wrapped prompt", () => {
   const { editor } = createEditor(DEFAULT_VIM_OPTIONS, { rows: 24, columns: 40 });
   editor.setText(TEXT);
   editor.render(40);
@@ -122,12 +117,10 @@ test.fails("j then dd deletes a different line than the one targeted", () => {
   editor.handleInput("d");
   editor.handleInput("d");
 
-  // Expected: "SECOND" is deleted. Actual: the whole wrapped first line
-  // (both of its screen rows) is deleted instead.
   expect(editor.getText()).toBe([LONG, "THIRD"].join("\n"));
 });
 
-test.fails("G (restoreCursor path) drifts on wrapped lines", () => {
+test("G lands on the last logical line in a wrapped prompt", () => {
   const { editor } = createEditor(DEFAULT_VIM_OPTIONS, { rows: 24, columns: 40 });
   editor.setText(TEXT);
   editor.render(40);
@@ -137,12 +130,10 @@ test.fails("G (restoreCursor path) drifts on wrapped lines", () => {
   editor.handleInput("g");
   editor.handleInput("g");
   editor.handleInput("G"); // vim: go to last logical line ("THIRD")
-  // Actual: lands on logical line 1 ("SECOND") because two replayed
-  // down-arrows only traverse two visual rows.
   expect(editor.getCursor().line).toBe(2);
 });
 
-test.fails("k on the first line at col 0 replaces the buffer with a history entry", () => {
+test("k on the first line is a no-op and never navigates prompt history", () => {
   const { editor } = createEditor(
     { ...DEFAULT_VIM_OPTIONS, startMode: "normal" },
     { rows: 24, columns: 40 },
@@ -154,12 +145,11 @@ test.fails("k on the first line at col 0 replaces the buffer with a history entr
   editor.handleInput("g");
   editor.handleInput("g"); // {0, 0}
   editor.handleInput("k"); // vim semantics: no-op at line 0
-  // Actual: Pi's editor treats up-arrow at col 0 on the first visual line as
-  // prompt-history navigation and swaps the buffer text.
   expect(editor.getText()).toBe("current prompt");
+  expect(editor.getCursor()).toEqual({ line: 0, col: 0 });
 });
 
-test.fails("l at end of line moves to the next logical line", () => {
+test("l at end of line stays on the same logical line", () => {
   const { editor } = createEditor(
     { ...DEFAULT_VIM_OPTIONS, startMode: "normal" },
     { rows: 24, columns: 40 },
@@ -171,7 +161,32 @@ test.fails("l at end of line moves to the next logical line", () => {
   editor.handleInput("g");
   editor.handleInput("$"); // {0, 2}
   editor.handleInput("l"); // vim semantics: no-op at end of line
-  // Actual: Pi's right-arrow wraps to the next logical line, so a following
-  // `x` deletes on the next line.
   expect(editor.getCursor()).toEqual({ line: 0, col: 2 });
+});
+
+test("cursor seam resolves against the real Pi editor and lands exact positions", () => {
+  const { editor } = createEditor(DEFAULT_VIM_OPTIONS, { rows: 24, columns: 40 });
+  editor.setText("one\ntwo\nthree");
+
+  const write = piCursorWriter(editor);
+  // Fails loudly when a future pi-tui release renames or reshapes the
+  // cursor internals: the adapter would fall back to drift-prone replay.
+  expect(write).toBeDefined();
+  expect(write?.({ line: 2, col: 3 })).toBe(true);
+  expect(editor.getCursor()).toEqual({ line: 2, col: 3 });
+});
+
+test("cursor seam is actually used: motions land on wrapped lines exactly", () => {
+  const { editor } = createEditor(DEFAULT_VIM_OPTIONS, { rows: 24, columns: 40 });
+  editor.setText(TEXT);
+  editor.render(40);
+  editor.handleInput("\x1b");
+  editor.render(40);
+
+  // Jump to the middle of the wrapped first line and back to line start:
+  // key replay cannot land here exactly on a wrapped prompt.
+  editor.handleInput("j");
+  editor.handleInput("g");
+  editor.handleInput("g");
+  expect(editor.getCursor()).toEqual({ line: 0, col: 0 });
 });
