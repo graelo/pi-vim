@@ -99,29 +99,33 @@ type PiCursorStateEditor = {
  * unavailable.
  */
 export function piCursorWriter(editor: unknown): ((position: Position) => boolean) | undefined {
-  const target = editor as PiCursorStateEditor;
-  const state = target.state;
-  const setCursorCol = target.setCursorCol;
-  const getCursor = target.getCursor;
-  if (
-    !state ||
-    typeof state !== "object" ||
-    typeof state.cursorLine !== "number" ||
-    typeof setCursorCol !== "function" ||
-    typeof getCursor !== "function"
-  ) {
+  try {
+    const target = editor as PiCursorStateEditor;
+    const state = target.state;
+    const setCursorCol = target.setCursorCol;
+    const getCursor = target.getCursor;
+    if (
+      !state ||
+      typeof state !== "object" ||
+      typeof state.cursorLine !== "number" ||
+      typeof setCursorCol !== "function" ||
+      typeof getCursor !== "function"
+    ) {
+      return undefined;
+    }
+    return (position) => {
+      try {
+        state.cursorLine = position.line;
+        setCursorCol.call(editor, position.col);
+        const cursor = getCursor.call(editor);
+        return cursor.line === position.line && cursor.col === position.col;
+      } catch {
+        return false;
+      }
+    };
+  } catch {
     return undefined;
   }
-  return (position) => {
-    try {
-      state.cursorLine = position.line;
-      setCursorCol.call(editor, position.col);
-    } catch {
-      return false;
-    }
-    const cursor = getCursor.call(editor);
-    return cursor.line === position.line && cursor.col === position.col;
-  };
 }
 
 function fitWidth(text: string, width: number): string {

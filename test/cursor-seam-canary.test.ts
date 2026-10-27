@@ -74,4 +74,20 @@ test("cursor seam degrades to undefined when internals change shape", () => {
   });
   expect(throwing).toBeDefined();
   expect(throwing?.({ line: 1, col: 1 })).toBe(false);
+
+  const throwingReadback = piCursorWriter({
+    state: { cursorLine: 0 },
+    setCursorCol: () => {},
+    getCursor: () => {
+      throw new Error("readback failed");
+    },
+  });
+  expect(throwingReadback?.({ line: 1, col: 1 })).toBe(false);
+
+  const throwingShape = Object.defineProperty({}, "state", {
+    get() {
+      throw new Error("shape getter failed");
+    },
+  });
+  expect(piCursorWriter(throwingShape)).toBeUndefined();
 });
