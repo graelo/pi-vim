@@ -11,6 +11,7 @@ import type {
   ResolvedVimUi,
   StartupMode,
   VimActionBindingMode,
+  VimClipboard,
   VimCommandAction,
   ResolvedVimEditorOptions,
   VimFeedbackOptions,
@@ -37,7 +38,7 @@ import {
   KEYMAP_TEXT_OBJECT_KIND_DESCRIPTORS,
   KEYMAP_TEXT_OBJECT_TARGET_DESCRIPTORS,
 } from "../keymap-descriptors.ts";
-import { VIM_PRESETS } from "../types.ts";
+import { VIM_CLIPBOARD_VALUES, VIM_PRESETS } from "../types.ts";
 
 export const VIM_MODES = [
   "insert",
@@ -55,6 +56,8 @@ export const REMAP_MODES = new Set<VimActionBindingMode>([
 ]);
 
 export const START_MODES = new Set<StartupMode>(["insert", "normal"]);
+
+export const CLIPBOARD_VALUE_SET = new Set<VimClipboard>(VIM_CLIPBOARD_VALUES);
 
 export const CURSOR_STYLES = new Set<CursorStyle>(["block", "bar", "underline"]);
 
@@ -259,6 +262,7 @@ export const DEFAULT_VIM_FEEDBACK = Object.freeze({
 
 export const DEFAULT_VIM_OPTIONS: ResolvedVimEditorOptions = Object.freeze({
   startMode: "insert",
+  clipboard: "none",
   cursor: Object.freeze({
     insert: "bar",
     normal: "block",

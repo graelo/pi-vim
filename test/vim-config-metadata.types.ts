@@ -27,6 +27,7 @@ type DeclaredPropertyPaths =
   | "preset"
   | "leader"
   | "startMode"
+  | "clipboard"
   | `cursor.${keyof VimConfigApi["cursor"] & string}`
   | `ui.status.${keyof VimConfigApi["ui"]["status"] & string}`
   | `ui.mode.${keyof VimConfigApi["ui"]["mode"] & string}`
@@ -52,35 +53,37 @@ type ExpectedPropertyShape<Path extends DeclaredPropertyPaths> = Path extends "p
     ? "one printable character or null"
     : Path extends "startMode"
       ? '"insert" | "normal"'
-      : Path extends `cursor.${string}`
-        ? '"block" | "bar" | "underline"'
-        : Path extends "keymap.operatorMotions"
-          ? "partial record of operator names to motion-name arrays"
-          : Path extends "ui.status.position"
-            ? '"left" | "right"'
-            : Path extends "ui.status.items"
-              ? 'readonly ("mode" | "pendingOperator" | "selection" | "cursorPosition")[]'
-              : Path extends "ui.selection.previewMaxChars" | "search.maxHighlights"
-                ? "non-negative integer"
-                : Path extends "ui.cursorPosition.base"
-                  ? "0 | 1"
-                  : Path extends "ui.workbench.reservedRows"
-                    ? "integer from 0 through 5"
-                    : Path extends "macros.slots" | "marks.slots"
-                      ? "readonly lowercase register-name[]"
-                      : Path extends "macros.maxReplaySteps"
-                        ? "positive integer"
-                        : Path extends "feedback.noop"
-                          ? '"off" | "status"'
-                          : Path extends "ui.mode.labels" | "ui.mode.narrowLabels"
-                            ? "partial record of Vim modes to strings"
-                            : Path extends "ui.mode.colors"
-                              ? 'partial record of Vim modes to { bg?, fg? } palette indices 0-255 or "#rrggbb"'
-                              : Path extends "promptStructures.targets"
-                                ? "partial record of prompt-structure targets to booleans"
-                                : Path extends "ui.cursorPosition.format"
-                                  ? "string"
-                                  : "boolean";
+      : Path extends "clipboard"
+        ? '"none" | "unnamed" | "unnamedplus"'
+        : Path extends `cursor.${string}`
+          ? '"block" | "bar" | "underline"'
+          : Path extends "keymap.operatorMotions"
+            ? "partial record of operator names to motion-name arrays"
+            : Path extends "ui.status.position"
+              ? '"left" | "right"'
+              : Path extends "ui.status.items"
+                ? 'readonly ("mode" | "pendingOperator" | "selection" | "cursorPosition")[]'
+                : Path extends "ui.selection.previewMaxChars" | "search.maxHighlights"
+                  ? "non-negative integer"
+                  : Path extends "ui.cursorPosition.base"
+                    ? "0 | 1"
+                    : Path extends "ui.workbench.reservedRows"
+                      ? "integer from 0 through 5"
+                      : Path extends "macros.slots" | "marks.slots"
+                        ? "readonly lowercase register-name[]"
+                        : Path extends "macros.maxReplaySteps"
+                          ? "positive integer"
+                          : Path extends "feedback.noop"
+                            ? '"off" | "status"'
+                            : Path extends "ui.mode.labels" | "ui.mode.narrowLabels"
+                              ? "partial record of Vim modes to strings"
+                              : Path extends "ui.mode.colors"
+                                ? 'partial record of Vim modes to { bg?, fg? } palette indices 0-255 or "#rrggbb"'
+                                : Path extends "promptStructures.targets"
+                                  ? "partial record of prompt-structure targets to booleans"
+                                  : Path extends "ui.cursorPosition.format"
+                                    ? "string"
+                                    : "boolean";
 type ExpectedPropertyAliases<Path extends DeclaredPropertyPaths> = Path extends "leader"
   ? readonly [`vim.g.${keyof VimConfigApi["g"] & string}`]
   : readonly [];
@@ -113,6 +116,7 @@ type PropertyValueCoverage = Assert<
       preset: VimConfigApi["preset"];
       leader: VimConfigApi["leader"];
       startMode: VimConfigApi["startMode"];
+      clipboard: VimConfigApi["clipboard"];
       "cursor.insert": VimConfigApi["cursor"]["insert"];
       "cursor.normal": VimConfigApi["cursor"]["normal"];
       "cursor.visual": VimConfigApi["cursor"]["visual"];

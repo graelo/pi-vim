@@ -8,6 +8,7 @@ import type {
   ResolvedVimSearch,
   ResolvedVimEasymotion,
   StartupMode,
+  VimClipboard,
   VimCommandAction,
   ResolvedVimEditorOptions,
   VimDiagnostics,
@@ -28,6 +29,7 @@ export type PartialVimOptions = {
   preset?: VimPreset;
   leader?: string | null;
   startMode?: StartupMode;
+  clipboard?: VimClipboard;
   cursor?: Partial<CursorStyles>;
   keymap?: PartialKeymapOptions;
   ui?: PartialUiOptions;

@@ -136,6 +136,19 @@ test("parses valid global settings", () => {
   });
 });
 
+test("clipboard defaults to none and accepts only Vim clipboard values", () => {
+  expect(resolveVimOptions(undefined).options.clipboard).toBe("none");
+
+  const result = resolveVimOptions({ clipboard: "unnamed" }, { clipboard: "unnamedplus" });
+  expect(result.warnings).toEqual([]);
+  expect(result.options.clipboard).toBe("unnamedplus");
+
+  const invalid = resolveVimOptions({ clipboard: "unnamed" }, { clipboard: "unnamed,autoselect" });
+  expect(invalid.options.clipboard).toBe("unnamed");
+  expect(invalid.warnings).toHaveLength(1);
+  expect(invalid.warnings[0]).toContain("unsupported clipboard");
+});
+
 test("project settings override global settings field by field", () => {
   const result = resolveVimOptions(
     { startMode: "normal", cursor: { insert: "underline", visual: "underline" } },

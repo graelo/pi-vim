@@ -1823,6 +1823,7 @@ test("exposes every finite option path through trusted JavaScript", async () => 
     f.write(`export default (vim) => {
   vim.leader = ",";
   vim.startMode = "normal";
+  vim.clipboard = "unnamedplus";
   vim.cursor.insert = "underline";
   vim.cursor.normal = "bar";
   vim.cursor.visual = "block";
@@ -1865,6 +1866,7 @@ test("exposes every finite option path through trusted JavaScript", async () => 
     expect(result.options).toMatchObject({
       leader: ",",
       startMode: "normal",
+      clipboard: "unnamedplus",
       cursor: {
         insert: "underline",
         normal: "bar",

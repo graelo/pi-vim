@@ -211,6 +211,7 @@ the allow-list section below.
 | `preset`     | absent      | `"minimal"`, `"prompt-safe"`, `"vim-heavy"` | Applies a curated baseline before explicit fields in the same settings object. Invalid values warn and are ignored.                                                |
 | `leader`     | absent      | one printable character or `null`           | Replaces leading `<leader>` tokens after all settings layers resolve. `null` clears an inherited leader.                                                           |
 | `startMode`  | `"insert"`  | `"insert"`, `"normal"`                      | Mode used for new editor instances and Vim reset paths that explicitly reset transient modal state. Visual modes are invalid because they need a selection anchor. |
+| `clipboard`  | `"none"`    | `"none"`, `"unnamed"`, `"unnamedplus"`      | Like Vim's `'clipboard'`: `"unnamed"` sends unprefixed yank/delete/change and normal-mode paste through `"*`, `"unnamedplus"` through `"+`. See [Clipboard](#clipboard). |
 | `vimOptions` | unsupported | none                                        | Legacy alias object. Ignored with warning: use `ui`.                                                                                                     |
 
 ### Presets
@@ -236,6 +237,34 @@ Example explicit override:
 
 Here `vim-heavy` supplies its baseline, then `startMode` and `visualBlock`
 override those fields.
+
+### Clipboard
+
+By default, unprefixed yank, delete, and change write only the prompt-local
+unnamed register, and the host clipboard is used only with an explicit `"+` or
+`"*` prefix. Set `clipboard` to make the host clipboard the default, like
+`:set clipboard=unnamedplus` in Vim:
+
+```json
+{
+  "clipboard": "unnamedplus"
+}
+```
+
+- `"unnamed"` uses the `"*` register and `"unnamedplus"` the `"+` register.
+    Both reach the same host clipboard; the value only picks which clipboard
+    mirror holds the text.
+- Unprefixed and `""`-prefixed yank, delete, and change also write that
+    clipboard mirror and copy to the host clipboard.
+- Unprefixed and `""`-prefixed normal-mode `p`/`P` read the host clipboard,
+    like `"+p`. Text the prompt copied itself keeps its linewise or charwise
+    type; other host text pastes charwise. If the host clipboard cannot be
+    read, paste falls back to the clipboard mirror, then the unnamed register.
+- Named (`"a`), black-hole (`"_`), and explicit clipboard (`"+`, `"*`)
+    prefixes keep their usual behavior.
+- Ex `:yank` and `:delete` without a register operand also copy. Visual-line
+    `p` and Ex `:put` still read the unnamed register, and insert-mode deletes
+    still write no register.
 
 ### Leader key
 
@@ -935,6 +964,7 @@ omits comments so it can be copied.
 ```json
 {
   "startMode": "insert",
+  "clipboard": "none",
   "cursor": {
     "insert": "bar",
     "normal": "block",
@@ -1386,6 +1416,7 @@ Common fixes:
 - Ensure JSON is valid.
 - Ensure the file holds a JSON object.
 - Use `"normal"` or `"insert"` for `startMode`.
+- Use `"none"`, `"unnamed"`, or `"unnamedplus"` for `clipboard`.
 - Use `"block"`, `"bar"`, or `"underline"` for cursor styles.
 - Use action names exactly as documented.
 - Do not map protected Pi shortcuts.

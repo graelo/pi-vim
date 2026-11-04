@@ -515,15 +515,19 @@ const searchWordCommand =
 
 const pasteCommand =
   (placement: "after" | "before"): NormalCommandHandler =>
-  ({ state, nextState, snapshot, count }) => {
-    const clipboardTarget = clipboardTargetToRead(state);
+  ({ state, nextState, snapshot, count, options }) => {
+    const clipboardTarget = clipboardTargetToRead(state, options.clipboard);
     if (clipboardTarget) {
+      const mirror = state.clipboardRegisters?.[clipboardTarget.slot];
+      // An unprefixed paste under 'clipboard' falls back to the unnamed register.
+      const target = state.pendingRegister;
+      const explicit = typeof target === "object" && target.kind === "clipboard";
       return withEffects(clearRegisterTarget(nextState), [
         {
           type: "readClipboard",
           register: clipboardTarget.slot,
           placement,
-          fallback: state.clipboardRegisters?.[clipboardTarget.slot],
+          fallback: mirror ?? (explicit ? undefined : state.register),
           ...(count > 1 ? { count } : {}),
         },
       ]);

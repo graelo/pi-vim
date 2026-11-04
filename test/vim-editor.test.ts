@@ -2485,6 +2485,58 @@ test("clipboard paste falls back to prompt-local mirror on host read failure", a
   expect(editor.getText()).toBe("one\none\n");
 });
 
+test("clipboard paste requests a render once the host read settles", async () => {
+  setClipboardTextReaderForTesting(async () => "host");
+  const { editor, getRenderRequests } = createEditor();
+  typeKeys(editor, ["o", "n", "e", "\x1b", '"', "+"]);
+  const before = getRenderRequests();
+  typeKeys(editor, ["p"]);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  expect(editor.getText()).toBe("onehost");
+  expect(getRenderRequests()).toBeGreaterThan(before);
+});
+
+test("clipboard paste keeps the mirror's linewise type when host text is the prompt's own copy", async () => {
+  setClipboardTextReaderForTesting(async () => "one");
+  const { editor } = createEditor();
+  typeKeys(editor, ["o", "n", "e", "\x1b", '"', "+", "y", "y", '"', "+", "p"]);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  expect(editor.getText()).toBe("one\none");
+  expect(editor.getClipboardRegister("+")).toEqual({ type: "line", text: "one" });
+});
+
+test("clipboard setting routes unprefixed yank and paste through the host clipboard", async () => {
+  let host = "";
+  setClipboardTextReaderForTesting(async () => host);
+  const { editor } = createEditor({ ...DEFAULT_VIM_OPTIONS, clipboard: "unnamedplus" });
+  typeKeys(editor, ["o", "n", "e", "\x1b", "y", "y"]);
+  expect(editor.getClipboardRegister("+")).toEqual({ type: "line", text: "one" });
+
+  host = "one";
+  typeKeys(editor, ["p"]);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(editor.getText()).toBe("one\none");
+
+  host = "HOST";
+  typeKeys(editor, ["P"]);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(editor.getText()).toBe("one\nHOSTone");
+  expect(editor.getRegister()).toEqual({ type: "line", text: "one" });
+});
+
+test("reconfigure applies the clipboard setting to the live editor", () => {
+  const { editor } = createEditor();
+  typeKeys(editor, ["o", "n", "e", "\x1b", "y", "y"]);
+  expect(editor.getClipboardRegister("+")).toBeUndefined();
+
+  const options = { ...DEFAULT_VIM_OPTIONS, clipboard: "unnamedplus" as const };
+  editor.reconfigure(createVimConfigPlan(options, []), { warnings: [] });
+  typeKeys(editor, ["y", "y"]);
+  expect(editor.getClipboardRegister("+")).toEqual({ type: "line", text: "one" });
+});
+
 const normalOpts = { ...DEFAULT_VIM_OPTIONS, startMode: "normal" as const };
 
 test(":q requests shutdown through injected callback without editing text", () => {

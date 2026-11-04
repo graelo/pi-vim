@@ -134,7 +134,7 @@ const ENTRIES = [
     category: "registers",
     topics: ["registers", "register", "clipboard", "black-hole", "unnamed", '"+', '"*', '"_'],
     summary:
-      'registers are prompt-local; unnamed and a-z named registers work with yank/delete/change/paste, "_ discards, and "+/"* copy to and paste from host clipboard with prompt-local mirror fallback',
+      'registers are prompt-local; unnamed and a-z named registers work with yank/delete/change/paste, "_ discards, "+/"* copy to and paste from host clipboard with prompt-local mirror fallback, and the clipboard setting makes unprefixed yank/delete/change/paste use the host clipboard',
     examples: ['"ayy', '"ap', '"_dd', '"+yy', ":yank +", ":put *"],
     limits: [
       "no full Vim register parity",

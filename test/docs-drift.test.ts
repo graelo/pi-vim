@@ -145,6 +145,7 @@ describe("documentation data contracts", () => {
   test("settings docs stay aligned with source-backed defaults", () => {
     const defaults: Record<string, string> = {
       startMode: `"${DEFAULT_VIM_OPTIONS.startMode}"`,
+      clipboard: `"${DEFAULT_VIM_OPTIONS.clipboard}"`,
       "cursor.insert": `"${DEFAULT_VIM_OPTIONS.cursor.insert}"`,
       "cursor.normal": `"${DEFAULT_VIM_OPTIONS.cursor.normal}"`,
       "keymap.escape": JSON.stringify(DEFAULT_VIM_OPTIONS.keymap!.escape),

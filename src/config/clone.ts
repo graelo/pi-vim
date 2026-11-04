@@ -153,6 +153,7 @@ export function cloneResolvedVimOptions(
     preset: options.preset,
     leader: options.leader,
     startMode: options.startMode,
+    clipboard: options.clipboard,
     cursor: { ...options.cursor },
     keymap: options.keymap ? cloneKeymap(options.keymap) : undefined,
     ui: options.ui ? cloneUi(options.ui) : undefined,

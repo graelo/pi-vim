@@ -626,6 +626,7 @@ export class VimEditor extends CustomEditor {
   private copyClipboard(text: string): void {
     void copyToClipboard(text).catch(() => {
       this.addRuntimeMessage({ kind: "error", text: "Clipboard copy failed" });
+      this.tui.requestRender();
     });
   }
 
@@ -637,7 +638,8 @@ export class VimEditor extends CustomEditor {
   ): void {
     void readClipboardText()
       .then((text) => {
-        const register: VimRegister = { type: "char", text };
+        // Host text carries no linewise flag; reuse the mirror's when it is our own copy.
+        const register: VimRegister = fallback?.text === text ? fallback : { type: "char", text };
         this.pasteClipboardRegister(slot, placement, register, count);
       })
       .catch(() => {
@@ -646,7 +648,9 @@ export class VimEditor extends CustomEditor {
           return;
         }
         this.addRuntimeMessage({ kind: "error", text: "Clipboard paste failed" });
-      });
+      })
+      // The read settles after input handling, so no keypress-driven render follows.
+      .finally(() => this.tui.requestRender());
   }
 
   private pasteClipboardRegister(

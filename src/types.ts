@@ -6,6 +6,10 @@ export type StartupMode = Extract<VimMode, "insert" | "normal">;
 
 export type CursorStyle = "block" | "bar" | "underline";
 
+/** Vim `'clipboard'`: which clipboard register unprefixed yank/delete/change/paste also use. */
+export const VIM_CLIPBOARD_VALUES = ["none", "unnamed", "unnamedplus"] as const;
+export type VimClipboard = (typeof VIM_CLIPBOARD_VALUES)[number];
+
 export type CursorStyles = Record<VimMode, CursorStyle>;
 
 export const VIM_PRESETS = ["minimal", "prompt-safe", "vim-heavy"] as const;
@@ -359,6 +363,7 @@ export type VimEditorOptions = {
   preset?: VimPreset;
   leader?: string | null;
   startMode?: StartupMode;
+  clipboard?: VimClipboard;
   cursor?: Partial<CursorStyles>;
   keymap?: VimKeymapOptions;
   ui?: VimUiEditorOptions;
@@ -374,6 +379,7 @@ export type ResolvedVimEditorOptions = {
   preset?: VimPreset;
   leader?: string;
   startMode: StartupMode;
+  clipboard?: VimClipboard;
   cursor: CursorStyles;
   keymap?: ResolvedVimKeymap;
   ui?: ResolvedVimUi;

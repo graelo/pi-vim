@@ -37,6 +37,16 @@ in [`docs/settings.md`](settings.md).
 
 ### `vim`
 
+#### `vim.clipboard`
+
+<a id="config-property-clipboard"></a>
+
+- Accepted shape: `"none" | "unnamed" | "unnamedplus"`
+- Built-in default: `"none"`
+- Assignment semantics: replaces clipboard register used by unprefixed yank, delete, change, and paste
+- JSON crosswalk: `clipboard`
+- Compatibility aliases: none
+
 #### `vim.leader`
 
 <a id="config-property-leader"></a>
