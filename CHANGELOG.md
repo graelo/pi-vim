@@ -6,6 +6,8 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-22
+
 ### Added
 
 - `clipboard` setting (`"none"`, `"unnamed"`, `"unnamedplus"`), like Vim's
