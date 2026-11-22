@@ -39,7 +39,7 @@ when rendering `:actions` and `:keymap` output.
 Settings names, defaults, parsing, preset merge order, and validation still live
 in `src/config.ts` and `src/types.ts`. Modal execution remains finite in
 `src/ex.ts` and `src/modal/engine.ts`; `src/customization.ts` and
-`src/prompt-transform-actions.ts` describe and explain supported behavior but do
+`src/prompt-transform-actions.ts` document and explain supported behavior but do
 not add arbitrary Vim grammar, recursive mappings, `.vimrc`, Vimscript, or
 Neovim Lua support.
 

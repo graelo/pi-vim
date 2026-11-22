@@ -31,7 +31,7 @@ interprets those keys with different semantics: up/down move by *visual*
 boundaries, and up at the first visual line with column 0 triggers
 prompt-history navigation. On any prompt whose lines wrap, the replayed keys
 land the cursor on a different logical position than the engine intended, and
-the next edit (`dd`, `x`, `D`, ...) hits a different line than the one under
+the next edit (`dd`, `x`, `D`, etc.) hits a different line than the one under
 the cursor. Pi exposes no public cursor setter (`getCursor()` is read-only),
 which is why replay existed at all.
 
