@@ -14,7 +14,11 @@ Date: 2026-06-04
 
 ## Status
 
-Accepted
+Accepted. Partially superseded by ADR-0006, which removed prompt
+transforms and with them `src/prompt-transform-actions.ts`; the diagnostics
+source-of-truth part of this decision (`src/customization.ts`) stands.
+References to "pi-vimmode" below are historical, predating the package
+rename to pi-vim (ADR-0008).
 
 ## Context
 

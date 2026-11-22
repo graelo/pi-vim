@@ -15,7 +15,9 @@ Date: 2026-10-08
 
 ## Status
 
-Accepted
+Accepted. Partially supersedes ADR-0003: the prompt transform action
+registry it names no longer exists; ADR-0003's diagnostics source of truth
+survives.
 
 ## Context
 
