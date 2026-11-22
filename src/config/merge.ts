@@ -139,6 +139,7 @@ export function mergePartialOptions(
   if (partial.leader === null) delete target.leader;
   if (typeof partial.leader === "string") target.leader = partial.leader;
   if (partial.startMode) target.startMode = partial.startMode;
+  if (partial.clipboard) target.clipboard = partial.clipboard;
   if (partial.cursor) target.cursor = { ...target.cursor, ...partial.cursor };
   const keymap = mergedPartialValue(target.keymap, partial.keymap, cloneKeymap, mergeKeymap);
   const ui = mergedPartialValue(target.ui, partial.ui, cloneUi, mergeUi);

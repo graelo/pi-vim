@@ -25,6 +25,7 @@ const helper = (vim: VimConfigApi): void => {
   vim.leader = ",";
   vim.g.mapleader = null;
   vim.startMode = "insert";
+  vim.clipboard = "unnamedplus";
   vim.cursor.insert = "underline";
   vim.cursor.normal = "block";
   vim.cursor.visual = "bar";

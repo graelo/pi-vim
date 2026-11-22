@@ -5,6 +5,7 @@ export type VimConfig = (vim: VimConfigApi) => void | Promise<void>;
 export type VimPreset = "minimal" | "prompt-safe" | "vim-heavy";
 export type VimMode = "insert" | "normal" | "visual" | "visualLine" | "visualBlock";
 export type VimStartupMode = "insert" | "normal";
+export type VimClipboard = "none" | "unnamed" | "unnamedplus";
 export type VimCursorStyle = "block" | "bar" | "underline";
 export type VimStatusPosition = "left" | "right";
 export type VimStatusItem = "mode" | "pendingOperator" | "selection" | "cursorPosition";
@@ -231,6 +232,7 @@ export type VimConfigApi = {
     mapleader: string | null;
   };
   startMode: VimStartupMode;
+  clipboard: VimClipboard;
   cursor: Record<VimMode, VimCursorStyle>;
   ui: {
     status: {

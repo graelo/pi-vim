@@ -1,6 +1,7 @@
 import type {
   PromptStructureTarget,
   StartupMode,
+  VimClipboard,
   VimFeedbackOptions,
   VimPreset,
 } from "../types.ts";
@@ -8,6 +9,7 @@ import type {
 import { isPrintableLeader } from "../config-js.ts";
 
 import {
+  CLIPBOARD_VALUE_SET,
   NOOP_FEEDBACK_VALUES,
   PROMPT_STRUCTURE_TARGET_SET,
   START_MODES,
@@ -238,6 +240,14 @@ export function parsePiVim(
     START_MODES,
   );
   if (startMode) partial.startMode = startMode;
+
+  const clipboard = enumField<VimClipboard>(
+    value.clipboard,
+    `${sourceLabel}: unsupported clipboard`,
+    warnings,
+    CLIPBOARD_VALUE_SET,
+  );
+  if (clipboard) partial.clipboard = clipboard;
 
   const cursor = parseCursorStyles(value.cursor, sourceLabel, warnings);
   if (cursor) partial.cursor = cursor;

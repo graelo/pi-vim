@@ -1016,8 +1016,17 @@ Behavior:
     normal-mode paste, then fall back to the prompt-local typed clipboard mirror
     if host clipboard read fails.
 - Host clipboard paste uses charwise paste semantics because OS clipboard text
-    does not carry Vim linewise/charwise metadata; fallback mirror paste
-    preserves typed register metadata.
+    does not carry Vim linewise/charwise metadata, unless the host text matches
+    the clipboard register mirror (text this prompt copied), which keeps the
+    mirror's type. Fallback mirror paste preserves typed register metadata.
+- The `clipboard` setting (`"unnamed"` or `"unnamedplus"`, like Vim's
+    `'clipboard'`) sends unprefixed and `""`-prefixed yank/delete/change,
+    including Ex `:yank`/`:delete`, to the `"*` or `"+` mirror and the host
+    clipboard, and makes unprefixed normal-mode `p`/`P` read the host
+    clipboard, falling back to the mirror and then the unnamed register. Named,
+    black-hole, and explicit clipboard prefixes are unaffected; visual-line `p`
+    and Ex `:put` still read the unnamed register. See `clipboard` in
+    `docs/settings.md`.
 - Ex line commands accept bare register operands: `:delete a`, `:yank +`,
     `:put *`, `:delete _`, `:delete "`. Quoted Ex operands such as `:yank "+`
     remain unsupported.

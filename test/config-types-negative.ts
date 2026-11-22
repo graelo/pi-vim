@@ -6,6 +6,8 @@ declare const vim: VimConfigApi;
 vim.unknown = true;
 // @ts-expect-error startup mode excludes visual modes
 vim.startMode = "visual";
+// @ts-expect-error clipboard accepts only finite Vim values
+vim.clipboard = "unnamed,unnamedplus";
 // @ts-expect-error mode must be finite VimModeAlias
 vim.keymap.set("replace", "x", null);
 // @ts-expect-error prompt transforms were removed in 1.0.0

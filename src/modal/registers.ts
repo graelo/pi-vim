@@ -1,8 +1,10 @@
-import type { VimRegister } from "../types.ts";
+import type { VimClipboard, VimRegister } from "../types.ts";
 import type {
   ActiveRegisterTarget,
+  ClipboardRegisterSlot,
   ModalEffect,
   ModalState,
+  ModalUpdate,
   PendingRegisterTarget,
 } from "./types.ts";
 
@@ -85,11 +87,52 @@ export function writeRegisters(state: ModalState, register: VimRegister | undefi
   return applyRegisterWrite(state, register).state;
 }
 
+/** The clipboard register Vim's `'clipboard'` setting routes unnamed-register traffic to. */
+export function defaultClipboardSlot(
+  clipboard: VimClipboard | undefined,
+): ClipboardRegisterSlot | undefined {
+  if (clipboard === "unnamed") return "*";
+  if (clipboard === "unnamedplus") return "+";
+  return undefined;
+}
+
+/** No prefix, or an explicit `""`: the target `'clipboard'` redirects. */
+function targetsUnnamed(target: PendingRegisterTarget | undefined): boolean {
+  return target === undefined || (typeof target === "object" && target.kind === "unnamed");
+}
+
+/**
+ * With `'clipboard'` set, an update that wrote only the unnamed register also
+ * writes the clipboard register mirror and requests a host clipboard copy.
+ * Named, black-hole, and explicit clipboard targets are left alone: they
+ * change named or clipboard registers, leave the unnamed register as it was,
+ * or already copy.
+ */
+export function mirrorUnnamedWrite(
+  before: ModalState,
+  update: ModalUpdate,
+  slot: ClipboardRegisterSlot | undefined,
+): ModalUpdate {
+  const { state } = update;
+  const register = state.register;
+  if (!slot || !register || register === before.register) return update;
+  if (!targetsUnnamed(before.pendingRegister)) return update;
+  if (state.namedRegisters !== before.namedRegisters) return update;
+  if (state.clipboardRegisters !== before.clipboardRegisters) return update;
+  return {
+    state: { ...state, clipboardRegisters: { ...state.clipboardRegisters, [slot]: register } },
+    effects: [...update.effects, { type: "copyClipboard", register: slot, text: register.text }],
+  };
+}
+
 export function clipboardTargetToRead(
   state: ModalState,
+  clipboard?: VimClipboard,
 ): Extract<ActiveRegisterTarget, { kind: "clipboard" }> | undefined {
   const target = activeTarget(state.pendingRegister);
-  return target?.kind === "clipboard" ? target : undefined;
+  if (target?.kind === "clipboard") return target;
+  const slot = defaultClipboardSlot(clipboard);
+  return slot && targetsUnnamed(state.pendingRegister) ? { kind: "clipboard", slot } : undefined;
 }
 
 export function registerToRead(state: ModalState): VimRegister | undefined {

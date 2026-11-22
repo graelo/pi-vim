@@ -101,7 +101,13 @@ import {
   applyOperatorTextObject,
   moveUpdate,
 } from "./normal.ts";
-import { clearRegisterTarget, isRegisterPrefixKey, registerTargetForKey } from "./registers.ts";
+import {
+  clearRegisterTarget,
+  defaultClipboardSlot,
+  isRegisterPrefixKey,
+  mirrorUnnamedWrite,
+  registerTargetForKey,
+} from "./registers.ts";
 import {
   handlePendingSearchInput,
   pendingSearchDisplay,
@@ -1233,9 +1239,10 @@ export function handleModalInput(
   data: string,
   diagnostics: VimDiagnostics = plan.diagnostics,
 ): ModalUpdate {
-  const update = consumeRegisterTarget(
+  const update = mirrorUnnamedWrite(
     state,
-    routeModalInput(state, snapshot, plan, data, diagnostics),
+    consumeRegisterTarget(state, routeModalInput(state, snapshot, plan, data, diagnostics)),
+    defaultClipboardSlot(plan.options.clipboard),
   );
   if (!state.recordingSlot || !shouldRecordInput(state, snapshot, update, plan.options, data))
     return update;

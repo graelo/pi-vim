@@ -1,4 +1,5 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
+import type { ModalEffect } from "../../src/modal/types.ts";
 import { handleModalInputWithOptions as handleModalInput } from "../modal-test-helper.ts";
 import { p, cursor, options, snapshot, applyModalKeys } from "./shared.ts";
 
@@ -437,4 +438,185 @@ test("Ex special register operands write, discard, put, and reject quoted forms"
   ]);
   expect(rejected.text).toBe("one");
   expect(rejected.state.exMessage?.kind).toBe("error");
+});
+
+describe("clipboard setting", () => {
+  const unnamedplus = { ...options, clipboard: "unnamedplus" as const };
+  const copies = (effects: readonly ModalEffect[]) =>
+    effects.filter((effect) => effect.type === "copyClipboard");
+
+  test("unprefixed yank, delete, and change also write the clipboard register", () => {
+    const yanked = applyModalKeys({ mode: "normal" }, "one\ntwo", p(0, 0), ["y", "y"], unnamedplus);
+    expect(yanked.state.register).toEqual({ type: "line", text: "one" });
+    expect(yanked.state.clipboardRegisters).toEqual({ "+": { type: "line", text: "one" } });
+    expect(copies(yanked.effects)).toEqual([{ type: "copyClipboard", register: "+", text: "one" }]);
+
+    const deleted = applyModalKeys({ mode: "normal" }, "one two", p(0, 0), ["d", "w"], unnamedplus);
+    expect(deleted.text).toBe("two");
+    expect(copies(deleted.effects)).toEqual([
+      { type: "copyClipboard", register: "+", text: "one " },
+    ]);
+
+    const changed = applyModalKeys(
+      { mode: "normal" },
+      "one two",
+      p(0, 0),
+      ["c", "i", "w"],
+      unnamedplus,
+    );
+    expect(changed.state.mode).toBe("insert");
+    expect(copies(changed.effects)).toEqual([
+      { type: "copyClipboard", register: "+", text: "one" },
+    ]);
+
+    const selected = applyModalKeys(
+      { mode: "visual", visualAnchor: p(0, 0) },
+      "abc",
+      p(0, 1),
+      ["y"],
+      unnamedplus,
+    );
+    expect(selected.state.clipboardRegisters?.["+"]).toEqual({ type: "char", text: "ab" });
+  });
+
+  test("unnamed uses the * register and explicit unnamed is redirected too", () => {
+    const unnamed = { ...options, clipboard: "unnamed" as const };
+    const yanked = applyModalKeys({ mode: "normal" }, "one", p(0, 0), ["y", "y"], unnamed);
+    expect(yanked.state.clipboardRegisters).toEqual({ "*": { type: "line", text: "one" } });
+    expect(copies(yanked.effects)).toEqual([{ type: "copyClipboard", register: "*", text: "one" }]);
+
+    const explicit = applyModalKeys(
+      { mode: "normal" },
+      "one",
+      p(0, 0),
+      ['"', '"', "y", "y"],
+      unnamedplus,
+    );
+    expect(explicit.state.clipboardRegisters?.["+"]).toEqual({ type: "line", text: "one" });
+  });
+
+  test("Ex yank and delete without a register operand copy", () => {
+    const yanked = applyModalKeys(
+      { mode: "normal" },
+      "one\ntwo",
+      p(0, 0),
+      [":", "%", "y", "a", "n", "k", "\r"],
+      unnamedplus,
+    );
+    expect(copies(yanked.effects)).toEqual([
+      { type: "copyClipboard", register: "+", text: "one\ntwo" },
+    ]);
+
+    const named = applyModalKeys(
+      { mode: "normal" },
+      "one\ntwo",
+      p(0, 0),
+      [":", "y", "a", "n", "k", " ", "a", "\r"],
+      unnamedplus,
+    );
+    expect(named.state.namedRegisters?.a).toEqual({ type: "line", text: "one" });
+    expect(copies(named.effects)).toEqual([]);
+  });
+
+  test("named, black-hole, and explicit clipboard targets are unchanged", () => {
+    const named = applyModalKeys(
+      { mode: "normal" },
+      "one",
+      p(0, 0),
+      ['"', "a", "y", "y"],
+      unnamedplus,
+    );
+    expect(named.state.namedRegisters?.a).toEqual({ type: "line", text: "one" });
+    expect(named.state.clipboardRegisters).toBeUndefined();
+    expect(copies(named.effects)).toEqual([]);
+
+    const discarded = applyModalKeys(
+      { mode: "normal" },
+      "one\ntwo",
+      p(0, 0),
+      ['"', "_", "d", "d"],
+      unnamedplus,
+    );
+    expect(discarded.text).toBe("two");
+    expect(discarded.state.clipboardRegisters).toBeUndefined();
+    expect(copies(discarded.effects)).toEqual([]);
+
+    const star = applyModalKeys(
+      { mode: "normal" },
+      "one",
+      p(0, 0),
+      ['"', "*", "y", "y"],
+      unnamedplus,
+    );
+    expect(star.state.clipboardRegisters).toEqual({ "*": { type: "line", text: "one" } });
+    expect(copies(star.effects)).toEqual([{ type: "copyClipboard", register: "*", text: "one" }]);
+  });
+
+  test("edits that write no register do not copy", () => {
+    const upper = applyModalKeys(
+      { mode: "normal", register: { type: "char", text: "keep" } },
+      "abc def",
+      p(0, 0),
+      ["g", "U", "i", "w"],
+      unnamedplus,
+    );
+    expect(upper.text).toBe("ABC def");
+    expect(copies(upper.effects)).toEqual([]);
+    expect(upper.state.clipboardRegisters).toBeUndefined();
+  });
+
+  test("unprefixed paste reads the host clipboard with mirror, then unnamed, fallback", () => {
+    const mirrored = applyModalKeys(
+      {
+        mode: "normal",
+        register: { type: "char", text: "unnamed" },
+        clipboardRegisters: { "+": { type: "line", text: "clip" } },
+      },
+      "one",
+      p(0, 0),
+      ["P"],
+      unnamedplus,
+    );
+    expect(mirrored.text).toBe("one");
+    expect(mirrored.effects).toContainEqual({
+      type: "readClipboard",
+      register: "+",
+      placement: "before",
+      fallback: { type: "line", text: "clip" },
+    });
+
+    const unnamedOnly = applyModalKeys(
+      { mode: "normal", register: { type: "char", text: "unnamed" } },
+      "one",
+      p(0, 0),
+      ["2", "p"],
+      unnamedplus,
+    );
+    expect(unnamedOnly.effects).toContainEqual({
+      type: "readClipboard",
+      register: "+",
+      placement: "after",
+      fallback: { type: "char", text: "unnamed" },
+      count: 2,
+    });
+
+    const named = applyModalKeys(
+      { mode: "normal", namedRegisters: { a: { type: "char", text: "A" } } },
+      "one",
+      p(0, 0),
+      ['"', "a", "p"],
+      unnamedplus,
+    );
+    expect(named.text).toBe("oAne");
+    expect(named.effects.some((effect) => effect.type === "readClipboard")).toBe(false);
+  });
+
+  test("none keeps unprefixed registers prompt-local", () => {
+    const none = { ...options, clipboard: "none" as const };
+    const yanked = applyModalKeys({ mode: "normal" }, "one", p(0, 0), ["y", "y", "p"], none);
+    expect(yanked.text).toBe("one\none");
+    expect(yanked.state.clipboardRegisters).toBeUndefined();
+    expect(copies(yanked.effects)).toEqual([]);
+    expect(yanked.effects.some((effect) => effect.type === "readClipboard")).toBe(false);
+  });
 });

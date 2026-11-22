@@ -2,6 +2,7 @@ export const TRUSTED_JS_OPTION_PATHS = [
   "preset",
   "leader",
   "startMode",
+  "clipboard",
   "cursor.insert",
   "cursor.normal",
   "cursor.visual",

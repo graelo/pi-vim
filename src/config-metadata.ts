@@ -195,6 +195,11 @@ const PROPERTY_FACTS = {
     assignment: "replaces startup mode",
     aliases: [],
   },
+  clipboard: {
+    acceptedShape: '"none" | "unnamed" | "unnamedplus"',
+    assignment: "replaces clipboard register used by unprefixed yank, delete, change, and paste",
+    aliases: [],
+  },
   "cursor.insert": {
     acceptedShape: '"block" | "bar" | "underline"',
     assignment: "replaces cursor style",
@@ -419,6 +424,7 @@ export const CONFIG_LEAVES: readonly ConfigLeaf[] = leaves([
   "preset",
   "leader",
   "startMode",
+  "clipboard",
   ...modes.map((mode) => `cursor.${mode}`),
   "keymap.escape",
   ...Object.keys(KEYMAP_OPERATOR_DESCRIPTORS).map((action) => `keymap.operators.${action}`),

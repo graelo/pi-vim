@@ -89,6 +89,7 @@ describe("canonical config metadata", () => {
       "preset",
       "leader",
       "startMode",
+      "clipboard",
       "cursor.insert",
       "cursor.normal",
       "cursor.visual",
